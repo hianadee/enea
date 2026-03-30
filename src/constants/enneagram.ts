@@ -1,0 +1,91 @@
+import { EnneagramQuestion, EnneagramType } from '../types';
+
+export const ENNEAGRAM_TYPES: Record<EnneagramType, { name: string; tagline: string; description: string }> = {
+  1: { name: 'The Reformer', tagline: 'Principled, purposeful, self-controlled', description: 'You seek integrity and live by a strong inner code of ethics.' },
+  2: { name: 'The Helper', tagline: 'Caring, generous, demonstrative', description: 'You give deeply and find meaning in nurturing others.' },
+  3: { name: 'The Achiever', tagline: 'Adaptable, ambitious, image-conscious', description: 'You pursue excellence and thrive on transformation through effort.' },
+  4: { name: 'The Individualist', tagline: 'Expressive, dramatic, self-absorbed', description: 'You long for depth, beauty, and authentic self-expression.' },
+  5: { name: 'The Investigator', tagline: 'Perceptive, innovative, secretive', description: 'You observe the world with quiet precision and love deep knowledge.' },
+  6: { name: 'The Loyalist', tagline: 'Engaging, responsible, anxious', description: 'You seek security through trust, preparation, and commitment.' },
+  7: { name: 'The Enthusiast', tagline: 'Spontaneous, versatile, acquisitive', description: 'You pursue joy, adventure, and the full richness of life.' },
+  8: { name: 'The Challenger', tagline: 'Self-confident, decisive, confrontational', description: 'You move through the world with power, directness, and fierce protectiveness.' },
+  9: { name: 'The Peacemaker', tagline: 'Receptive, reassuring, complacent', description: 'You seek harmony and wholeness, holding space for all perspectives.' },
+};
+
+export const ENNEAGRAM_QUESTIONS: EnneagramQuestion[] = [
+  {
+    id: 1,
+    text: 'When things go wrong, your first instinct is to…',
+    options: [
+      { label: 'Find what could have been done better', types: [1] },
+      { label: 'Reach out and support someone affected', types: [2] },
+      { label: 'Quickly pivot and find a solution', types: [3] },
+      { label: 'Feel it deeply and process emotionally', types: [4] },
+      { label: 'Withdraw and analyze what happened', types: [5] },
+      { label: 'Worry about what comes next', types: [6] },
+      { label: 'Look for the silver lining and move on', types: [7] },
+      { label: 'Take control and fix it head-on', types: [8] },
+      { label: 'Stay calm and wait for things to settle', types: [9] },
+    ],
+  },
+  {
+    id: 2,
+    text: 'What do people most appreciate about you?',
+    options: [
+      { label: 'My reliability and strong principles', types: [1, 6] },
+      { label: 'My warmth and generosity', types: [2] },
+      { label: 'My drive and ability to get things done', types: [3] },
+      { label: 'My depth and creativity', types: [4] },
+      { label: 'My insight and quiet wisdom', types: [5] },
+      { label: 'My loyalty and dedication', types: [6, 1] },
+      { label: 'My enthusiasm and positive energy', types: [7] },
+      { label: 'My strength and honesty', types: [8] },
+      { label: 'My calmness and open-mindedness', types: [9] },
+    ],
+  },
+  {
+    id: 3,
+    text: 'Your deepest fear is…',
+    options: [
+      { label: 'Being corrupt, evil, or imperfect', types: [1] },
+      { label: 'Being unloved or unwanted', types: [2] },
+      { label: 'Being worthless or a failure', types: [3] },
+      { label: 'Having no identity or personal significance', types: [4] },
+      { label: 'Being useless, helpless, or incapable', types: [5] },
+      { label: 'Being without support or guidance', types: [6] },
+      { label: 'Being deprived or trapped in pain', types: [7] },
+      { label: 'Being harmed, controlled, or violated', types: [8] },
+      { label: 'Loss and separation', types: [9] },
+    ],
+  },
+  {
+    id: 4,
+    text: 'You feel most alive when…',
+    options: [
+      { label: 'Everything is in its right order', types: [1] },
+      { label: 'Someone I care about is thriving because of me', types: [2] },
+      { label: 'I achieve something meaningful', types: [3] },
+      { label: 'I'm lost in a creative or emotional experience', types: [4] },
+      { label: 'I'm deep in thought or discovery', types: [5] },
+      { label: 'I feel safe and supported', types: [6] },
+      { label: 'Life is full of possibility and fun', types: [7] },
+      { label: 'I'm making an impact or protecting others', types: [8] },
+      { label: 'There's peace and connection around me', types: [9] },
+    ],
+  },
+  {
+    id: 5,
+    text: 'In relationships, you tend to…',
+    options: [
+      { label: 'Hold yourself and others to high standards', types: [1] },
+      { label: 'Give a lot — sometimes too much', types: [2] },
+      { label: 'Work hard to be admired and desired', types: [3] },
+      { label: 'Crave deep emotional intimacy', types: [4] },
+      { label: 'Need space and feel drained by too much closeness', types: [5] },
+      { label: 'Seek someone you can truly trust', types: [6] },
+      { label: 'Keep things light, fun, and adventurous', types: [7] },
+      { label: 'Protect fiercely those you love', types: [8] },
+      { label: 'Avoid conflict at almost any cost', types: [9] },
+    ],
+  },
+];
