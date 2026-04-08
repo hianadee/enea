@@ -500,6 +500,32 @@ export const SettingsScreen: React.FC = () => {
           label="Hecho con"
           right={<Text style={[styles.versionText, { color: colors.textMuted }]}>Expo · React Native</Text>}
         />
+        <SettingsRow
+          label="Política de privacidad"
+          right={
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://hianadee.github.io/enea/privacy-policy.html')}
+              activeOpacity={0.7}
+              accessibilityLabel="Abrir política de privacidad"
+              accessibilityRole="link"
+            >
+              <Text style={[styles.linkText, { color: palette.primary }]}>Ver →</Text>
+            </TouchableOpacity>
+          }
+        />
+        <SettingsRow
+          label="Soporte"
+          right={
+            <TouchableOpacity
+              onPress={() => Linking.openURL('mailto:hola@enea.app')}
+              activeOpacity={0.7}
+              accessibilityLabel="Enviar email de soporte"
+              accessibilityRole="link"
+            >
+              <Text style={[styles.linkText, { color: palette.primary }]}>hola@enea.app →</Text>
+            </TouchableOpacity>
+          }
+        />
 
         {/* Dev-only reset onboarding */}
         {__DEV__ && (
@@ -559,6 +585,10 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: TYPOGRAPHY.sizes.sm,
+  },
+  linkText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
