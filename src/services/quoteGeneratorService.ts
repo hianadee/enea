@@ -124,14 +124,30 @@ async function callEdgeFunction(
     todayDate:           today,
   };
 
-  const { data, error } = await supabase.functions.invoke('generate-quote', {
+  // Timeout de 20 s — si la Edge Function no responde, cae al fallback
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Edge Function timeout')), 20_000),
+  );
+
+  const invokePromise = supabase.functions.invoke('generate-quote', {
     body: payload,
   });
+
+  const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
 
   if (error) throw error;
   if (!data?.text) throw new Error('Respuesta vacía de la Edge Function');
 
-  return data as GeneratedQuote;
+  // Validar que todos los campos requeridos están presentes y son strings
+  const quote: GeneratedQuote = {
+    text:             typeof data.text             === 'string' ? data.text.trim()             : '',
+    explanation:      typeof data.explanation      === 'string' ? data.explanation.trim()      : '',
+    planetaryContext: typeof data.planetaryContext === 'string' ? data.planetaryContext.trim() : '',
+  };
+
+  if (!quote.text) throw new Error('Campo text vacío en respuesta');
+
+  return quote;
 }
 
 // ─── Fallback ─────────────────────────────────────────────────────────────────

@@ -292,7 +292,7 @@ serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model:      'claude-opus-4-5',
-        max_tokens: 600,
+        max_tokens: 900,
         system:     buildSystemPrompt(),
         messages: [
           { role: 'user', content: buildUserPrompt(ctx) },
@@ -313,8 +313,21 @@ serve(async (req: Request) => {
 
     let quote: QuoteResponse;
     try {
-      quote = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Validar que todos los campos requeridos están presentes
+      quote = {
+        text:             typeof parsed.text             === 'string' && parsed.text.trim()
+                            ? parsed.text.trim()
+                            : raw.slice(0, 300),
+        explanation:      typeof parsed.explanation      === 'string'
+                            ? parsed.explanation.trim()
+                            : '',
+        planetaryContext: typeof parsed.planetaryContext === 'string' && parsed.planetaryContext.trim()
+                            ? parsed.planetaryContext.trim()
+                            : `${ctx.dominantPlanet} · día ${ctx.universalDay}`,
+      };
     } catch {
+      // Claude devolvió texto plano en lugar de JSON
       quote = {
         text:             raw.slice(0, 300),
         explanation:      '',
