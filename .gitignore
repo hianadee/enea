@@ -1,7 +1,6 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies
 node_modules/
+.yarn/
 
 # Expo
 .expo/
@@ -9,33 +8,45 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
+# Native builds
+ios/
+android/
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.orig.*
 
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# Environment variables — NUNCA subir al repo
+.env
+.env.local
+.env.development
+.env.production
+*.env
 
 # macOS
 .DS_Store
-*.pem
+.AppleDouble
+.LSOverride
 
-# local env files
-.env*.local
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
 
-# typescript
+# EAS
+.easignore
+
+# Supabase CLI temp (contiene project-ref y versiones internas)
+supabase/.temp/
+
+# TypeScript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,18 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { colors, typography, spacing } from '@/design-system/tokens';
+import { Button, Card, Input } from '@/design-system/components';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GradientBackground } from '../../components/GradientBackground';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { StepIndicator } from '../../components/StepIndicator';
-import { useOnboardingStore } from '../../store/onboardingStore';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../constants/theme';
-import { ENNEAGRAM_TYPES } from '../../constants/enneagram';
-import { EnneagramType } from '../../types';
-import { OnboardingStackParamList } from '../../navigation/types';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
+import { EnneagramType } from '@/types';
+import { OnboardingStackParamList } from '@/navigation/types';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'EnneagramIntro'>;
 };
+
+const TOTAL = 10;
 
 export const EnneagramIntroScreen: React.FC<Props> = ({ navigation }) => {
   const { setEnneagramType, setStep } = useOnboardingStore();
@@ -24,142 +32,190 @@ export const EnneagramIntroScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <GradientBackground>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <StepIndicator total={3} current={1} />
-          <Text style={styles.stepLabel}>Step 2 of 3</Text>
-        </View>
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityLabel="Volver a la pantalla anterior"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepCounter}>7 de {TOTAL}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-        <Text style={styles.symbol}>◎</Text>
-        <Text style={styles.title}>Your inner type</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.heading}>Unas preguntas{'\n'}para conocerte mejor</Text>
         <Text style={styles.subtitle}>
-          The Enneagram reveals your core motivations and fears.
-          Know your type — or take a short test to find it.
+          El Eneagrama describe nueve formas de ver el mundo. Responde con lo primero que sientas, sin pensarlo mucho.
         </Text>
 
-        <PrimaryButton
-          label="Take the short test (5 questions)"
+        {/* CTA: take test */}
+        <TouchableOpacity
+          style={styles.testBtn}
           onPress={() => {
             setStep('enneagram_test');
             navigation.navigate('EnneagramTest');
           }}
-          style={styles.primaryBtn}
-        />
+          activeOpacity={0.85}
+          accessibilityLabel="Hacer el test de eneagrama, 5 preguntas"
+          accessibilityRole="button"
+        >
+          <Text style={styles.testBtnText}>Hacer el test</Text>
+        </TouchableOpacity>
 
-        <View style={styles.divider}>
+        {/* Divider */}
+        <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or select yours</Text>
+          <Text style={styles.dividerText}>Ya sé mi tipo</Text>
           <View style={styles.dividerLine} />
         </View>
 
+        {/* Type list */}
         <View style={styles.typeGrid}>
           {(Object.keys(ENNEAGRAM_TYPES) as unknown as EnneagramType[]).map((type) => {
             const info = ENNEAGRAM_TYPES[type];
             return (
               <TouchableOpacity
                 key={type}
-                style={styles.typeCard}
+                style={styles.typeRow}
                 onPress={() => handleSelectType(type)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Tipo ${type}: ${info.name}. ${info.tagline}`}
               >
-                <Text style={styles.typeNumber}>{type}</Text>
-                <Text style={styles.typeName}>{info.name}</Text>
-                <Text style={styles.typeTagline}>{info.tagline}</Text>
+                <View style={styles.typeNumCircle}>
+                  <Text style={styles.typeNum}>{type}</Text>
+                </View>
+                <View style={styles.typeInfo}>
+                  <Text style={styles.typeName}>{info.name}</Text>
+                  <Text style={styles.typeTagline} numberOfLines={1}>{info.tagline}</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
               </TouchableOpacity>
             );
           })}
         </View>
       </ScrollView>
-    </GradientBackground>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: 60,
-    paddingBottom: SPACING.xl,
+  safe: {
+    flex: 1,
+    backgroundColor: '#0A0A0F',
   },
   header: {
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING['2xl'],
+    paddingHorizontal: 24,
   },
-  stepLabel: {
-    color: COLORS.dark.textSecondary,
-    fontSize: TYPOGRAPHY.sizes.sm,
+  backBtn: { width: 40, height: 44, justifyContent: 'center' },
+  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  headerSpacer: { width: 40 },
+  stepCounter: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.fg.secondary,
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
-  symbol: {
-    fontSize: 40,
-    marginBottom: SPACING.md,
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 40,
   },
-  title: {
-    fontSize: TYPOGRAPHY.sizes['3xl'],
-    fontWeight: '300',
-    color: COLORS.dark.text,
-    marginBottom: SPACING.sm,
-    letterSpacing: -0.5,
+  heading: {
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 34,
+    color: colors.fg.primary,
+    lineHeight: 44,
+    marginBottom: 16,
   },
   subtitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.dark.textSecondary,
-    lineHeight: 24,
-    marginBottom: SPACING.xl,
+    fontSize: 15,
+    color: '#A8A8B8',
+    lineHeight: 22,
+    marginBottom: 32,
   },
-  primaryBtn: {
-    width: '100%',
+  testBtn: {
+    backgroundColor: colors.fg.primary,
+    borderRadius: 100,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
   },
-  divider: {
+  testBtnText: {
+    color: '#1A2332',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xl,
-    gap: SPACING.md,
+    marginBottom: 24,
+    gap: 12,
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: COLORS.dark.border,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
   },
   dividerText: {
-    color: COLORS.dark.textMuted,
-    fontSize: TYPOGRAPHY.sizes.sm,
+    color: '#A8A8B8',
+    fontSize: 14,
   },
   typeGrid: {
-    gap: SPACING.sm,
+    gap: 2,
   },
-  typeCard: {
-    backgroundColor: COLORS.dark.surface,
-    borderWidth: 1,
-    borderColor: COLORS.dark.border,
-    borderRadius: 14,
-    padding: SPACING.md,
+  typeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#1A1A1A',
+    gap: 14,
   },
-  typeNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.dark.surfaceElevated,
-    color: '#C4B5FD',
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 32,
-    overflow: 'hidden',
+  typeNumCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: '#FC8181B3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  typeName: {
-    flex: 1,
-    color: COLORS.dark.text,
-    fontSize: TYPOGRAPHY.sizes.md,
+  typeNum: {
+    color: '#FC8181E6',
+    fontSize: 15,
     fontWeight: '500',
   },
+  typeInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  typeName: {
+    color: colors.fg.primary,
+    fontSize: 15,
+    fontWeight: '400',
+  },
   typeTagline: {
-    flex: 2,
-    color: COLORS.dark.textSecondary,
-    fontSize: TYPOGRAPHY.sizes.sm,
+    color: '#A8A8B8',
+    fontSize: 14,
+  },
+  chevron: {
+    color: '#7A7A8A',
+    fontSize: 20,
   },
 });

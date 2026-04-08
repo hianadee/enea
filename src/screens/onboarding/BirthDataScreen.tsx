@@ -5,55 +5,78 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { colors, typography, spacing } from '@/design-system/tokens';
+import { Button, Card, Input } from '@/design-system/components';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GradientBackground } from '../../components/GradientBackground';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { StepIndicator } from '../../components/StepIndicator';
-import { useOnboardingStore } from '../../store/onboardingStore';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../constants/theme';
-import { OnboardingStackParamList } from '../../navigation/types';
+import { GradientBackground } from '@/design-system/components/GradientBackground';
+import { PrimaryButton } from '@/design-system/components/PrimaryButton';
+import { StepIndicator } from '@/design-system/components/StepIndicator';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { COLORS, TYPOGRAPHY, SPACING } from '@/constants/theme';
+import { OnboardingStackParamList } from '@/navigation/types';
+import { geocodeLocation } from '@/utils/astroUtils';
 
 type Props = {
-  navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Birth'>;
+  navigation: NativeStackNavigationProp<OnboardingStackParamList, 'FirstName'>;
 };
 
 export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
 
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [date, setDate]       = useState('');
+  const [time, setTime]       = useState('');
   const [location, setLocation] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const isValid =
     date.length === 10 && time.length === 5 && location.trim().length > 0;
 
-  const handleContinue = () => {
-    // Basic validation
+  const handleContinue = async () => {
     const [year, month, day] = date.split('-').map(Number);
     if (
-      !year || year < 1900 || year > 2025 ||
+      !year || year < 1900 || year > 2030 ||
       !month || month < 1 || month > 12 ||
       !day || day < 1 || day > 31
     ) {
-      Alert.alert('Invalid date', 'Please enter a valid date (YYYY-MM-DD)');
+      Alert.alert('Fecha inválida', 'Por favor ingresa una fecha válida (AAAA-MM-DD)');
       return;
     }
 
+    setLoading(true);
+    try {
+      const coords = await geocodeLocation(location.trim());
+      const lat = coords?.lat ?? 0;
+      const lng = coords?.lng ?? 0;
+
+      if (!coords) {
+        Alert.alert(
+          'Lugar no encontrado',
+          'No pudimos ubicar ese lugar. Usaremos coordenadas aproximadas. Puedes continuar.',
+          [{ text: 'Continuar', onPress: () => proceed(lat, lng) }],
+        );
+      } else {
+        proceed(lat, lng);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const proceed = (lat: number, lng: number) => {
     setBirthData({
       date,
       time,
-      locationName: location,
-      // Coordinates would come from geocoding — placeholder for now
-      latitude: 0,
-      longitude: 0,
+      locationName: location.trim(),
+      latitude:  lat,
+      longitude: lng,
     });
-    setStep('enneagram_intro');
-    navigation.navigate('EnneagramIntro');
+    setStep('natal_chart');
+    navigation.navigate('NatalChartPreview');
   };
 
   return (
@@ -67,26 +90,25 @@ export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <StepIndicator total={3} current={0} />
-            <Text style={styles.stepLabel}>Step 1 of 3</Text>
+            <StepIndicator total={4} current={0} />
+            <Text style={styles.stepLabel}>Paso 1 de 4</Text>
           </View>
 
           <View style={styles.content}>
             <Text style={styles.symbol}>☽</Text>
-            <Text style={styles.title}>Your birth details</Text>
+            <Text style={styles.title}>Tu fecha de nacimiento</Text>
             <Text style={styles.subtitle}>
-              Your natal chart is the map of the sky at the moment you arrived.
-              The more precise, the deeper your insights.
+              Tu carta natal es el mapa del cielo en el momento en que llegaste.
+              Cuanto más precisa, más profundos tus mensajes.
             </Text>
 
             <View style={styles.form}>
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Date of birth</Text>
+                <Text style={styles.fieldLabel}>Fecha de nacimiento</Text>
                 <TextInput
                   style={styles.input}
                   value={date}
                   onChangeText={(t) => {
-                    // Auto-format YYYY-MM-DD
                     const cleaned = t.replace(/[^0-9]/g, '');
                     let formatted = cleaned;
                     if (cleaned.length >= 5) {
@@ -97,7 +119,7 @@ export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
                     }
                     setDate(formatted);
                   }}
-                  placeholder="YYYY-MM-DD"
+                  placeholder="AAAA-MM-DD"
                   placeholderTextColor={COLORS.dark.textMuted}
                   keyboardType="number-pad"
                   maxLength={10}
@@ -106,7 +128,7 @@ export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Time of birth</Text>
+                <Text style={styles.fieldLabel}>Hora de nacimiento</Text>
                 <TextInput
                   style={styles.input}
                   value={time}
@@ -124,16 +146,18 @@ export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
                   maxLength={5}
                   returnKeyType="next"
                 />
-                <Text style={styles.fieldHint}>Use your local birth time. "Unknown" → enter 12:00</Text>
+                <Text style={styles.fieldHint}>
+                  Usa tu hora local de nacimiento. Si no la sabes, ingresa 12:00
+                </Text>
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Place of birth</Text>
+                <Text style={styles.fieldLabel}>Lugar de nacimiento</Text>
                 <TextInput
                   style={styles.input}
                   value={location}
                   onChangeText={setLocation}
-                  placeholder="City, Country"
+                  placeholder="Ciudad, País"
                   placeholderTextColor={COLORS.dark.textMuted}
                   returnKeyType="done"
                   autoCapitalize="words"
@@ -143,13 +167,17 @@ export const BirthDataScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View style={styles.footer}>
-            <PrimaryButton
-              label="Continue"
-              onPress={handleContinue}
-              disabled={!isValid}
-            />
+            {loading ? (
+              <ActivityIndicator color={COLORS.dark.text} size="small" />
+            ) : (
+              <PrimaryButton
+                label="Continuar"
+                onPress={handleContinue}
+                disabled={!isValid}
+              />
+            )}
             <Text style={styles.privacy}>
-              Your data is private and never sold.
+              Tus datos son privados y nunca se venden.
             </Text>
           </View>
         </ScrollView>
@@ -227,6 +255,8 @@ const styles = StyleSheet.create({
   footer: {
     gap: SPACING.md,
     alignItems: 'center',
+    minHeight: 60,
+    justifyContent: 'center',
   },
   privacy: {
     fontSize: TYPOGRAPHY.sizes.xs,

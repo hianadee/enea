@@ -4,33 +4,49 @@ import {
   EnneagramType,
   TonePreferences,
   NatalChart,
+  NumerologyProfile,
   OnboardingStep,
-  SpiritualTradition,
+  ReligionResponse,
   LanguageStyle,
   EnergyType,
   LifeFocus,
-} from '../types';
+} from '@/types';
 
 interface OnboardingState {
   step: OnboardingStep;
+  firstName: string;
+  fullName: string;
   birthData: Partial<BirthData>;
   natalChart: NatalChart | null;
+  numerologyProfile: NumerologyProfile | null;
   enneagramType: EnneagramType | null;
+  religionResponse: ReligionResponse | null;
+  religion: string | null;
   tonePreferences: Partial<TonePreferences>;
 
   setStep: (step: OnboardingStep) => void;
+  setFirstName: (name: string) => void;
+  setFullName: (name: string) => void;
   setBirthData: (data: Partial<BirthData>) => void;
   setNatalChart: (chart: NatalChart) => void;
+  setNumerologyProfile: (profile: NumerologyProfile) => void;
   setEnneagramType: (type: EnneagramType) => void;
+  setReligionResponse: (response: ReligionResponse) => void;
+  setReligion: (religion: string) => void;
   setTonePreference: <K extends keyof TonePreferences>(key: K, value: TonePreferences[K]) => void;
   reset: () => void;
 }
 
 const initialState = {
-  step: 'birth' as OnboardingStep,
+  step: 'first_name' as OnboardingStep,
+  firstName: '',
+  fullName: '',
   birthData: {},
   natalChart: null,
+  numerologyProfile: null,
   enneagramType: null,
+  religionResponse: null,
+  religion: null,
   tonePreferences: {},
 };
 
@@ -39,12 +55,22 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
 
   setStep: (step) => set({ step }),
 
+  setFirstName: (firstName) => set({ firstName }),
+
+  setFullName: (fullName) => set({ fullName }),
+
   setBirthData: (data) =>
     set((state) => ({ birthData: { ...state.birthData, ...data } })),
 
   setNatalChart: (chart) => set({ natalChart: chart }),
 
+  setNumerologyProfile: (profile) => set({ numerologyProfile: profile }),
+
   setEnneagramType: (type) => set({ enneagramType: type }),
+
+  setReligionResponse: (response) => set({ religionResponse: response }),
+
+  setReligion: (religion) => set({ religion }),
 
   setTonePreference: (key, value) =>
     set((state) => ({

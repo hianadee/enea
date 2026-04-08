@@ -6,7 +6,7 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../constants/theme';
+import { COLORS, TYPOGRAPHY, SPACING } from '@/constants/theme';
 
 interface Props {
   label: string;
