@@ -267,9 +267,9 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
     marginBottom: SPACING['3xl'],
   },
   dateText: {
