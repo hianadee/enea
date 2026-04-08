@@ -42,6 +42,9 @@ yarn-error.*
 # Supabase CLI temp (contiene project-ref y versiones internas)
 supabase/.temp/
 
+# Google Play service account key — NUNCA subir al repo
+google-play-key.json
+
 # TypeScript
 *.tsbuildinfo
 
