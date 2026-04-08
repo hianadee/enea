@@ -92,10 +92,10 @@ export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
           style={styles.ctaBtn}
           onPress={handleContinue}
           activeOpacity={0.85}
-          accessibilityLabel="Sí, este soy yo, continuar al siguiente paso"
+          accessibilityLabel="Sí, me reconozco, continuar al siguiente paso"
           accessibilityRole="button"
         >
-          <Text style={styles.ctaBtnText}>Sí, este soy yo</Text>
+          <Text style={styles.ctaBtnText}>Sí, me reconozco</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.retakeBtn}

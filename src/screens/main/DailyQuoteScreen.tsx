@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: 40,
     marginBottom: SPACING['3xl'],
   },
   dateText: {
