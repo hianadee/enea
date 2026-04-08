@@ -5,22 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Animated,
+  Platform,
 } from 'react-native';
+import { colors, typography, spacing } from '@/design-system/tokens';
+import { Button, Card, Input } from '@/design-system/components';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GradientBackground } from '../../components/GradientBackground';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { useOnboardingStore } from '../../store/onboardingStore';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../constants/theme';
-import { ENNEAGRAM_QUESTIONS } from '../../constants/enneagram';
-import { EnneagramType } from '../../types';
-import { OnboardingStackParamList } from '../../navigation/types';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { ENNEAGRAM_QUESTIONS } from '@/constants/enneagram';
+import { EnneagramType } from '@/types';
+import { OnboardingStackParamList } from '@/navigation/types';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'EnneagramTest'>;
 };
 
 type Scores = Record<EnneagramType, number>;
+
+const TOTAL = 10;
 
 export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
   const { setEnneagramType, setStep } = useOnboardingStore();
@@ -35,194 +37,230 @@ export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
   const isLast = questionIndex === ENNEAGRAM_QUESTIONS.length - 1;
   const progress = (questionIndex + 1) / ENNEAGRAM_QUESTIONS.length;
 
-  const handleSelect = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
-  };
-
   const handleNext = () => {
     if (selectedOption === null) return;
 
-    // Tally scores
     const option = question.options[selectedOption];
     const newScores = { ...scores };
-    option.types.forEach((t) => {
-      newScores[t] = (newScores[t] || 0) + 1;
-    });
+    option.types.forEach((t) => { newScores[t] = (newScores[t] || 0) + 1; });
     setScores(newScores);
 
     if (isLast) {
-      // Find winning type
-      const winnerType = (Object.keys(newScores) as unknown as EnneagramType[]).reduce(
-        (a, b) => (newScores[a] >= newScores[b] ? a : b)
+      const winner = (Object.keys(newScores) as unknown as EnneagramType[]).reduce(
+        (a, b) => (newScores[a] >= newScores[b] ? a : b),
       );
-      setEnneagramType(winnerType);
+      setEnneagramType(winner);
       setStep('enneagram_result');
       navigation.navigate('EnneagramResult');
     } else {
-      setQuestionIndex((i) => i + 1);
+      setQuestionIndex(i => i + 1);
       setSelectedOption(null);
     }
   };
 
+  const handleBack = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelectedOption(null);
+    } else {
+      navigation.goBack();
+    }
+  };
+
   return (
-    <GradientBackground>
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={handleBack}
+          style={styles.backBtn}
+          accessibilityLabel="Volver a la pantalla anterior"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepCounter}>7 de {TOTAL}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Progress bar */}
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Progress bar */}
-        <View style={styles.progressContainer}>
-          <TouchableOpacity
-            onPress={() => {
-              if (questionIndex > 0) {
-                setQuestionIndex((i) => i - 1);
-                setSelectedOption(null);
-              } else {
-                navigation.goBack();
-              }
-            }}
-          >
-            <Text style={styles.backArrow}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-          </View>
-          <Text style={styles.progressText}>
-            {questionIndex + 1}/{ENNEAGRAM_QUESTIONS.length}
-          </Text>
-        </View>
-
-        <View style={styles.questionContainer}>
-          <Text style={styles.questionText}>{question.text}</Text>
-        </View>
+        {questionIndex === 0 && (
+          <>
+            <Text style={styles.heading}>Unas preguntas para{'\n'}conocerte mejor</Text>
+            <Text style={styles.subtitle}>
+              El Eneagrama describe nueve formas de ver el mundo. Responde con lo primero que sientas, sin pensarlo mucho.
+            </Text>
+          </>
+        )}
+        <Text style={styles.questionCount}>
+          {questionIndex + 1} / {ENNEAGRAM_QUESTIONS.length}
+        </Text>
+        <Text style={styles.questionText}>{question.text}</Text>
 
         <View style={styles.options}>
           {question.options.map((option, i) => (
             <TouchableOpacity
               key={i}
-              style={[
-                styles.option,
-                selectedOption === i && styles.optionSelected,
-              ]}
-              onPress={() => handleSelect(i)}
+              style={[styles.option, selectedOption === i && styles.optionSelected]}
+              onPress={() => setSelectedOption(i)}
               activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityLabel={option.label}
+              accessibilityState={{ checked: selectedOption === i }}
             >
-              <View
-                style={[
-                  styles.optionDot,
-                  selectedOption === i && styles.optionDotSelected,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.optionText,
-                  selectedOption === i && styles.optionTextSelected,
-                ]}
-              >
+              <View style={[styles.dot, selectedOption === i && styles.dotSelected]} />
+              <Text style={[styles.optionText, selectedOption === i && styles.optionTextSelected]}>
                 {option.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+      </ScrollView>
 
-        <PrimaryButton
-          label={isLast ? 'See my type' : 'Next question'}
+      {/* Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.ctaBtn, selectedOption === null && styles.ctaBtnDisabled]}
           onPress={handleNext}
           disabled={selectedOption === null}
-          style={styles.nextBtn}
-        />
-      </ScrollView>
-    </GradientBackground>
+          activeOpacity={0.85}
+          accessibilityLabel={isLast ? 'Ver mi tipo de eneagrama' : 'Siguiente pregunta'}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: selectedOption === null }}
+        >
+          <Text style={styles.ctaBtnText}>
+            {isLast ? 'Ver mi tipo' : 'Siguiente'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: 60,
-    paddingBottom: SPACING.xl,
-    flexGrow: 1,
+  safe: {
+    flex: 1,
+    backgroundColor: '#0A0A0F',
   },
-  progressContainer: {
+  header: {
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING['3xl'],
+    paddingHorizontal: 24,
   },
-  backArrow: {
-    color: COLORS.dark.textSecondary,
-    fontSize: TYPOGRAPHY.sizes.xl,
-  },
-  progressBarBg: {
+  backBtn: { width: 40, height: 44, justifyContent: 'center' },
+  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  headerSpacer: { width: 40 },
+  stepCounter: {
     flex: 1,
-    height: 3,
-    backgroundColor: COLORS.dark.border,
-    borderRadius: 2,
+    textAlign: 'center',
+    color: colors.fg.secondary,
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  progressBar: {
+    height: 1,
+    backgroundColor: '#1A1A1A',
+    marginHorizontal: 24,
+    marginBottom: 8,
+    borderRadius: 1,
     overflow: 'hidden',
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#C4B5FD',
-    borderRadius: 2,
+  progressFill: {
+    height: 1,
+    backgroundColor: colors.fg.primary,
+    borderRadius: 1,
   },
-  progressText: {
-    color: COLORS.dark.textMuted,
-    fontSize: TYPOGRAPHY.sizes.sm,
-    minWidth: 28,
-    textAlign: 'right',
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 16,
   },
-  questionContainer: {
-    marginBottom: SPACING['2xl'],
+  heading: {
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 28,
+    color: colors.fg.primary,
+    lineHeight: 38,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#A8A8B8',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  questionCount: {
+    fontSize: 14,
+    color: '#A8A8B8',
+    letterSpacing: 0.5,
+    marginBottom: 16,
   },
   questionText: {
-    fontSize: TYPOGRAPHY.sizes['2xl'],
-    fontWeight: '300',
-    color: COLORS.dark.text,
-    lineHeight: 34,
-    letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 26,
+    color: colors.fg.primary,
+    lineHeight: 36,
+    marginBottom: 32,
   },
   options: {
-    flex: 1,
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    gap: 8,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: SPACING.md,
-    backgroundColor: COLORS.dark.surface,
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.dark.border,
-    borderRadius: 14,
-    padding: SPACING.md,
+    borderColor: '#1A1A1A',
+    backgroundColor: '#080808',
   },
   optionSelected: {
-    borderColor: '#C4B5FD',
-    backgroundColor: 'rgba(196, 181, 253, 0.08)',
+    borderColor: '#3A3A3A',
+    backgroundColor: '#111111',
   },
-  optionDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.dark.border,
-    marginTop: 1,
+  dot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#FC8181B3',
+    marginTop: 2,
     flexShrink: 0,
   },
-  optionDotSelected: {
-    borderColor: '#C4B5FD',
-    backgroundColor: '#C4B5FD',
+  dotSelected: {
+    borderColor: '#FC8181E6',
+    backgroundColor: '#FC8181E6',
   },
   optionText: {
     flex: 1,
-    fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.dark.textSecondary,
+    fontSize: 15,
+    color: '#A8A8B8',
     lineHeight: 22,
   },
   optionTextSelected: {
-    color: COLORS.dark.text,
+    color: colors.fg.primary,
   },
-  nextBtn: {
-    width: '100%',
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
+  ctaBtn: {
+    backgroundColor: colors.fg.primary,
+    borderRadius: 100,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaBtnDisabled: { opacity: 0.3 },
+  ctaBtnText: { color: '#1A2332', fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
 });

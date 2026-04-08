@@ -1,18 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { colors, typography, spacing } from '@/design-system/tokens';
+import { Button, Card, Input } from '@/design-system/components';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GradientBackground } from '../../components/GradientBackground';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { StepIndicator } from '../../components/StepIndicator';
-import { useOnboardingStore } from '../../store/onboardingStore';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../constants/theme';
-import { ENNEAGRAM_TYPES } from '../../constants/enneagram';
-import { EnneagramType } from '../../types';
-import { OnboardingStackParamList } from '../../navigation/types';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
+import { EnneagramType } from '@/types';
+import { OnboardingStackParamList } from '@/navigation/types';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'EnneagramResult'>;
 };
+
+const TOTAL = 10;
 
 export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
   const { enneagramType, setEnneagramType, setStep } = useOnboardingStore();
@@ -22,163 +30,203 @@ export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
   const typeInfo = ENNEAGRAM_TYPES[enneagramType];
 
   const handleContinue = () => {
-    setStep('tone');
-    navigation.navigate('TonePreferences');
+    setStep('religion');
+    navigation.navigate('Religion');
   };
 
   const otherTypes = (Object.keys(ENNEAGRAM_TYPES) as unknown as EnneagramType[]).filter(
-    (t) => t !== enneagramType
+    t => t !== enneagramType,
   );
 
   return (
-    <GradientBackground>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <StepIndicator total={3} current={1} />
-          <Text style={styles.stepLabel}>Step 2 of 3</Text>
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityLabel="Volver a la pantalla anterior"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepCounter}>7 de {TOTAL}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Large type number */}
+        <Text style={styles.typeLabel}>Tu tipo:</Text>
+        <Text style={styles.typeNumber}>{enneagramType}</Text>
+        <Text style={styles.typeName}>{typeInfo.name}</Text>
+        <Text style={styles.typeTagline}>{typeInfo.tagline}</Text>
+
+        <View style={styles.hairline} />
+
+        <Text style={styles.typeDescription}>{typeInfo.description}</Text>
+
+        {/* Change type section */}
+        <Text style={styles.resonateLabel}>¿No te resuena? Elige otro tipo:</Text>
+        <View style={styles.typeChips}>
+          {otherTypes.map(t => (
+            <TouchableOpacity
+              key={t}
+              style={styles.typeChip}
+              onPress={() => setEnneagramType(t)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Elegir tipo ${t}: ${ENNEAGRAM_TYPES[t].name}`}
+            >
+              <Text style={styles.typeChipText}>{t}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-
-        <View style={styles.resultCard}>
-          <Text style={styles.typeNumber}>{enneagramType}</Text>
-          <Text style={styles.typeName}>{typeInfo.name}</Text>
-          <Text style={styles.typeTagline}>{typeInfo.tagline}</Text>
-          <View style={styles.divider} />
-          <Text style={styles.typeDescription}>{typeInfo.description}</Text>
-        </View>
-
-        <Text style={styles.resonateQuestion}>Does this resonate?</Text>
-
-        <View style={styles.changeTypeContainer}>
-          <Text style={styles.changeTypeLabel}>Choose a different type</Text>
-          <View style={styles.typeChips}>
-            {otherTypes.map((t) => (
-              <TouchableOpacity
-                key={t}
-                style={styles.typeChip}
-                onPress={() => setEnneagramType(t)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.typeChipText}>{t}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <PrimaryButton
-          label="Yes, this is me"
-          onPress={handleContinue}
-          style={styles.continueBtn}
-        />
-        <PrimaryButton
-          label="Retake the test"
-          onPress={() => navigation.navigate('EnneagramTest')}
-          variant="ghost"
-          style={styles.retakeBtn}
-        />
       </ScrollView>
-    </GradientBackground>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.ctaBtn}
+          onPress={handleContinue}
+          activeOpacity={0.85}
+          accessibilityLabel="Sí, este soy yo, continuar al siguiente paso"
+          accessibilityRole="button"
+        >
+          <Text style={styles.ctaBtnText}>Sí, este soy yo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.retakeBtn}
+          onPress={() => navigation.navigate('EnneagramTest')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.retakeBtnText}>Repetir el test</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: 60,
-    paddingBottom: SPACING.xl,
+  safe: {
+    flex: 1,
+    backgroundColor: '#0A0A0F',
   },
   header: {
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING['2xl'],
+    paddingHorizontal: 24,
   },
-  stepLabel: {
-    color: COLORS.dark.textSecondary,
-    fontSize: TYPOGRAPHY.sizes.sm,
+  backBtn: { width: 40, height: 44, justifyContent: 'center' },
+  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  headerSpacer: { width: 40 },
+  stepCounter: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.fg.secondary,
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
-  resultCard: {
-    backgroundColor: COLORS.dark.surface,
-    borderWidth: 1,
-    borderColor: 'rgba(196, 181, 253, 0.3)',
-    borderRadius: 20,
-    padding: SPACING.xl,
+  scroll: {
+    paddingHorizontal: 28,
+    paddingTop: 32,
+    paddingBottom: 16,
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+  },
+  typeLabel: {
+    fontSize: 14,
+    color: '#A8A8B8',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   typeNumber: {
-    fontSize: 72,
-    fontWeight: '100',
-    color: '#C4B5FD',
-    lineHeight: 80,
-    marginBottom: SPACING.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 96,
+    color: '#FC8181',
+    fontWeight: '200',
+    lineHeight: 100,
+    marginBottom: 8,
   },
   typeName: {
-    fontSize: TYPOGRAPHY.sizes['2xl'],
-    fontWeight: '300',
-    color: COLORS.dark.text,
-    marginBottom: SPACING.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 28,
+    color: '#FC8181',
+    fontWeight: '400',
+    marginBottom: 8,
     textAlign: 'center',
   },
   typeTagline: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.dark.textSecondary,
+    fontSize: 14,
+    color: '#FC8181',
+    fontWeight: '500',
     textAlign: 'center',
-    fontStyle: 'italic',
+    marginBottom: 24,
   },
-  divider: {
+  hairline: {
     width: 40,
-    height: 1,
-    backgroundColor: COLORS.dark.border,
-    marginVertical: SPACING.md,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#FC818130',
+    marginBottom: 24,
   },
   typeDescription: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.dark.textSecondary,
-    lineHeight: 24,
+    fontSize: 16,
+    color: '#A8A8B8',
+    lineHeight: 26,
     textAlign: 'center',
+    marginBottom: 40,
   },
-  resonateQuestion: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    color: COLORS.dark.text,
-    fontWeight: '300',
-    marginBottom: SPACING.md,
+  resonateLabel: {
+    fontSize: 14,
+    color: '#A8A8B8',
+    marginBottom: 16,
     textAlign: 'center',
-  },
-  changeTypeContainer: {
-    marginBottom: SPACING.xl,
-  },
-  changeTypeLabel: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.dark.textMuted,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
   },
   typeChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: 8,
+    marginBottom: 8,
   },
   typeChip: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.dark.surface,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
-    borderColor: COLORS.dark.border,
+    borderColor: '#FC8181',
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeChipText: {
-    color: COLORS.dark.textSecondary,
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '500',
+    color: '#FC8181',
+    fontSize: 15,
+    fontWeight: '400',
   },
-  continueBtn: {
-    width: '100%',
-    marginBottom: SPACING.sm,
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    gap: 10,
   },
+  ctaBtn: {
+    backgroundColor: colors.fg.primary,
+    borderRadius: 100,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaBtnText: { color: '#1A2332', fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
   retakeBtn: {
-    width: '100%',
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retakeBtnText: {
+    color: colors.fg.secondary,
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
 });

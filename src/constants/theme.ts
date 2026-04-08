@@ -1,11 +1,11 @@
-import { DominantPlanet } from '../types';
+import { DominantPlanet } from '@/types';
 
 export const PLANET_PALETTES: Record<DominantPlanet, { primary: string; secondary: string; accent: string }> = {
   Sun: { primary: '#F4C542', secondary: '#F97316', accent: '#FEF3C7' },
   Moon: { primary: '#C4B5FD', secondary: '#7C3AED', accent: '#EDE9FE' },
   Mercury: { primary: '#6EE7B7', secondary: '#059669', accent: '#ECFDF5' },
   Venus: { primary: '#FDA4AF', secondary: '#E11D48', accent: '#FFF1F2' },
-  Mars: { primary: '#FCA5A5', secondary: '#DC2626', accent: '#FEF2F2' },
+  Mars: { primary: '#FC8181', secondary: '#DC2626', accent: '#FEF2F2' },
   Jupiter: { primary: '#93C5FD', secondary: '#2563EB', accent: '#EFF6FF' },
   Saturn: { primary: '#FCD34D', secondary: '#1E3A5F', accent: '#1E293B' },
   Uranus: { primary: '#67E8F9', secondary: '#0891B2', accent: '#ECFEFF' },
@@ -23,7 +23,7 @@ export const COLORS = {
     border: '#2A2A3A',
     text: '#F0EEF6',
     textSecondary: '#8B8A9E',
-    textMuted: '#4A4A5E',
+    textMuted: '#808080',   // was #4A4A5E — bumped to 5.0:1 on dark bg (WCAG AA)
   },
   light: {
     background: '#FAFAF8',
@@ -40,8 +40,8 @@ export const TYPOGRAPHY = {
   quoteFont: 'serif',
   bodyFont: 'System',
   sizes: {
-    xs: 11,
-    sm: 13,
+    xs: 14,
+    sm: 14,
     md: 15,
     lg: 17,
     xl: 20,
