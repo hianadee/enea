@@ -10,23 +10,30 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors } from '@/design-system/tokens';
-import { useOnboardingStore } from '@/store/onboardingStore';
-import { useOnboardingSave } from '@/hooks/useOnboardingSave';
-import { RootStackParamList } from '@/navigation/types';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { colors } from '../../design-system/tokens';
+import { useOnboardingStore } from '../../store/onboardingStore';
+import { useOnboardingSave } from '../../hooks/useOnboardingSave';
+import { RootStackParamList } from '../../navigation/types';
 
 export const WelcomeScreen: React.FC = () => {
   const { firstName } = useOnboardingStore();
   const { saveAnonymous } = useOnboardingSave();
   const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  const player = useVideoPlayer(require('../../../assets/videos/20556585-hd_1920_1080_24fps.mp4'), p => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim,  { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 1200, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 1200, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -38,40 +45,57 @@ export const WelcomeScreen: React.FC = () => {
   const greeting = firstName ? `Hola, ${firstName}.` : 'Hola.';
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.content}>
-        <Animated.Text
-          style={[styles.heading, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-        >
-          {greeting}
-        </Animated.Text>
+    <View style={styles.container}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        nativeControls={false}
+      />
+      <View style={styles.overlay} />
 
-        <Animated.Text
-          style={[styles.subtitle, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-        >
-          Ya tengo lo que necesito para acompañarte. Cada día recibirás una reflexión pensada para ti: quién eres, cómo te sientes hoy, y qué puedes hacer con eso.
-        </Animated.Text>
-      </View>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.content}>
+          <Animated.Text
+            style={[styles.heading, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+          >
+            {greeting}
+          </Animated.Text>
 
-      <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-        <TouchableOpacity
-          style={styles.ctaBtn}
-          onPress={handleContinue}
-          activeOpacity={0.85}
-          accessibilityLabel="Ver mi reflexión de hoy"
-          accessibilityRole="button"
-        >
-          <Text style={styles.ctaBtnText}>Ver mi reflexión de hoy</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+          <Animated.Text
+            style={[styles.subtitle, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+          >
+            Ya tengo lo que necesito para acompañarte. Cada día recibirás una reflexión pensada para ti: quién eres, cómo te sientes hoy, y qué puedes hacer con eso.
+          </Animated.Text>
+        </View>
+
+        <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+          <TouchableOpacity
+            style={styles.ctaBtn}
+            onPress={handleContinue}
+            activeOpacity={0.85}
+            accessibilityLabel="Ver mi reflexión de hoy"
+            accessibilityRole="button"
+          >
+            <Text style={styles.ctaBtnText}>Ver mi reflexión de hoy</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
     backgroundColor: '#0A0A0F',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10, 10, 15, 0.55)',
+  },
+  safe: {
+    flex: 1,
   },
   content: {
     flex: 1,

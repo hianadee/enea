@@ -517,12 +517,12 @@ export const SettingsScreen: React.FC = () => {
           label="Soporte"
           right={
             <TouchableOpacity
-              onPress={() => Linking.openURL('mailto:hola@enea.app')}
+              onPress={() => Linking.openURL('mailto:hi@astroenea.com')}
               activeOpacity={0.7}
               accessibilityLabel="Enviar email de soporte"
               accessibilityRole="link"
             >
-              <Text style={[styles.linkText, { color: palette.primary }]}>hola@enea.app →</Text>
+              <Text style={[styles.linkText, { color: palette.primary }]}>hi@astroenea.com →</Text>
             </TouchableOpacity>
           }
         />

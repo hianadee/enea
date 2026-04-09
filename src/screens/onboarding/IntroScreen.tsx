@@ -7,10 +7,10 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { colors } from '@/design-system/tokens';
 import { OnboardingStackParamList } from '@/navigation/types';
 
 type Props = {
@@ -20,50 +20,72 @@ type Props = {
 export const IntroScreen: React.FC<Props> = ({ navigation }) => {
   const handleStart = () => navigation.navigate('FirstName');
 
+  const player = useVideoPlayer(require('../../../assets/videos/stars.mp4'), p => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Upper half — logo hero */}
-      <View style={styles.logoArea}>
-        <Image
-          source={require('../../../assets/enea_logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-          accessibilityLabel="Logo de ENEA"
-          accessibilityRole="image"
-        />
-      </View>
+    <View style={styles.container}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        nativeControls={false}
+      />
+      <View style={styles.overlay} />
 
-      {/* Lower half — copy + CTA */}
-      <View style={styles.textArea}>
-        <Text style={styles.headline}>
-          Nada de lo que sientes es accidental
-        </Text>
-        <Text style={styles.subhead}>
-          Conócete. Entiéndete. Cambia lo que quieras cambiar.
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safe}>
+        {/* Upper half — logo hero */}
+        <View style={styles.logoArea}>
+          <Image
+            source={require('../../../assets/enea_logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="Logo de ENEA"
+            accessibilityRole="image"
+          />
+        </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.ctaBtn}
-          onPress={handleStart}
-          activeOpacity={0.85}
-          accessibilityLabel="Quiero descubrirlo, comenzar la experiencia"
-          accessibilityRole="button"
-        >
-          <Text style={styles.ctaBtnText}>Quiero descubrirlo</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        {/* Lower half — copy + CTA */}
+        <View style={styles.textArea}>
+          <Text style={styles.headline}>
+            Nada de lo que sientes es accidental
+          </Text>
+          <Text style={styles.subhead}>
+            Conócete. Entiéndete. Cambia lo que quieras cambiar.
+          </Text>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.ctaBtn}
+            onPress={handleStart}
+            activeOpacity={0.85}
+            accessibilityLabel="Quiero descubrirlo, comenzar la experiencia"
+            accessibilityRole="button"
+          >
+            <Text style={styles.ctaBtnText}>Quiero descubrirlo</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
-  // Top half — logo centered
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10, 10, 15, 0.55)',
+  },
+  safe: {
+    flex: 1,
+  },
   logoArea: {
     flex: 1,
     alignItems: 'center',
@@ -73,7 +95,6 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
   },
-  // Bottom section — text
   textArea: {
     paddingHorizontal: 28,
     paddingBottom: 36,

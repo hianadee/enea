@@ -22,29 +22,18 @@ type Props = {
 };
 
 interface PlaceResult {
-  display_name: string;
-  lat: string;
-  lon: string;
-  address?: {
-    city?: string;
-    town?: string;
-    village?: string;
-    municipality?: string;
-    state?: string;
-    county?: string;
-    country?: string;
-  };
+  name: string;
+  lat: number;
+  lon: number;
+  state?: string;
+  country?: string;
 }
 
 const TOTAL = 10;
 
 function formatPlace(result: PlaceResult): string {
-  const addr = result.address ?? {};
-  const city = addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? '';
-  const region = addr.state ?? addr.county ?? '';
-  const country = addr.country ?? '';
-  const parts = [city, region, country].filter(Boolean);
-  return parts.length > 0 ? parts.join(', ') : result.display_name.split(',').slice(0, 3).join(',');
+  const parts = [result.name, result.state, result.country].filter(Boolean);
+  return parts.join(', ');
 }
 
 export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
@@ -66,12 +55,17 @@ export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     setError('');
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=6&addressdetails=1&accept-language=es`;
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'ENEA-App/1.0' },
-      });
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=6&lang=es&layer=city&layer=locality`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Network error');
-      const data: PlaceResult[] = await res.json();
+      const json = await res.json();
+      const data: PlaceResult[] = (json.features ?? []).map((f: any) => ({
+        name: f.properties.name ?? '',
+        lat: f.geometry.coordinates[1],
+        lon: f.geometry.coordinates[0],
+        state: f.properties.state,
+        country: f.properties.country,
+      }));
       setResults(data);
     } catch {
       setError('No se pudo buscar. Comprueba tu conexión.');
@@ -96,8 +90,8 @@ export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
   const handleContinue = () => {
     if (!selected) return;
     setBirthData({
-      latitude: parseFloat(selected.lat),
-      longitude: parseFloat(selected.lon),
+      latitude: selected.lat,
+      longitude: selected.lon,
       locationName: formatPlace(selected),
     });
     setStep('birth_time');
