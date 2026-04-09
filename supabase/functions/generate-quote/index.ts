@@ -243,7 +243,7 @@ serve(async (req: Request) => {
     );
   }
 
-  const supabaseUrl    = Deno.env.get('SUPABASE_URL');
+  const supabaseUrl     = Deno.env.get('SUPABASE_URL');
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -253,16 +253,25 @@ serve(async (req: Request) => {
     );
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const jwt      = authHeader.replace('Bearer ', '');
+  // Verificar que la petición proviene de un cliente autorizado.
+  // Se acepta tanto un JWT de usuario (sesión anónima o real) como el anon key,
+  // porque el cliente móvil puede no tener sesión activa aún.
+  const apiKeyHeader = req.headers.get('apikey');
+  const bearer       = authHeader.replace('Bearer ', '');
+  const isValidApiKey = apiKeyHeader === supabaseAnonKey || bearer === supabaseAnonKey;
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-
-  if (authError || !user) {
-    return new Response(
-      JSON.stringify({ error: 'Token inválido o expirado' }),
-      { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
-    );
+  if (!isValidApiKey) {
+    // Intentar validar como JWT de usuario (sesión anónima/real)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ code: 401, message: 'No autorizado' }),
+        { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
+      );
+    }
   }
 
   // ── 2. Verificar API key de Anthropic ─────────────────────────────────────

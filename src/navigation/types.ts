@@ -19,7 +19,6 @@ export type OnboardingStackParamList = {
 export type TabParamList = {
   Today: undefined;
   Journal: undefined;
-  Favorites: undefined;
   Settings: undefined;
 };
 

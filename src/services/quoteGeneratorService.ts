@@ -124,6 +124,20 @@ async function callEdgeFunction(
     todayDate:           today,
   };
 
+  // ── Garantizar sesión JWT válida ─────────────────────────────────────────
+  // Si no hay sesión activa, crearla antes de invocar la Edge Function.
+  // Así el cliente envía un Bearer JWT real, no la clave anon (sb_publishable_...)
+  // que el gateway de Supabase rechazaría con 401 "Invalid JWT".
+  {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { error: signInError } = await supabase.auth.signInAnonymously();
+      if (signInError) {
+        logger.warn('[QuoteGenerator] No se pudo crear sesión anónima:', signInError.message);
+      }
+    }
+  }
+
   // Timeout de 20 s — si la Edge Function no responde, cae al fallback
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error('Edge Function timeout')), 20_000),
@@ -135,7 +149,24 @@ async function callEdgeFunction(
 
   const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
 
-  if (error) throw error;
+  if (error) {
+    // Intentar leer el body real de la respuesta HTTP
+    try {
+      const ctx = (error as any)?.context;
+      if (ctx && typeof ctx.text === 'function') {
+        const body = await ctx.text();
+        logger.warn('[QuoteGenerator] Edge Function response body:', body);
+      } else if (ctx && typeof ctx.json === 'function') {
+        const body = await ctx.json();
+        logger.warn('[QuoteGenerator] Edge Function response body:', JSON.stringify(body));
+      } else {
+        logger.warn('[QuoteGenerator] Edge Function error (no body):', (error as any)?.message);
+      }
+    } catch (e) {
+      logger.warn('[QuoteGenerator] Edge Function error:', (error as any)?.message);
+    }
+    throw error;
+  }
   if (!data?.text) throw new Error('Respuesta vacía de la Edge Function');
 
   // Validar que todos los campos requeridos están presentes y son strings

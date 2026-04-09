@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, DEFAULT_PALETTE } from '@/constants/theme';
 
@@ -15,10 +14,9 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { name: 'Today',     label: 'Hoy',         icon: () => '◉' },
-  { name: 'Journal',   label: 'Diario',      icon: () => '◈' },
-  { name: 'Favorites', label: 'Favoritos',   icon: (_a, badge) => (badge ? '♥' : '♡') },
-  { name: 'Settings',  label: 'Ajustes',     icon: () => '⚙' },
+  { name: 'Today',    label: 'Hoy',    icon: () => '◉' },
+  { name: 'Journal',  label: 'Diario', icon: () => '◈' },
+  { name: 'Settings', label: 'Tú',     icon: () => '◎' },
 ];
 
 interface TabItemProps {
@@ -68,9 +66,7 @@ const TabItem: React.FC<TabItemProps> = ({ config, active, onPress, hasBadge, in
 
 export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
-  const { history } = useQuoteStore();
   const { colors } = useTheme();
-  const hasSaved = history.some((q) => q.isFavorite);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -84,7 +80,6 @@ export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
               key={tab.name}
               config={tab}
               active={active}
-              hasBadge={tab.name === 'Favorites' ? hasSaved : false}
               inactiveColor={colors.textMuted}
               onPress={() => {
                 const event = navigation.emit({
