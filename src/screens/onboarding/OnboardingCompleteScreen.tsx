@@ -61,11 +61,23 @@ export const OnboardingCompleteScreen: React.FC = () => {
   });
 
   const setOnboardingCompleted = useUserStore((s) => s.setOnboardingCompleted);
+  const setProfileSynced       = useUserStore((s) => s.setProfileSynced);
 
   const handleBegin = async () => {
-    // Guardar perfil anónimo aunque el usuario no haya dado email
-    try { await saveAnonymous(); } catch { /* continuar igualmente */ }
+    // Intenta guardar el perfil anónimo en Supabase.
+    // saveAnonymous() ya habrá guardado el backup local antes de intentar Supabase,
+    // así que si lanza, el backup queda en AsyncStorage para reintento posterior.
+    let synced = false;
+    try {
+      await saveAnonymous();
+      synced = true;
+      // Supabase OK → el backup fue eliminado dentro de saveAnonymous()
+    } catch {
+      // Sin red o Supabase caído: el backup local ya existe en AsyncStorage.
+      // useAppReady reintentará el sync en el próximo arranque.
+    }
     setOnboardingCompleted(true);
+    setProfileSynced(synced);
     rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
   };
 

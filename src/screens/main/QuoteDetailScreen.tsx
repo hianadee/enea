@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Share,
   Animated,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing } from '@/design-system/tokens';
 import { Button, Card, Input } from '@/design-system/components';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +16,10 @@ import { RouteProp } from '@react-navigation/native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { EmailGateSheet } from '@/design-system/components/EmailGateSheet';
+
+const EMAIL_GATE_KEY = 'enea-email-gate-shown';
 import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
@@ -31,6 +36,8 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { tonePreferences } = useOnboardingStore();
   const { history, toggleSave } = useQuoteStore();
   const { colors } = useTheme();
+  const { isAnonymous } = useAuthContext();
+  const [gateVisible, setGateVisible] = useState(false);
 
   const quote = history.find((q) => q.id === quoteId);
 
@@ -52,14 +59,28 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     ]).start();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(async () => {
     if (!quote) return;
+    const wasFavorite = quote.isFavorite;
     toggleSave(quote.id);
     Animated.sequence([
       Animated.spring(heartAnim, { toValue: 1.5, tension: 200, friction: 4, useNativeDriver: true }),
       Animated.spring(heartAnim, { toValue: 1, tension: 200, friction: 8, useNativeDriver: true }),
     ]).start();
-  };
+
+    // Mostrar gate la primera vez que un usuario anónimo guarda una frase
+    if (isAnonymous && !wasFavorite) {
+      try {
+        const shown = await AsyncStorage.getItem(EMAIL_GATE_KEY);
+        if (!shown) setGateVisible(true);
+      } catch {}
+    }
+  }, [quote, isAnonymous, toggleSave]);
+
+  const handleGateDismiss = useCallback(async () => {
+    setGateVisible(false);
+    try { await AsyncStorage.setItem(EMAIL_GATE_KEY, 'true'); } catch {}
+  }, []);
 
   const handleShare = async () => {
     if (!quote) return;
@@ -157,6 +178,9 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           </Animated.View>
         )}
       </ScrollView>
+
+      {/* Email gate */}
+      <EmailGateSheet visible={gateVisible} onDismiss={handleGateDismiss} />
 
       {/* Action bar */}
       <Animated.View style={[styles.actionBar, { opacity: fadeAnim, backgroundColor: colors.background + 'F0', borderTopColor: colors.border }]}>

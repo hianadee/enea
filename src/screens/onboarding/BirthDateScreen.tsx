@@ -29,11 +29,11 @@ const MIN_YEAR = 1920;
 const MAX_YEAR = 2010;
 const DEFAULT_DATE = new Date('1985-06-15');
 
-// iOS native spinner constants
-const IOS_PICKER_HEIGHT = 216;
+// iOS native spinner constants — 7 rows × 44pt = 308pt
+const IOS_PICKER_HEIGHT = 308;
 const IOS_ROW_HEIGHT    = 44;
-const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;  // 86
-const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;              // 130
+const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;  // 132
+const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;              // 176
 
 // Android scroll picker data
 const DAYS   = Array.from({ length: 31 }, (_, i) => String(i + 1));

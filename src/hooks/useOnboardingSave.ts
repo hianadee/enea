@@ -8,6 +8,10 @@
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { buildProfilePayload, upsertProfile } from '@/services/profileService';
+import {
+  saveProfileBackup,
+  clearProfileBackup,
+} from '@/services/profileBackupService';
 import { linkEmail, ensureSession } from '@/services/authService';
 
 export function useOnboardingSave() {
@@ -46,7 +50,12 @@ export function useOnboardingSave() {
 
   /**
    * Guarda el perfil sin vincular email (usuario pulsa "Ahora no").
-   * Los datos quedan en la sesión anónima.
+   *
+   * Estrategia de resiliencia:
+   *   1. Persiste el payload en AsyncStorage PRIMERO (backup local)
+   *   2. Intenta upsert en Supabase — lanza si falla
+   *   3. El caller (handleBegin) captura el error y marca profileSynced:false
+   *   4. useAppReady reintentará desde el backup en el siguiente arranque
    */
   const saveAnonymous = async (): Promise<void> => {
     await ensureSession();
@@ -65,7 +74,14 @@ export function useOnboardingSave() {
       isDark:               settings.isDark,
     });
 
+    // Backup local PRIMERO — sobrevive a fallos de red
+    await saveProfileBackup(payload);
+
+    // Supabase — lanza si falla (el caller trackea el resultado)
     await upsertProfile(payload);
+
+    // Éxito: el backup ya no es necesario
+    await clearProfileBackup();
   };
 
   return { saveAndProceed, saveAnonymous };

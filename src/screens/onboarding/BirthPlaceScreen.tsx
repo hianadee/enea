@@ -55,7 +55,7 @@ export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     setError('');
     try {
-      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=6&lang=es&layer=city&layer=locality`;
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=6&layer=city&layer=locality`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Network error');
       const json = await res.json();

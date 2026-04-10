@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,22 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
+import { EmailGateSheet } from '@/design-system/components/EmailGateSheet';
 import { calculateUniversalDay, getDailyNumerologyPhrase } from '@/utils/numerologyUtils';
 import { getSunSign, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { generateDailyQuote } from '@/services/quoteGeneratorService';
+
+const EMAIL_GATE_KEY = 'enea-email-gate-shown';
 
 // ─── Dimensiones de la tarjeta de compartir (ratio 4:5) ──────────────────────
 const CARD_W = Dimensions.get('window').width;
@@ -189,7 +194,9 @@ export const DailyQuoteScreen: React.FC = () => {
     useOnboardingStore();
   const { todayQuote, setTodayQuote, toggleSave } = useQuoteStore();
   const { colors, isDark } = useTheme();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { isAnonymous } = useAuthContext();
+  const [isGenerating,    setIsGenerating]    = useState(false);
+  const [gateVisible,     setGateVisible]     = useState(false);
 
   const palette = natalChart?.dominantPlanet
     ? PLANET_PALETTES[natalChart.dominantPlanet]
@@ -236,14 +243,28 @@ export const DailyQuoteScreen: React.FC = () => {
       .finally(() => { setIsGenerating(false); animate(); });
   }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(async () => {
     if (!todayQuote) return;
+    const wasFavorite = todayQuote.isFavorite;
     toggleSave(todayQuote.id);
     Animated.sequence([
       Animated.spring(heartAnim, { toValue: 1.35, tension: 200, friction: 4,  useNativeDriver: true }),
       Animated.spring(heartAnim, { toValue: 1,    tension: 200, friction: 8,  useNativeDriver: true }),
     ]).start();
-  };
+
+    // Mostrar gate la primera vez que un usuario anónimo guarda una frase
+    if (isAnonymous && !wasFavorite) {
+      try {
+        const shown = await AsyncStorage.getItem(EMAIL_GATE_KEY);
+        if (!shown) setGateVisible(true);
+      } catch {}
+    }
+  }, [todayQuote, isAnonymous, toggleSave]);
+
+  const handleGateDismiss = useCallback(async () => {
+    setGateVisible(false);
+    try { await AsyncStorage.setItem(EMAIL_GATE_KEY, 'true'); } catch {}
+  }, []);
 
   const [isSharing, setIsSharing] = useState(false);
 
@@ -379,6 +400,9 @@ export const DailyQuoteScreen: React.FC = () => {
           sunSignEs={sunSignEs}
         />
       </View>
+
+      {/* ── EMAIL GATE ───────────────────────────────────────────────────── */}
+      <EmailGateSheet visible={gateVisible} onDismiss={handleGateDismiss} />
 
       {/* ── ACTION BAR ───────────────────────────────────────────────────── */}
       <Animated.View
