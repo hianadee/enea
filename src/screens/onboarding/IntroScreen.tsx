@@ -40,7 +40,7 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
         {/* Upper half — logo hero */}
         <View style={styles.logoArea}>
           <Image
-            source={require('../../../assets/enea_logo.png')}
+            source={require('../../../assets/logo/enea_logo.png')}
             style={styles.logo}
             resizeMode="contain"
             accessibilityLabel="Logo de ENEA"
