@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -33,8 +33,14 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         nativeControls={false}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
       />
-      <View style={styles.overlay} />
+      <View
+        style={styles.overlay}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
+      />
 
       <SafeAreaView style={styles.safe}>
         {/* Upper half — logo hero */}
@@ -43,7 +49,7 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
             source={require('../../../assets/logo/enea_logo.png')}
             style={styles.logo}
             resizeMode="contain"
-            accessibilityLabel="Logo de ENEA"
+            accessibilityLabel="Logo de Enea"
             accessibilityRole="image"
           />
         </View>
@@ -92,8 +98,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 280,
-    height: 280,
+    width: 200,
+    height: 60,
   },
   textArea: {
     paddingHorizontal: 28,

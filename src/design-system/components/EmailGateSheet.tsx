@@ -78,32 +78,47 @@ export const EmailGateSheet: React.FC<Props> = ({ visible, onDismiss }) => {
           style={styles.backdrop}
           activeOpacity={1}
           onPress={handleDismiss}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar"
         />
 
         <View style={styles.sheet}>
-          {/* Indicador de arrastre */}
-          <View style={styles.handle} />
+          {/* Indicador de arrastre — decorativo */}
+          <View
+            style={styles.handle}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          />
 
           {sent ? (
             /* ── Estado: email enviado ── */
             <View style={styles.sentBox}>
-              <Text style={styles.sentIcon}>✉️</Text>
+              <Text
+                style={styles.sentIcon}
+                accessibilityElementsHidden={true}
+                importantForAccessibility="no-hide-descendants"
+              >✉️</Text>
               <Text style={styles.sentTitle}>Revisa tu email</Text>
               <Text style={styles.sentSubtitle}>
                 Te hemos enviado un enlace a{'\n'}
                 {email.trim().toLowerCase()}.{'\n\n'}
-                Púlsalo para vincular tu cuenta y proteger tus favoritos.
+                Púlsalo para confirmar tu email y guardar tus favoritos.
               </Text>
-              <TouchableOpacity style={styles.doneBtn} onPress={handleDismiss}>
-                <Text style={styles.doneBtnText}>Listo</Text>
+              <TouchableOpacity
+                style={styles.doneBtn}
+                onPress={handleDismiss}
+                accessibilityRole="button"
+                accessibilityLabel="Listo, cerrar"
+              >
+                <Text style={styles.doneBtnText} accessibilityElementsHidden={true}>Listo</Text>
               </TouchableOpacity>
             </View>
           ) : (
             /* ── Estado: formulario ── */
             <>
-              <Text style={styles.title}>Protege tus favoritos</Text>
+              <Text style={styles.title}>Guarda tus favoritos</Text>
               <Text style={styles.subtitle}>
-                Tus frases guardadas están vinculadas a esta sesión.{'\n'}
+                Tus frases están vinculadas a esta sesión.{'\n'}
                 Sin email, las perderías si reinstalaras la app.
               </Text>
 
@@ -119,29 +134,38 @@ export const EmailGateSheet: React.FC<Props> = ({ visible, onDismiss }) => {
                   autoCorrect={false}
                   returnKeyType="send"
                   onSubmitEditing={handleSend}
-                  accessibilityLabel="Email para proteger tus favoritos"
+                  accessibilityLabel="Email para guardar tus favoritos"
                 />
                 <TouchableOpacity
                   style={[styles.sendBtn, (!email.trim() || sending) && styles.sendBtnDisabled]}
                   onPress={handleSend}
                   disabled={!email.trim() || sending}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Guardar email"
+                  accessibilityState={{ disabled: !email.trim() || sending }}
                 >
                   {sending
-                    ? <ActivityIndicator color="#0A0A0F" size="small" />
-                    : <Text style={styles.sendBtnText}>Guardar</Text>
+                    ? <ActivityIndicator color="#0A0A0F" size="small" accessibilityLabel="Enviando" />
+                    : <Text style={styles.sendBtnText} accessibilityElementsHidden={true}>Guardar</Text>
                   }
                 </TouchableOpacity>
               </View>
 
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? (
+                <View accessibilityLiveRegion="assertive">
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
 
               <TouchableOpacity
                 style={styles.skipBtn}
                 onPress={handleDismiss}
                 activeOpacity={0.6}
+                accessibilityRole="button"
+                accessibilityLabel="Ahora no, cerrar"
               >
-                <Text style={styles.skipText}>Ahora no</Text>
+                <Text style={styles.skipText} accessibilityElementsHidden={true}>Ahora no</Text>
               </TouchableOpacity>
             </>
           )}
@@ -223,7 +247,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  skipText: { color: '#555565', fontSize: 13 },
+  skipText: { color: '#A8A8B8', fontSize: 13 },
 
   // Sent state
   sentBox: {
@@ -231,7 +255,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
   },
-  sentIcon:     { fontSize: 36 },
+  sentIcon:     { fontSize: 36, textAlignVertical: 'center' },
   sentTitle:    { fontSize: 18, color: colors.fg.primary, fontWeight: '500' },
   sentSubtitle: {
     fontSize: 14,

@@ -6,17 +6,15 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
+import { colors } from '@/design-system/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
-import { WheelPicker, PICKER_HEIGHT as WHEEL_HEIGHT } from '@/design-system/components/WheelPicker';
 
-// Native date picker — iOS only
+// Native date picker — iOS & Android (M3 calendar dialog on Android)
 let DateTimePicker: React.ComponentType<any> | null = null;
-if (Platform.OS === 'ios') {
+if (Platform.OS !== 'web') {
   DateTimePicker = require('@react-native-community/datetimepicker').default;
 }
 
@@ -24,7 +22,7 @@ type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'BirthDate'>;
 };
 
-const TOTAL = 10;
+const TOTAL    = 10;
 const MIN_YEAR = 1920;
 const MAX_YEAR = 2010;
 const DEFAULT_DATE = new Date('1985-06-15');
@@ -32,16 +30,13 @@ const DEFAULT_DATE = new Date('1985-06-15');
 // iOS native spinner constants — 7 rows × 44pt = 308pt
 const IOS_PICKER_HEIGHT = 308;
 const IOS_ROW_HEIGHT    = 44;
-const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;  // 132
-const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;              // 176
+const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;
+const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;
 
-// Android scroll picker data
-const DAYS   = Array.from({ length: 31 }, (_, i) => String(i + 1));
-const MONTHS = [
+const MONTHS_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
-const YEARS  = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => String(MIN_YEAR + i));
 
 function toISODate(d: Date): string {
   const y   = d.getFullYear();
@@ -50,21 +45,22 @@ function toISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function formatDisplay(d: Date): string {
+  return `${d.getDate()} ${MONTHS_ES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
 
-  // iOS state
-  const [date, setDate] = useState<Date>(DEFAULT_DATE);
-
-  // Android state (0-based indices into DAYS / MONTHS / YEARS)
-  const [dayIdx,   setDayIdx]   = useState(DEFAULT_DATE.getDate() - 1);
-  const [monthIdx, setMonthIdx] = useState(DEFAULT_DATE.getMonth());
-  const [yearIdx,  setYearIdx]  = useState(DEFAULT_DATE.getFullYear() - MIN_YEAR);
+  const [date,       setDate]       = useState<Date>(DEFAULT_DATE);
+  const [showPicker, setShowPicker] = useState(false);
 
   // Web state
   const [webText, setWebText] = useState(toISODate(DEFAULT_DATE));
 
-  const handleIosChange = (_event: unknown, selected?: Date) => {
+  const handleChange = (_event: unknown, selected?: Date) => {
+    // On Android the dialog closes itself; on iOS it stays open
+    if (Platform.OS === 'android') setShowPicker(false);
     if (selected) setDate(selected);
   };
 
@@ -75,17 +71,11 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const buildDateString = (): string => {
-    if (Platform.OS === 'android') {
-      const d = String(dayIdx + 1).padStart(2, '0');
-      const m = String(monthIdx + 1).padStart(2, '0');
-      const y = String(MIN_YEAR + yearIdx);
-      return `${y}-${m}-${d}`;
-    }
     if (Platform.OS === 'web') {
       const parsed = new Date(webText);
       return isNaN(parsed.getTime()) ? toISODate(DEFAULT_DATE) : webText;
     }
-    return toISODate(date); // iOS
+    return toISODate(date);
   };
 
   const handleContinue = () => {
@@ -112,16 +102,21 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.heading}>¿Cuándo naciste?</Text>
-        <Text style={styles.helper}>Tu fecha de nacimiento es el primer dato de tu mapa personal.</Text>
+        {/* Heading — flujo normal, queda en la parte superior */}
+        <View style={styles.headingGroup}>
+          <Text style={styles.heading}>¿Cuándo naciste?</Text>
+          <Text style={styles.helper}>
+            Tu fecha de nacimiento es el primer dato de tu mapa personal.
+          </Text>
+        </View>
 
-        {/* Picker — vertically centered between heading and footer */}
+        {/* Picker — absoluto sobre toda el área de contenido para centrar en pantalla */}
         <View style={styles.pickerWrapper}>
 
           {Platform.OS === 'web' ? (
             /* ── Web: native HTML date input ── */
             <View style={styles.webInputContainer}>
-              {/* @ts-ignore — HTML <input> used only in web context */}
+              {/* @ts-ignore */}
               <input
                 type="date"
                 value={webText}
@@ -147,37 +142,33 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
           ) : Platform.OS === 'android' ? (
-            /* ── Android: three WheelPicker columns ── */
-            <View
-              style={styles.androidRow}
-              accessibilityLabel="Selector de fecha de nacimiento"
-            >
-              <View style={styles.colNarrow}>
-                <WheelPicker
-                  items={DAYS}
-                  defaultIndex={dayIdx}
-                  onChange={setDayIdx}
+            /* ── Android: M3 calendar dialog (tap to open) ── */
+            <>
+              <TouchableOpacity
+                style={styles.dateDisplay}
+                onPress={() => setShowPicker(true)}
+                activeOpacity={0.75}
+                accessibilityLabel={`Fecha seleccionada: ${formatDisplay(date)}. Toca para cambiar`}
+                accessibilityRole="button"
+              >
+                <Text style={styles.dateText}>{formatDisplay(date)}</Text>
+                <Text style={styles.dateTapHint}>Toca para cambiar</Text>
+              </TouchableOpacity>
+
+              {showPicker && DateTimePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date(`${MIN_YEAR}-01-01`)}
+                  maximumDate={new Date(`${MAX_YEAR}-12-31`)}
+                  onChange={handleChange}
                 />
-              </View>
-              <View style={styles.colWide}>
-                <WheelPicker
-                  items={MONTHS}
-                  defaultIndex={monthIdx}
-                  onChange={setMonthIdx}
-                  isPrimary
-                />
-              </View>
-              <View style={styles.colMid}>
-                <WheelPicker
-                  items={YEARS}
-                  defaultIndex={yearIdx}
-                  onChange={setYearIdx}
-                />
-              </View>
-            </View>
+              )}
+            </>
 
           ) : DateTimePicker ? (
-            /* ── iOS: native spinner ── */
+            /* ── iOS: native spinner (inline) ── */
             <View style={styles.iosPicker}>
               <DateTimePicker
                 value={date}
@@ -185,7 +176,7 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
                 display="spinner"
                 minimumDate={new Date(`${MIN_YEAR}-01-01`)}
                 maximumDate={new Date(`${MAX_YEAR}-12-31`)}
-                onChange={handleIosChange}
+                onChange={handleChange}
                 themeVariant="dark"
                 textColor="#FFFFFF"
                 style={styles.iosPickerInner}
@@ -230,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backBtn:      { width: 40, height: 44, justifyContent: 'center' },
+  backBtn:      { width: 44, height: 44, justifyContent: 'center' },
   backArrow:    { color: colors.fg.primary, fontSize: 22 },
   headerSpacer: { width: 40 },
   stepCounter: {
@@ -242,37 +233,52 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  headingGroup: {
     paddingTop: 32,
+    paddingHorizontal: 28,
+    zIndex: 1,
   },
   heading: {
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     fontSize: 32,
     color: colors.fg.primary,
     lineHeight: 42,
-    paddingHorizontal: 28,
     marginBottom: 8,
   },
   helper: {
     fontSize: 14,
     color: '#A8A8B8',
-    paddingHorizontal: 28,
     fontWeight: '500',
   },
-  // Centres the picker vertically in the space between heading and footer
   pickerWrapper: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // ── Android columns ──
-  androidRow: {
-    flexDirection: 'row',
-    width: '100%',
-    paddingHorizontal: 8,
+  // ── Android: fecha como texto + tap ──
+  dateDisplay: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
   },
-  colNarrow: { flex: 1 },   // day  (1–31)
-  colWide:   { flex: 2 },   // month (Septiembre is the longest)
-  colMid:    { flex: 1.4 }, // year  (4-digit)
+  dateText: {
+    fontFamily: 'serif',
+    fontSize: 34,
+    color: colors.fg.primary,
+    textAlign: 'center',
+    lineHeight: 44,
+  },
+  dateTapHint: {
+    fontSize: 13,
+    color: '#555565',
+    letterSpacing: 0.5,
+  },
   // ── iOS native spinner ──
   iosPicker: {
     position: 'relative',

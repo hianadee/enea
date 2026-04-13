@@ -6,17 +6,15 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
+import { colors } from '@/design-system/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
-import { WheelPicker } from '@/design-system/components/WheelPicker';
 
-// Native time picker — iOS only
+// Native time picker — iOS & Android (M3 clock dial on Android)
 let DateTimePicker: React.ComponentType<any> | null = null;
-if (Platform.OS === 'ios') {
+if (Platform.OS !== 'web') {
   DateTimePicker = require('@react-native-community/datetimepicker').default;
 }
 
@@ -29,21 +27,14 @@ const TOTAL = 10;
 // iOS native spinner constants — 7 rows × 44pt = 308pt
 const IOS_PICKER_HEIGHT = 308;
 const IOS_ROW_HEIGHT    = 44;
-const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;  // 132
-const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;              // 176
+const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;
+const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;
 
-// Default: noon (12:00)
-const DEFAULT_HOUR   = 12;
-const DEFAULT_MINUTE = 0;
-const DEFAULT_TIME   = (() => {
+const DEFAULT_TIME = (() => {
   const d = new Date();
-  d.setHours(DEFAULT_HOUR, DEFAULT_MINUTE, 0, 0);
+  d.setHours(12, 0, 0, 0);
   return d;
 })();
-
-// Android scroll picker data
-const HOURS   = Array.from({ length: 24 }, (_, i) => String(i));
-const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 function toTimeStr(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -52,17 +43,14 @@ function toTimeStr(d: Date): string {
 export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
 
-  // iOS state
-  const [time, setTime] = useState<Date>(DEFAULT_TIME);
-
-  // Android state (0-based indices into HOURS / MINUTES)
-  const [hourIdx, setHourIdx] = useState(DEFAULT_HOUR);
-  const [minIdx,  setMinIdx]  = useState(DEFAULT_MINUTE);
+  const [time,       setTime]       = useState<Date>(DEFAULT_TIME);
+  const [showPicker, setShowPicker] = useState(false);
 
   // Web state
   const [webText, setWebText] = useState('12:00');
 
-  const handleIosChange = (_event: unknown, selected?: Date) => {
+  const handleChange = (_event: unknown, selected?: Date) => {
+    if (Platform.OS === 'android') setShowPicker(false);
     if (selected) setTime(selected);
   };
 
@@ -79,9 +67,6 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const buildTimeString = (): string => {
-    if (Platform.OS === 'android') {
-      return `${String(hourIdx).padStart(2, '0')}:${String(minIdx).padStart(2, '0')}`;
-    }
     if (Platform.OS === 'web') {
       const [hStr, mStr] = webText.split(':');
       const h = parseInt(hStr ?? '12', 10);
@@ -91,7 +76,7 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
       }
       return '12:00';
     }
-    return toTimeStr(time); // iOS
+    return toTimeStr(time);
   };
 
   const navigate = (timeStr: string) => {
@@ -121,18 +106,19 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.heading}>¿Sabes tu hora{'\n'}de nacimiento?</Text>
-        <Text style={styles.helper}>
-          Con ella puedo calcular tu Ascendente. Si no la sabes exacta, una aproximación funciona.
-        </Text>
+        <View style={styles.headingGroup}>
+          <Text style={styles.heading}>¿Sabes tu hora{'\n'}de nacimiento?</Text>
+          <Text style={styles.helper}>
+            Con ella puedo calcular tu Ascendente. Si no la sabes exacta, una aproximación funciona.
+          </Text>
+        </View>
 
-        {/* Picker — vertically centered between heading and footer */}
         <View style={styles.pickerWrapper}>
 
           {Platform.OS === 'web' ? (
             /* ── Web: native HTML time input ── */
             <View style={styles.webInputContainer}>
-              {/* @ts-ignore — HTML <input> used only in web context */}
+              {/* @ts-ignore */}
               <input
                 type="time"
                 value={webText}
@@ -157,39 +143,39 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
           ) : Platform.OS === 'android' ? (
-            /* ── Android: hour + minute WheelPicker columns ── */
-            <View
-              style={styles.androidRow}
-              accessibilityLabel="Selector de hora de nacimiento"
-            >
-              <View style={styles.timeCol}>
-                <WheelPicker
-                  items={HOURS}
-                  defaultIndex={hourIdx}
-                  onChange={setHourIdx}
-                  isPrimary
+            /* ── Android: M3 clock dial (tap to open) ── */
+            <>
+              <TouchableOpacity
+                style={styles.timeDisplay}
+                onPress={() => setShowPicker(true)}
+                activeOpacity={0.75}
+                accessibilityLabel={`Hora seleccionada: ${toTimeStr(time)}. Toca para cambiar`}
+                accessibilityRole="button"
+              >
+                <Text style={styles.timeText}>{toTimeStr(time)}</Text>
+                <Text style={styles.timeTapHint}>Toca para cambiar</Text>
+              </TouchableOpacity>
+
+              {showPicker && DateTimePicker && (
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  display="default"
+                  is24Hour={true}
+                  onChange={handleChange}
                 />
-              </View>
-              <Text style={styles.timeSeparator}>:</Text>
-              <View style={styles.timeCol}>
-                <WheelPicker
-                  items={MINUTES}
-                  defaultIndex={minIdx}
-                  onChange={setMinIdx}
-                  isPrimary
-                />
-              </View>
-            </View>
+              )}
+            </>
 
           ) : DateTimePicker ? (
-            /* ── iOS: native 24h spinner ── */
+            /* ── iOS: native 24h spinner (inline) ── */
             <View style={styles.iosPicker}>
               <DateTimePicker
                 value={time}
                 mode="time"
                 display="spinner"
                 is24Hour={true}
-                onChange={handleIosChange}
+                onChange={handleChange}
                 themeVariant="dark"
                 textColor="#FFFFFF"
                 style={styles.iosPickerInner}
@@ -226,7 +212,9 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
           accessibilityRole="button"
         >
           <Text style={styles.skipBtnText}>No lo sé</Text>
-          <Text style={styles.skipBtnNote}>Usaré el mediodía como referencia. Puedes actualizarlo después.</Text>
+          <Text style={styles.skipBtnNote}>
+            Usaré el mediodía como referencia. Puedes actualizarlo después.
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -256,47 +244,52 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  headingGroup: {
     paddingTop: 32,
+    paddingHorizontal: 28,
+    zIndex: 1,
   },
   heading: {
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     fontSize: 32,
     color: colors.fg.primary,
     lineHeight: 42,
-    paddingHorizontal: 28,
     marginBottom: 8,
   },
   helper: {
     fontSize: 14,
     color: '#A8A8B8',
-    paddingHorizontal: 28,
     fontWeight: '500',
     lineHeight: 21,
   },
-  // Centres the picker vertically in the space between heading and footer
   pickerWrapper: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // ── Android layout ──
-  androidRow: {
-    flexDirection: 'row',
+  // ── Android: hora como texto + tap ──
+  timeDisplay: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 8,
+    gap: 10,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
   },
-  timeCol: {
-    width: 100,
-  },
-  timeSeparator: {
+  timeText: {
+    fontFamily: 'serif',
+    fontSize: 56,
     color: colors.fg.primary,
-    fontSize: 40,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    lineHeight: 48,
-    marginBottom: 4,
-    opacity: 0.6,
+    letterSpacing: 4,
+    lineHeight: 68,
+  },
+  timeTapHint: {
+    fontSize: 13,
+    color: '#555565',
+    letterSpacing: 0.5,
   },
   // ── iOS native spinner ──
   iosPicker: {

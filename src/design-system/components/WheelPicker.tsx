@@ -8,11 +8,18 @@
  *                               → initialScrollIndex = vi   (topmost row)
  *   Initial centre target: vi = CENTER + defaultIndex
  *     where CENTER = floor(REPEAT/2) * N
+ *
+ * Performance notes:
+ *   - scrollY is an Animated.Value updated via onScroll with useNativeDriver:true
+ *     so item transforms (opacity/scale) run on the native thread during scrolling.
+ *   - renderItem only depends on stable refs (scrollY, N, isPrimary) so there
+ *     are no JS-thread re-renders while the user is swiping.
  */
-import React, { useRef, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
+  Animated,
   FlatList,
   StyleSheet,
   Platform,
@@ -59,8 +66,10 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
     { id: 'e2', value: '', vi: REPEAT * N + 1, spacer: true },
   ], [items, N]);
 
-  // selVi drives the opacity/size of every visible row
-  const [selVi, setSelVi] = useState(CENTER + defaultIndex);
+  // Animated.Value updated on the native thread during scroll —
+  // no JS re-renders while the user is swiping.
+  const scrollY = useRef(new Animated.Value((CENTER + defaultIndex) * ITEM_HEIGHT)).current;
+
   const lastIdx = useRef(defaultIndex);
   const listRef = useRef<FlatList<Row>>(null);
 
@@ -72,15 +81,11 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
   }), []);
 
   // initialScrollIndex is the data-index of the TOPMOST visible row.
-  // With our 2-spacer prefix, topmost = vi − 0 in data-index terms equals vi itself
-  // (because spacers at 0,1 push real items to start at data-index 2;
-  //  initialScrollIndex = vi makes data[vi] topmost → data[vi+2] centred).
   const initialScrollIndex = CENTER + defaultIndex;
 
   const applySnap = useCallback((y: number, forceScroll: boolean) => {
     const vi  = Math.max(0, Math.min(REPEAT * N - 1, Math.round(y / ITEM_HEIGHT)));
     const idx = ((vi % N) + N) % N;
-    setSelVi(vi);
     if (forceScroll) {
       listRef.current?.scrollToOffset({ offset: vi * ITEM_HEIGHT, animated: true });
     }
@@ -102,25 +107,60 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
     [applySnap],
   );
 
+  // Driven by scrollY Animated.Value — stable deps, no re-renders on scroll.
   const renderItem = useCallback(({ item }: ListRenderItemInfo<Row>) => {
     if (item.spacer) return <View style={styles.spacer} />;
 
-    const dist  = Math.abs(item.vi - selVi);
-    const d     = Math.min(dist, 4);
-    const sizes   = isPrimary ? [52, 28, 18, 12, 9] : [30, 20, 14, 10, 8];
-    const opacity = [1, 0.32, 0.15, 0.07, 0.03][d];
+    const sizes = isPrimary ? [52, 28, 18, 12, 9] : [30, 20, 14, 10, 8];
+
+    // Centre of this item in scroll-offset space
+    const itemCentre = item.vi * ITEM_HEIGHT;
+
+    // Distance from scroll centre (scrollY + 2*ITEM_HEIGHT = centre row offset)
+    const dist = Animated.subtract(
+      scrollY,
+      itemCentre - ITEM_HEIGHT * 2,
+    );
+
+    // Clamp |dist| to [0, 4*ITEM_HEIGHT] and map to opacity / fontSize
+    const absDist = dist.interpolate({
+      inputRange: [-4 * ITEM_HEIGHT, 0, 4 * ITEM_HEIGHT],
+      outputRange: [4 * ITEM_HEIGHT, 0, 4 * ITEM_HEIGHT],
+      extrapolate: 'clamp',
+    });
+
+    const opacity = absDist.interpolate({
+      inputRange: [0, ITEM_HEIGHT, 2 * ITEM_HEIGHT, 3 * ITEM_HEIGHT, 4 * ITEM_HEIGHT],
+      outputRange: [1, 0.32, 0.15, 0.07, 0.03],
+      extrapolate: 'clamp',
+    });
+
+    const fontSize = absDist.interpolate({
+      inputRange: [0, ITEM_HEIGHT, 2 * ITEM_HEIGHT, 3 * ITEM_HEIGHT, 4 * ITEM_HEIGHT],
+      outputRange: [sizes[0], sizes[1], sizes[2], sizes[3], sizes[4]],
+      extrapolate: 'clamp',
+    });
 
     return (
       <View style={styles.itemView}>
-        <Text
-          style={{ fontSize: sizes[d], opacity, color: '#FFFFFF', fontFamily: SERIF }}
+        <Animated.Text
+          style={{ fontSize, opacity, color: '#FFFFFF', fontFamily: SERIF }}
           numberOfLines={1}
         >
           {item.value}
-        </Text>
+        </Animated.Text>
       </View>
     );
-  }, [selVi, isPrimary]);
+  }, [scrollY, isPrimary]);
+
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+        useNativeDriver: false, // fontSize/opacity don't support native driver
+        listener: () => {},
+      }),
+    [scrollY],
+  );
 
   return (
     <View style={styles.container}>
@@ -135,16 +175,19 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
         getItemLayout={getItemLayout}
         initialScrollIndex={initialScrollIndex}
         snapToInterval={ITEM_HEIGHT}
+        disableIntervalMomentum
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={onMomentumEnd}
         onScrollEndDrag={onDragEnd}
         style={{ height: PICKER_HEIGHT }}
         // Virtualisation tuning
-        windowSize={5}
-        maxToRenderPerBatch={12}
+        windowSize={7}
+        maxToRenderPerBatch={10}
         initialNumToRender={VISIBLE + 4}
-        removeClippedSubviews
+        removeClippedSubviews={false}
       />
     </View>
   );
