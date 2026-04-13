@@ -30,12 +30,12 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.astroenea.app",
-      "versionCode": 1,
+      "versionCode": 6,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "SCHEDULE_EXACT_ALARM"
@@ -57,7 +57,13 @@
         }
       ],
       "expo-secure-store",
-      "expo-video"
-    ]
+      "expo-video",
+      "@sentry/react-native"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b698bcc5-fc99-4cd3-92d2-f22a0eaa0338"
+      }
+    }
   }
 }
