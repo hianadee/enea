@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NatalChartWheel } from '@/design-system/components/NatalChartWheel';
 import { useOnboardingStore } from '../../store/onboardingStore';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingSave } from '../../hooks/useOnboardingSave';
 import { useUserStore } from '../../store/userStore';
 import { ENNEAGRAM_TYPES } from '../../constants/enneagram';
@@ -62,6 +63,7 @@ export const OnboardingCompleteScreen: React.FC = () => {
 
   const setOnboardingCompleted = useUserStore((s) => s.setOnboardingCompleted);
   const setProfileSynced       = useUserStore((s) => s.setProfileSynced);
+  const posthog = usePostHog();
 
   const handleBegin = async () => {
     // Intenta guardar el perfil anónimo en Supabase.
@@ -76,6 +78,7 @@ export const OnboardingCompleteScreen: React.FC = () => {
       // Sin red o Supabase caído: el backup local ya existe en AsyncStorage.
       // useAppReady reintentará el sync en el próximo arranque.
     }
+    posthog?.capture('onboarding_completed');
     setOnboardingCompleted(true);
     setProfileSynced(synced);
     rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
@@ -200,15 +203,20 @@ export const OnboardingCompleteScreen: React.FC = () => {
                     onPress={handleSaveEmail}
                     disabled={!email.trim() || sending}
                     activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="Enviar email"
+                    accessibilityState={{ disabled: !email.trim() || sending }}
                   >
                     {sending
-                      ? <ActivityIndicator color="#0A0A0F" size="small" />
-                      : <Text style={styles.sendBtnText}>Enviar</Text>
+                      ? <ActivityIndicator color="#0A0A0F" size="small" accessibilityLabel="Enviando" />
+                      : <Text style={styles.sendBtnText} accessibilityElementsHidden={true}>Enviar</Text>
                     }
                   </TouchableOpacity>
                 </View>
                 {emailError ? (
-                  <Text style={styles.errorText}>{emailError}</Text>
+                  <View accessibilityLiveRegion="assertive">
+                    <Text style={styles.errorText}>{emailError}</Text>
+                  </View>
                 ) : null}
               </>
             )}
@@ -222,12 +230,20 @@ export const OnboardingCompleteScreen: React.FC = () => {
             style={styles.ctaBtn}
             onPress={handleBegin}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Ver mi primera frase"
           >
-            <Text style={styles.ctaBtnText}>Ver mi primera frase</Text>
+            <Text style={styles.ctaBtnText} accessibilityElementsHidden={true}>Ver mi primera frase</Text>
           </TouchableOpacity>
           {!sent && (
-            <TouchableOpacity onPress={handleBegin} activeOpacity={0.6} style={styles.skipBtn}>
-              <Text style={styles.skipText}>Ahora no</Text>
+            <TouchableOpacity
+              onPress={handleBegin}
+              activeOpacity={0.6}
+              style={styles.skipBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Ahora no, continuar sin email"
+            >
+              <Text style={styles.skipText} accessibilityElementsHidden={true}>Ahora no</Text>
             </TouchableOpacity>
           )}
         </Animated.View>
@@ -242,7 +258,11 @@ const SummaryRow: React.FC<{ icon: string; label: string; children: React.ReactN
   icon, label, children,
 }) => (
   <View style={rowStyles.row}>
-    <Text style={rowStyles.icon}>{icon}</Text>
+    <Text
+      style={rowStyles.icon}
+      accessibilityElementsHidden={true}
+      importantForAccessibility="no-hide-descendants"
+    >{icon}</Text>
     <View style={rowStyles.text}>
       <Text style={rowStyles.label}>{label}</Text>
       <Text style={rowStyles.value}>{children}</Text>

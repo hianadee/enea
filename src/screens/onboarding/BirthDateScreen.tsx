@@ -9,6 +9,7 @@ import {
 import { colors } from '@/design-system/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -51,6 +52,7 @@ function formatDisplay(d: Date): string {
 
 export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
+  const posthog = usePostHog();
 
   const [date,       setDate]       = useState<Date>(DEFAULT_DATE);
   const [showPicker, setShowPicker] = useState(false);
@@ -80,6 +82,7 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleContinue = () => {
     setBirthData({ date: buildDateString() });
+    posthog?.capture('onboarding_birth_date_set');
     setStep('birth_place');
     navigation.navigate('BirthPlace');
   };

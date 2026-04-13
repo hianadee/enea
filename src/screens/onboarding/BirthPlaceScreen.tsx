@@ -14,6 +14,7 @@ import { colors, typography, spacing } from '@/design-system/tokens';
 import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -38,6 +39,7 @@ function formatPlace(result: PlaceResult): string {
 
 export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
+  const posthog = usePostHog();
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceResult[]>([]);
@@ -94,6 +96,7 @@ export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
       longitude: selected.lon,
       locationName: formatPlace(selected),
     });
+    posthog?.capture('onboarding_birth_place_set');
     setStep('birth_time');
     navigation.navigate('BirthTime');
   };

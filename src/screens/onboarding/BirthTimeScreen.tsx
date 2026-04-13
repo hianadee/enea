@@ -9,6 +9,7 @@ import {
 import { colors } from '@/design-system/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -42,6 +43,7 @@ function toTimeStr(d: Date): string {
 
 export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
+  const posthog = usePostHog();
 
   const [time,       setTime]       = useState<Date>(DEFAULT_TIME);
   const [showPicker, setShowPicker] = useState(false);
@@ -81,6 +83,7 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
 
   const navigate = (timeStr: string) => {
     setBirthData({ time: timeStr });
+    posthog?.capture('onboarding_birth_time_set');
     setStep('natal_chart');
     navigation.navigate('NatalChartPreview');
   };

@@ -12,6 +12,7 @@ import { colors, typography, spacing } from '@/design-system/tokens';
 import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -24,6 +25,7 @@ const TOTAL = 10;
 
 export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
   const { setFirstName, setStep } = useOnboardingStore();
+  const posthog = usePostHog();
   const [name, setName] = useState('');
 
   const isValid = name.trim().length > 0;
@@ -31,6 +33,7 @@ export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
   const handleContinue = () => {
     if (!isValid) return;
     setFirstName(name.trim());
+    posthog?.capture('onboarding_name_entered');
     setStep('birth_date');
     navigation.navigate('BirthDate');
   };

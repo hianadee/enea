@@ -11,6 +11,7 @@ import { colors, typography, spacing } from '@/design-system/tokens';
 import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { EnneagramType } from '@/types';
@@ -24,12 +25,14 @@ const TOTAL = 10;
 
 export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
   const { enneagramType, setEnneagramType, setStep } = useOnboardingStore();
+  const posthog = usePostHog();
 
   if (!enneagramType) return null;
 
   const typeInfo = ENNEAGRAM_TYPES[enneagramType];
 
   const handleContinue = () => {
+    posthog?.capture('onboarding_enneagram_result_seen', { type: enneagramType });
     setStep('religion');
     navigation.navigate('Religion');
   };
@@ -101,8 +104,10 @@ export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
           style={styles.retakeBtn}
           onPress={() => navigation.navigate('EnneagramTest')}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Repetir el test"
         >
-          <Text style={styles.retakeBtnText}>Repetir el test</Text>
+          <Text style={styles.retakeBtnText} accessibilityElementsHidden={true}>Repetir el test</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -120,7 +125,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backBtn: { width: 40, height: 44, justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, justifyContent: 'center' },
   backArrow: { color: colors.fg.primary, fontSize: 22 },
   headerSpacer: { width: 40 },
   stepCounter: {
@@ -193,9 +198,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   typeChip: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: '#FC8181',
     alignItems: 'center',

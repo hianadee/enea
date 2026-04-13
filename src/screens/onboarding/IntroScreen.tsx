@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { usePostHog } from 'posthog-react-native';
 import { colors } from '@/design-system/tokens';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -18,7 +19,11 @@ type Props = {
 };
 
 export const IntroScreen: React.FC<Props> = ({ navigation }) => {
-  const handleStart = () => navigation.navigate('FirstName');
+  const posthog = usePostHog();
+  const handleStart = () => {
+    posthog?.capture('onboarding_start');
+    navigation.navigate('FirstName');
+  };
 
   const player = useVideoPlayer(require('../../../assets/videos/stars.mp4'), p => {
     p.loop = true;
