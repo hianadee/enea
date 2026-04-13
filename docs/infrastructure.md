@@ -44,14 +44,14 @@
 - **Configuración**: `tracesSampleRate: 0.2`, entorno development/production automático
 - **Cuándo subir de plan**: si superas 5.000 errores/mes (señal de problema grave)
 
-### OpenAI (Generación de frases)
-- **Modelo**: GPT-4o
-- **Dashboard**: https://platform.openai.com
+### Anthropic Claude (Generación de frases)
+- **Modelo**: claude-sonnet-4-6
+- **Dashboard**: https://console.anthropic.com
 - **Configurar límites**: Settings → Billing → Usage limits
-  - Hard limit: cantidad máxima en € que nunca se superará
+  - Hard limit: cantidad máxima en $ que nunca se superará
   - Soft limit: alerta por email al alcanzar el % definido
-- **Coste estimado por frase**: ~$0.002 (GPT-4o, ~500 tokens)
-- **Coste estimado 1.000 usuarios diarios**: ~$2/día
+- **Coste estimado por frase**: ~$0.003 (Sonnet, ~500 tokens)
+- **Coste estimado 1.000 usuarios diarios**: ~$3/día
 
 ---
 
