@@ -1,12 +1,14 @@
 /**
  * DailyQuoteBanner.tsx
- * Banner in-app que invita al usuario a descubrir su frase del día.
+ * Banner in-app con aspecto de notificación nativa del sistema.
+ *
+ * Diseño: icono de la app + "Enea" como título + frase del día como subtítulo.
+ * Estilo inspirado en las notificaciones de iOS y Android (Co-Star, Headspace).
  *
  * - Se desliza desde arriba con spring animation
  * - Se auto-descarta a los AUTO_DISMISS_MS milisegundos
  * - Tapping navega a la pestaña Hoy
  * - Respeta el safe area top (notch / Dynamic Island)
- * - Posicionado de forma absoluta sobre toda la UI
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
@@ -16,16 +18,14 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const AUTO_DISMISS_MS = 6_000;
-const ACCENT          = '#FC8181';
-const BANNER_HEIGHT   = 56; // altura sin safe area
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -42,37 +42,33 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
   onPress,
   onDismiss,
 }) => {
-  const { colors } = useTheme();
-  const insets     = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
 
-  // Altura total incluyendo safe area top
-  const totalHeight = BANNER_HEIGHT + insets.top;
-
-  // Animación: parte oculta arriba, entra con spring
-  const translateY = useRef(new Animated.Value(-totalHeight)).current;
+  const translateY = useRef(new Animated.Value(-200)).current;
   const opacity    = useRef(new Animated.Value(0)).current;
   const autoDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── Enter / Exit ──────────────────────────────────────────────────────────
 
   const enter = useCallback(() => {
+    translateY.setValue(-200);
+    opacity.setValue(0);
     Animated.parallel([
       Animated.spring(translateY, {
         toValue:         0,
-        tension:         80,
-        friction:        12,
+        tension:         65,
+        friction:        11,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue:         1,
-        duration:        200,
+        duration:        250,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Auto-dismiss
     autoDismissTimer.current = setTimeout(exit, AUTO_DISMISS_MS);
-  }, [totalHeight]);
+  }, []);
 
   const exit = useCallback(() => {
     if (autoDismissTimer.current) {
@@ -81,8 +77,8 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
     }
     Animated.parallel([
       Animated.timing(translateY, {
-        toValue:         -totalHeight,
-        duration:        280,
+        toValue:         -200,
+        duration:        300,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
@@ -93,25 +89,18 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
     ]).start(({ finished }) => {
       if (finished) onDismiss();
     });
-  }, [totalHeight, onDismiss]);
+  }, [onDismiss]);
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (visible) {
-      // Resetear posición antes de entrar (por si se mostró antes)
-      translateY.setValue(-totalHeight);
-      opacity.setValue(0);
-      enter();
-    } else {
-      exit();
-    }
+    if (visible) enter();
+    else exit();
     return () => {
       if (autoDismissTimer.current) clearTimeout(autoDismissTimer.current);
     };
   }, [visible]);
 
-  // No renderizar nada si está oculto y la animación ya terminó
   if (!visible) return null;
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -121,49 +110,37 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colors.background,
-          paddingTop:       insets.top,
-          height:           totalHeight,
-          transform:        [{ translateY }],
+          paddingTop: insets.top + 8,
+          transform:  [{ translateY }],
           opacity,
         },
       ]}
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
     >
-      {/* Borde inferior acento */}
-      <View style={[styles.accentLine, { backgroundColor: ACCENT + '60' }]} />
-
       <TouchableOpacity
-        style={styles.inner}
+        style={styles.card}
         onPress={() => { exit(); onPress(); }}
-        activeOpacity={0.85}
-        accessibilityLabel="Ver tu frase de hoy"
+        activeOpacity={0.9}
+        accessibilityLabel="Enea: Tu frase diaria está lista. Toca para verla."
         accessibilityRole="button"
-        accessibilityHint="Abre la pantalla con tu frase personalizada de hoy"
       >
-        {/* Icono */}
-        <Text style={styles.icon}>✦</Text>
+        {/* App icon */}
+        <Image
+          source={require('../../assets/ios-light.png')}
+          style={styles.appIcon}
+        />
 
-        {/* Texto */}
-        <Text
-          style={[styles.text, { color: colors.text }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          ¿Estás preparado/a para saber tu frase de hoy?
-        </Text>
-
-        {/* Botón cerrar */}
-        <TouchableOpacity
-          style={styles.closeBtn}
-          onPress={() => exit()}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          accessibilityLabel="Cerrar aviso"
-          accessibilityRole="button"
-        >
-          <Text style={[styles.closeIcon, { color: colors.textMuted }]}>✕</Text>
-        </TouchableOpacity>
+        {/* Text content */}
+        <View style={styles.textColumn}>
+          <View style={styles.headerRow}>
+            <Text style={styles.appName}>Enea</Text>
+            <Text style={styles.timestamp}>ahora</Text>
+          </View>
+          <Text style={styles.body} numberOfLines={2}>
+            Tu frase diaria está lista.
+          </Text>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -173,53 +150,63 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position:  'absolute',
-    top:       0,
-    left:      0,
-    right:     0,
-    zIndex:    999,
-    elevation: 10,           // Android shadow
-    // Sombra iOS
+    position: 'absolute',
+    top:      0,
+    left:     0,
+    right:    0,
+    zIndex:   999,
+    paddingHorizontal: 12,
+    paddingBottom: 4,
+  },
+  card: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius:    16,
+    paddingVertical:   12,
+    paddingHorizontal: 14,
+    gap: 12,
+    // Shadow
     ...Platform.select({
       ios: {
         shadowColor:   '#000',
-        shadowOffset:  { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius:  6,
+        shadowOffset:  { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius:  12,
+      },
+      android: {
+        elevation: 8,
       },
     }),
   },
-  accentLine: {
-    position: 'absolute',
-    bottom:   0,
-    left:     0,
-    right:    0,
-    height:   1,
+  appIcon: {
+    width:        36,
+    height:       36,
+    borderRadius: 8,
+    flexShrink:   0,
   },
-  inner: {
-    flex:           1,
+  textColumn: {
+    flex: 1,
+    gap:  2,
+  },
+  headerRow: {
     flexDirection:  'row',
     alignItems:     'center',
-    paddingHorizontal: 16,
-    gap:            10,
+    justifyContent: 'space-between',
   },
-  icon: {
-    fontSize: 14,
-    color:    ACCENT,
-    flexShrink: 0,
-  },
-  text: {
-    flex:       1,
-    fontSize:   13,
-    fontWeight: '500',
+  appName: {
+    color:      '#000000',
+    fontSize:   14,
+    fontWeight: '600',
     letterSpacing: 0.1,
   },
-  closeBtn: {
-    flexShrink: 0,
-    padding:    4,
-  },
-  closeIcon: {
+  timestamp: {
+    color:    '#6B6B6B',
     fontSize: 12,
-    fontWeight: '600',
+  },
+  body: {
+    color:      '#1C1C1E',
+    fontSize:   14,
+    lineHeight: 19,
   },
 });

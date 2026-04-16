@@ -49,7 +49,22 @@ export const EmailGateSheet: React.FC<Props> = ({ visible, onDismiss }) => {
       await linkEmail(trimmed);
       setSent(true);
     } catch (err: any) {
-      setError(err?.message ?? 'No se pudo enviar. Inténtalo de nuevo.');
+      const raw = (err?.message ?? '').toLowerCase();
+      // Humanizar errores comunes de Supabase / red
+      if (raw.includes('rate limit') || raw.includes('too many') || raw.includes('over_email_send_rate_limit'))
+        setError('Demasiados intentos. Espera unos minutos.');
+      else if (raw.includes('already registered') || raw.includes('already in use') || raw.includes('already been registered') || raw.includes('email exists'))
+        setError('Este email ya está vinculado a otra cuenta.');
+      else if (raw.includes('invalid') || raw.includes('format') || raw.includes('email_address_invalid'))
+        setError('El formato del email no es válido.');
+      else if (raw.includes('network') || raw.includes('fetch') || raw.includes('failed to fetch') || raw.includes('networkrequest'))
+        setError('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
+      else if (raw.includes('not authenticated') || raw.includes('no session') || raw.includes('unauthenticated'))
+        setError('Sesión expirada. Cierra y vuelve a abrir la app.');
+      else if (raw.includes('email_change_new_email_taken') || raw.includes('new_email_taken'))
+        setError('Este email ya está en uso. Prueba con otro.');
+      else
+        setError(`No se pudo guardar (${raw.slice(0, 60) || 'error desconocido'}). Inténtalo de nuevo.`);
     } finally {
       setSending(false);
     }

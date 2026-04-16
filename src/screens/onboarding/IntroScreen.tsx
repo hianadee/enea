@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,12 +15,18 @@ import { usePostHog } from 'posthog-react-native';
 import { colors } from '@/design-system/tokens';
 import { OnboardingStackParamList } from '@/navigation/types';
 
+const { width: SCREEN_W } = Dimensions.get('window');
+const LOGO_W = Math.min(SCREEN_W * 0.55, 260);
+const LOGO_H = LOGO_W * 1.207; // aspect ratio real de enea_logo.png (600×724 → h/w = 1.207)
+
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Intro'>;
 };
 
 export const IntroScreen: React.FC<Props> = ({ navigation }) => {
   const posthog = usePostHog();
+  const [videoReady, setVideoReady] = useState(false);
+
   const handleStart = () => {
     posthog?.capture('onboarding_start');
     navigation.navigate('FirstName');
@@ -31,16 +38,26 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
     p.play();
   });
 
+  useEffect(() => {
+    const subscription = player.addListener('statusChange', ({ status, error }) => {
+      if (status === 'readyToPlay') setVideoReady(true);
+      if (status === 'error' || error) setVideoReady(false);
+    });
+    return () => subscription.remove();
+  }, [player]);
+
   return (
     <View style={styles.container}>
-      <VideoView
-        player={player}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        nativeControls={false}
-        accessibilityElementsHidden={true}
-        importantForAccessibility="no-hide-descendants"
-      />
+      {videoReady && (
+        <VideoView
+          player={player}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          nativeControls={false}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        />
+      )}
       <View
         style={styles.overlay}
         accessibilityElementsHidden={true}
@@ -51,7 +68,7 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
         {/* Upper half — logo hero */}
         <View style={styles.logoArea}>
           <Image
-            source={require('../../../assets/logo/enea_logo.png')}
+            source={require('../../../assets/enea_logo.png')}
             style={styles.logo}
             resizeMode="contain"
             accessibilityLabel="Logo de Enea"
@@ -103,8 +120,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 200,
-    height: 60,
+    width: LOGO_W,
+    height: LOGO_H,
   },
   textArea: {
     paddingHorizontal: 28,

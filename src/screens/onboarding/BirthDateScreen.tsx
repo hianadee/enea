@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Modal,
 } from 'react-native';
 import { colors } from '@/design-system/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,16 +55,30 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
   const { setBirthData, setStep } = useOnboardingStore();
   const posthog = usePostHog();
 
-  const [date,       setDate]       = useState<Date>(DEFAULT_DATE);
-  const [showPicker, setShowPicker] = useState(false);
+  const [date, setDate] = useState<Date>(DEFAULT_DATE);
+
+  // Android Modal picker state
+  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+  const [tempDate, setTempDate] = useState<Date>(DEFAULT_DATE);
 
   // Web state
   const [webText, setWebText] = useState(toISODate(DEFAULT_DATE));
 
   const handleChange = (_event: unknown, selected?: Date) => {
-    // On Android the dialog closes itself; on iOS it stays open
-    if (Platform.OS === 'android') setShowPicker(false);
     if (selected) setDate(selected);
+  };
+
+  // Android Modal handlers
+  const handleAndroidChange = (_event: unknown, selected?: Date) => {
+    if (selected) setTempDate(selected);
+  };
+  const handleAndroidDone = () => {
+    setDate(tempDate);
+    setShowAndroidPicker(false);
+  };
+  const openAndroidPicker = () => {
+    setTempDate(date);
+    setShowAndroidPicker(true);
   };
 
   const handleWebChange = (value: string) => {
@@ -145,31 +160,55 @@ export const BirthDateScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
           ) : Platform.OS === 'android' ? (
-            /* ── Android: M3 calendar dialog (tap to open) ── */
+            /* ── Android: fecha como texto + Modal con spinner ── */
             <>
               <TouchableOpacity
                 style={styles.dateDisplay}
-                onPress={() => setShowPicker(true)}
+                onPress={openAndroidPicker}
                 activeOpacity={0.75}
-                accessibilityLabel={`Fecha seleccionada: ${formatDisplay(date)}. Toca para cambiar`}
+                accessibilityLabel={`Fecha seleccionada: ${formatDisplay(date)}. Toca para cambiar.`}
                 accessibilityRole="button"
               >
                 <Text style={styles.dateText}>{formatDisplay(date)}</Text>
-                <Text style={styles.dateTapHint}>Toca para cambiar</Text>
+                <Text style={styles.dateTapHint}>TOCA PARA CAMBIAR</Text>
               </TouchableOpacity>
 
-              {showPicker && DateTimePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="default"
-                  minimumDate={new Date(`${MIN_YEAR}-01-01`)}
-                  maximumDate={new Date(`${MAX_YEAR}-12-31`)}
-                  onChange={handleChange}
-                />
-              )}
-            </>
+              <Modal
+                visible={showAndroidPicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowAndroidPicker(false)}
+                statusBarTranslucent
+              >
+                <View style={styles.androidModalOverlay}>
+                  <View style={styles.androidModalSheet}>
+                    <Text style={styles.androidModalTitle}>Fecha de nacimiento</Text>
 
+                    {DateTimePicker && (
+                      <DateTimePicker
+                        value={tempDate}
+                        mode="date"
+                        display="spinner"
+                        minimumDate={new Date(`${MIN_YEAR}-01-01`)}
+                        maximumDate={new Date(`${MAX_YEAR}-12-31`)}
+                        onChange={handleAndroidChange}
+                        style={{ width: '100%' }}
+                      />
+                    )}
+
+                    <TouchableOpacity
+                      style={styles.androidDoneBtn}
+                      onPress={handleAndroidDone}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel="Confirmar fecha"
+                    >
+                      <Text style={styles.androidDoneBtnText}>Hecho</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </>
           ) : DateTimePicker ? (
             /* ── iOS: native spinner (inline) ── */
             <View style={styles.iosPicker}>
@@ -299,6 +338,43 @@ const styles = StyleSheet.create({
     right: 24,
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  // ── Android Modal picker ──
+  androidModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  androidModalSheet: {
+    backgroundColor: '#0F0F16',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  androidModalTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  androidDoneBtn: {
+    marginTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 100,
+    height: 52,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  androidDoneBtnText: {
+    color: '#0A0A0F',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   // ── Web ──
   webInputContainer: {
