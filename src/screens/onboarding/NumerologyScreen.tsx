@@ -431,7 +431,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: colors.fg.primary,
     lineHeight: 32,
-    fontWeight: '300',
     fontWeight: '500',
     letterSpacing: -0.2,
   },
