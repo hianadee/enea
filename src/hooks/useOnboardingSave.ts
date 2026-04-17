@@ -24,8 +24,9 @@ export function useOnboardingSave() {
    * 3. Envía el magic link al email para convertir la cuenta en real
    */
   const saveAndProceed = async (email: string): Promise<void> => {
-    // 1. Sesión
-    await ensureSession();
+    // 1. Sesión — lanzar si no se puede crear (sin red, etc.)
+    const user = await ensureSession();
+    if (!user) throw new Error('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
 
     // 2. Guardar perfil
     const payload = buildProfilePayload({

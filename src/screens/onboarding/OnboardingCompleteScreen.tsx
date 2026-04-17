@@ -96,7 +96,17 @@ export const OnboardingCompleteScreen: React.FC = () => {
       await saveAndProceed(trimmed);
       setSent(true);
     } catch (err: any) {
-      setEmailError(err?.message ?? 'No se pudo enviar. Inténtalo de nuevo.');
+      const raw = (err?.message ?? '').toLowerCase();
+      if (raw.includes('session missing') || raw.includes('not authenticated') || raw.includes('no session'))
+        setEmailError('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
+      else if (raw.includes('rate limit') || raw.includes('too many'))
+        setEmailError('Demasiados intentos. Espera unos minutos.');
+      else if (raw.includes('already') || raw.includes('taken') || raw.includes('in use'))
+        setEmailError('Este email ya está en uso. Prueba con otro.');
+      else if (raw.includes('network') || raw.includes('fetch') || raw.includes('conexión'))
+        setEmailError('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
+      else
+        setEmailError(err?.message ?? 'No se pudo enviar. Inténtalo de nuevo.');
     } finally {
       setSending(false);
     }
