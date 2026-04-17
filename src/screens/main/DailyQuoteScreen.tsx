@@ -11,22 +11,18 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuthContext } from '@/contexts/AuthContext';
 import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
-import { EmailGateSheet } from '@/design-system/components/EmailGateSheet';
 import { calculateUniversalDay, getDailyNumerologyPhrase } from '@/utils/numerologyUtils';
 import { getSunSign, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { generateDailyQuote } from '@/services/quoteGeneratorService';
 
-const EMAIL_GATE_KEY = 'enea-email-gate-shown';
 
 // ─── Dimensiones de la tarjeta de compartir (ratio 4:5) ──────────────────────
 const CARD_W = Dimensions.get('window').width;
@@ -194,9 +190,7 @@ export const DailyQuoteScreen: React.FC = () => {
     useOnboardingStore();
   const { todayQuote, setTodayQuote, toggleSave } = useQuoteStore();
   const { colors, isDark } = useTheme();
-  const { isAnonymous } = useAuthContext();
-  const [isGenerating,    setIsGenerating]    = useState(false);
-  const [gateVisible,     setGateVisible]     = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const palette = natalChart?.dominantPlanet
     ? PLANET_PALETTES[natalChart.dominantPlanet]
@@ -251,20 +245,7 @@ export const DailyQuoteScreen: React.FC = () => {
       Animated.spring(heartAnim, { toValue: 1.35, tension: 200, friction: 4,  useNativeDriver: true }),
       Animated.spring(heartAnim, { toValue: 1,    tension: 200, friction: 8,  useNativeDriver: true }),
     ]).start();
-
-    // Mostrar gate la primera vez que un usuario anónimo guarda una frase
-    if (isAnonymous && !wasFavorite) {
-      try {
-        const shown = await AsyncStorage.getItem(EMAIL_GATE_KEY);
-        if (!shown) setGateVisible(true);
-      } catch {}
-    }
-  }, [todayQuote, isAnonymous, toggleSave]);
-
-  const handleGateDismiss = useCallback(async () => {
-    setGateVisible(false);
-    try { await AsyncStorage.setItem(EMAIL_GATE_KEY, 'true'); } catch {}
-  }, []);
+  }, [todayQuote, toggleSave]);
 
   const [isSharing, setIsSharing] = useState(false);
 
@@ -321,10 +302,20 @@ export const DailyQuoteScreen: React.FC = () => {
             styles.quoteBlock,
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
           ]}
+          accessible={true}
+          accessibilityLabel={todayQuote?.text ?? ''}
         >
           {/* Comilla decorativa — ancla editorial */}
-          <Text style={[styles.openMark, { color: palette.primary }]}>"</Text>
-          <Text style={[styles.quoteText, { color: colors.text }]}>
+          <Text
+            style={[styles.openMark, { color: palette.primary }]}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          >"</Text>
+          <Text
+            style={[styles.quoteText, { color: colors.text }]}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          >
             {todayQuote?.text ?? ''}
           </Text>
         </Animated.View>
@@ -367,7 +358,7 @@ export const DailyQuoteScreen: React.FC = () => {
               <Text style={[styles.numerologyNumber, { color: palette.primary }]}>
                 {universalDay}
               </Text>
-              <Text style={[styles.numerologyCaption, { color: palette.primary + '55' }]}>
+              <Text style={[styles.numerologyCaption, { color: palette.primary }]}>
                 DÍA UNIVERSAL
               </Text>
             </View>
@@ -382,9 +373,16 @@ export const DailyQuoteScreen: React.FC = () => {
 
       {/* ── GENERATING OVERLAY ───────────────────────────────────────────── */}
       {isGenerating && (
-        <View style={styles.generatingOverlay}>
-          <ActivityIndicator size="small" color={palette.primary} />
-          <Text style={[styles.generatingText, { color: palette.primary + '90' }]}>
+        <View
+          style={styles.generatingOverlay}
+          accessibilityLiveRegion="polite"
+          accessibilityLabel="Componiendo tu frase"
+        >
+          <ActivityIndicator size="small" color={palette.primary} accessibilityElementsHidden={true} />
+          <Text
+            style={[styles.generatingText, { color: palette.primary + '90' }]}
+            accessibilityElementsHidden={true}
+          >
             Componiendo tu frase…
           </Text>
         </View>
@@ -400,9 +398,6 @@ export const DailyQuoteScreen: React.FC = () => {
           sunSignEs={sunSignEs}
         />
       </View>
-
-      {/* ── EMAIL GATE ───────────────────────────────────────────────────── */}
-      <EmailGateSheet visible={gateVisible} onDismiss={handleGateDismiss} />
 
       {/* ── ACTION BAR ───────────────────────────────────────────────────── */}
       <Animated.View
@@ -436,7 +431,11 @@ export const DailyQuoteScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.ornament}>
+        <View
+          style={styles.ornament}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        >
           <View style={[styles.ornamentDot,  { backgroundColor: palette.primary + '40' }]} />
           <View style={[styles.ornamentLine, { backgroundColor: palette.primary + '20' }]} />
           <View style={[styles.ornamentDot,  { backgroundColor: palette.primary + '40' }]} />
