@@ -8,8 +8,8 @@ import {
   ScrollView,
   Animated,
   ActivityIndicator,
-  Platform,
   Dimensions,
+  Vibration,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
@@ -17,9 +17,9 @@ import * as Sharing from 'expo-sharing';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
-import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
+import { TYPOGRAPHY, FONT_FAMILY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
-import { calculateUniversalDay, getDailyNumerologyPhrase } from '@/utils/numerologyUtils';
+import { calculateUniversalDay, getDailyNumerologyPhrase, NUMEROLOGY_MEANINGS } from '@/utils/numerologyUtils';
 import { getSunSign, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { generateDailyQuote } from '@/services/quoteGeneratorService';
 
@@ -39,8 +39,7 @@ function quotefontSize(text: string): number {
 }
 function quoteLineHeight(fs: number): number { return fs * 1.38; }
 
-// ─── Tipografía editorial ────────────────────────────────────────────────────
-const GEORGIA = Platform.OS === 'ios' ? 'Georgia' : 'serif';
+// ─── Tipografía — usar FONT_FAMILY + TYPOGRAPHY.presets desde theme ──────────
 
 // ─── Ilustraciones zodiacales ─────────────────────────────────────────────────
 // _b = arte blanco sobre fondo oscuro (dark mode)
@@ -136,7 +135,7 @@ const ShareCard = React.forwardRef<ViewShot, ShareCardProps>(
           />
         )}
 
-        {/* Logo ENEA */}
+        {/* Logo Astro Enea */}
         <View style={card.brandWrap}>
           <EneaLogo width={CARD_W * 0.22} />
         </View>
@@ -157,7 +156,7 @@ const card = StyleSheet.create({
     gap: 20,
   },
   quoteText: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: CARD_W * 0.094,
     fontStyle: 'italic',
     fontWeight: '400',
@@ -186,7 +185,7 @@ const card = StyleSheet.create({
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 export const DailyQuoteScreen: React.FC = () => {
-  const { enneagramType, natalChart, tonePreferences, birthData, numerologyProfile, firstName } =
+  const { enneagramType, natalChart, tonePreferences, birthData, numerologyProfile, firstName, genderPreference } =
     useOnboardingStore();
   const { todayQuote, setTodayQuote, toggleSave } = useQuoteStore();
   const { colors, isDark } = useTheme();
@@ -208,25 +207,36 @@ export const DailyQuoteScreen: React.FC = () => {
   const universalDay        = React.useMemo(() => calculateUniversalDay(), []);
   const dailyNumerologyPhrase = getDailyNumerologyPhrase(universalDay);
 
-  // Animaciones
-  const fadeAnim    = useRef(new Animated.Value(0)).current;
-  const slideAnim   = useRef(new Animated.Value(12)).current;
+  // ── Animaciones por sección ──────────────────────────────────────────────
+  const animHeader  = useRef(new Animated.Value(0)).current; // fecha + badge
+  const animQuote   = useRef(new Animated.Value(0)).current; // frase hero
+  const animIllus   = useRef(new Animated.Value(0)).current; // ilustración
+  const animContext = useRef(new Animated.Value(0)).current; // por qué hoy
+  const animNumero  = useRef(new Animated.Value(0)).current; // numerología
   const heartAnim   = useRef(new Animated.Value(1)).current;
   const shareCardRef = useRef<ViewShot>(null);
 
+  // Qué secciones scroll-triggered ya se dispararon
+  const scrollFired = useRef({ illus: false, context: false, numero: false });
+  const isReady     = useRef(false); // true una vez el contenido está listo
+
+  const reveal = (anim: Animated.Value, delay = 0) =>
+    Animated.timing(anim, { toValue: 1, duration: 550, delay, useNativeDriver: true }).start();
+
+  const animateIn = () => {
+    isReady.current = true;
+    reveal(animHeader, 0);
+    reveal(animQuote,  180);
+  };
+
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
-    const animate = () =>
-      Animated.parallel([
-        Animated.timing(fadeAnim,  { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 900,  useNativeDriver: true }),
-      ]).start();
-
-    if (todayQuote && todayQuote.date === today) { animate(); return; }
+    if (todayQuote && todayQuote.date === today) { animateIn(); return; }
 
     setIsGenerating(true);
     generateDailyQuote({
       firstName:        firstName || 'amigo',
+      genderPreference: genderPreference ?? 'neutro',
       enneagramType,
       natalChart,
       numerologyProfile,
@@ -234,13 +244,29 @@ export const DailyQuoteScreen: React.FC = () => {
       birthDate:        birthData?.date,
     })
       .then(setTodayQuote)
-      .finally(() => { setIsGenerating(false); animate(); });
+      .finally(() => { setIsGenerating(false); animateIn(); });
   }, []);
+
+  // Estilo reutilizable: fade + subida 18px
+  const revealStyle = (anim: Animated.Value) => ({
+    opacity: anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
+  });
+
+  // Handler de scroll — dispara secciones según threshold
+  const handleScroll = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    if (!isReady.current) return;
+    const y = e.nativeEvent.contentOffset.y;
+    if (!scrollFired.current.illus   && y > 60)  { scrollFired.current.illus   = true; reveal(animIllus); }
+    if (!scrollFired.current.context && y > 140) { scrollFired.current.context = true; reveal(animContext); }
+    if (!scrollFired.current.numero  && y > 320) { scrollFired.current.numero  = true; reveal(animNumero); }
+  };
 
   const handleSave = useCallback(async () => {
     if (!todayQuote) return;
-    const wasFavorite = todayQuote.isFavorite;
     toggleSave(todayQuote.id);
+    // Haptic feedback — breve confirmación táctil (P1)
+    Vibration.vibrate(30);
     Animated.sequence([
       Animated.spring(heartAnim, { toValue: 1.35, tension: 200, friction: 4,  useNativeDriver: true }),
       Animated.spring(heartAnim, { toValue: 1,    tension: 200, friction: 8,  useNativeDriver: true }),
@@ -279,10 +305,12 @@ export const DailyQuoteScreen: React.FC = () => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
 
         {/* ── 1. ANCLA TEMPORAL: fecha ──────────────────────────────────── */}
-        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.header, revealStyle(animHeader)]}>
           <Text style={[styles.dateText, { color: colors.textMuted }]}>
             {formatDate(new Date())}
           </Text>
@@ -298,19 +326,11 @@ export const DailyQuoteScreen: React.FC = () => {
 
         {/* ── 2. FRASE: protagonista absoluto ──────────────────────────── */}
         <Animated.View
-          style={[
-            styles.quoteBlock,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-          ]}
+          style={[styles.quoteBlock, revealStyle(animQuote)]}
           accessible={true}
           accessibilityLabel={todayQuote?.text ?? ''}
         >
-          {/* Comilla decorativa — ancla editorial */}
-          <Text
-            style={[styles.openMark, { color: palette.primary }]}
-            accessibilityElementsHidden={true}
-            importantForAccessibility="no-hide-descendants"
-          >"</Text>
+          <View style={[styles.quoteAccent, { backgroundColor: palette.primary }]} />
           <Text
             style={[styles.quoteText, { color: colors.text }]}
             accessibilityElementsHidden={true}
@@ -322,7 +342,7 @@ export const DailyQuoteScreen: React.FC = () => {
 
         {/* ── 3. ILUSTRACIÓN ZODIACAL ───────────────────────────────────── */}
         {illustration && (
-          <Animated.View style={[styles.illustrationBlock, { opacity: fadeAnim }]}>
+          <Animated.View style={[styles.illustrationBlock, revealStyle(animIllus)]}>
             <View style={[styles.illustrationRule, { backgroundColor: palette.primary + '20' }]} />
             <Image
               source={illustration}
@@ -338,35 +358,90 @@ export const DailyQuoteScreen: React.FC = () => {
         <Animated.View
           style={[
             styles.contextBlock,
-            { opacity: fadeAnim },
+            revealStyle(animContext),
             !illustration && styles.contextBlockNoIllustration,
           ]}
         >
-          <Text style={[styles.sectionLabel, { color: palette.primary + '80' }]}>
+          <Text style={[styles.sectionLabel, { color: palette.primary }]}>
             Por qué esta frase hoy
           </Text>
-          <Text style={[styles.contextText, { color: colors.textSecondary }]}>
+          <Text style={[styles.contextText, { color: colors.text }]}>
             {todayQuote?.explanation ?? ''}
           </Text>
         </Animated.View>
 
-        {/* ── 5. NÚMERO DEL DÍA ────────────────────────────────────────── */}
-        <Animated.View style={[styles.numerologyBlock, { opacity: fadeAnim }]}>
+        {/* ── 5. NUMEROLOGÍA ───────────────────────────────────────────── */}
+        <Animated.View style={[styles.numerologyBlock, revealStyle(animNumero)]}>
           <View style={[styles.hairline, { backgroundColor: palette.primary + '20' }]} />
-          <View style={styles.numerologyRow}>
-            <View style={styles.numerologyLeft}>
-              <Text style={[styles.numerologyNumber, { color: palette.primary }]}>
+
+          {/* Etiqueta de sección — contraste correcto */}
+          <Text style={[styles.sectionLabel, { color: palette.primary }]}>
+            Numerología de hoy
+          </Text>
+
+          {/* ── Día Universal ──────────────────────────────────────────── */}
+          <View style={[styles.numCard, { borderColor: palette.primary + '22', backgroundColor: palette.primary + '08' }]}>
+            {/* Overline */}
+            <Text style={[styles.numCardLabel, { color: palette.primary }]}>
+              DÍA UNIVERSAL
+            </Text>
+            {/* Cuerpo: número + línea + contenido */}
+            <View style={styles.numCardBody}>
+              <Text style={[styles.numCardNumber, { color: palette.primary }]}>
                 {universalDay}
               </Text>
-              <Text style={[styles.numerologyCaption, { color: palette.primary }]}>
-                DÍA UNIVERSAL
-              </Text>
+              <View style={[styles.numCardVline, { backgroundColor: palette.primary + '30' }]} />
+              <View style={styles.numCardRight}>
+                {/* Qué es — texto explicativo siempre visible */}
+                <Text style={[styles.numCardWhat, { color: colors.textSecondary }]}>
+                  La energía colectiva de hoy.{'\n'}El mismo número para todo el mundo.
+                </Text>
+                {/* Frase significativa del día */}
+                <Text style={[styles.numCardPhrase, { color: colors.text }]}>
+                  {dailyNumerologyPhrase}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.numerologyDivider, { backgroundColor: palette.primary + '20' }]} />
-            <Text style={[styles.numerologyPhrase, { color: colors.textMuted }]}>
-              {dailyNumerologyPhrase}
-            </Text>
           </View>
+
+          {/* ── Año Personal ───────────────────────────────────────────── */}
+          {numerologyProfile?.personalYear != null && (() => {
+            const py     = numerologyProfile.personalYear;
+            const pyMean = NUMEROLOGY_MEANINGS[py];
+            return (
+              <View style={[styles.numCard, { borderColor: palette.primary + '18', backgroundColor: palette.primary + '05' }]}>
+                {/* Overline */}
+                <Text style={[styles.numCardLabel, { color: palette.primary }]}>
+                  AÑO PERSONAL
+                </Text>
+                {/* Cuerpo */}
+                <View style={styles.numCardBody}>
+                  <Text style={[styles.numCardNumber, { color: palette.primary }]}>
+                    {py}
+                  </Text>
+                  <View style={[styles.numCardVline, { backgroundColor: palette.primary + '25' }]} />
+                  <View style={styles.numCardRight}>
+                    {/* Qué es — texto explicativo */}
+                    <Text style={[styles.numCardWhat, { color: colors.textSecondary }]}>
+                      Tu ciclo numerológico personal.{'\n'}Se renueva cada año en tu cumpleaños.
+                    </Text>
+                    {/* Arquetipo del año */}
+                    {pyMean && (
+                      <Text style={[styles.numCardPhrase, { color: colors.text }]}>
+                        {pyMean.title}
+                      </Text>
+                    )}
+                    {/* Keywords — contexto adicional */}
+                    {pyMean?.keywords?.length > 0 && (
+                      <Text style={[styles.numCardKeywords, { color: colors.textSecondary }]}>
+                        {pyMean.keywords.slice(0, 3).join(' · ')}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
         </Animated.View>
 
       </ScrollView>
@@ -380,7 +455,7 @@ export const DailyQuoteScreen: React.FC = () => {
         >
           <ActivityIndicator size="small" color={palette.primary} accessibilityElementsHidden={true} />
           <Text
-            style={[styles.generatingText, { color: palette.primary + '90' }]}
+            style={[styles.generatingText, { color: palette.primary }]}
             accessibilityElementsHidden={true}
           >
             Componiendo tu frase…
@@ -404,7 +479,7 @@ export const DailyQuoteScreen: React.FC = () => {
         style={[
           styles.actionBar,
           {
-            opacity: fadeAnim,
+            opacity: animQuote,
             backgroundColor: colors.background + 'F2',
             borderTopColor: colors.border,
           },
@@ -430,16 +505,6 @@ export const DailyQuoteScreen: React.FC = () => {
             {isSaved ? 'Guardado' : 'Guardar'}
           </Text>
         </TouchableOpacity>
-
-        <View
-          style={styles.ornament}
-          accessibilityElementsHidden={true}
-          importantForAccessibility="no-hide-descendants"
-        >
-          <View style={[styles.ornamentDot,  { backgroundColor: palette.primary + '40' }]} />
-          <View style={[styles.ornamentLine, { backgroundColor: palette.primary + '20' }]} />
-          <View style={[styles.ornamentDot,  { backgroundColor: palette.primary + '40' }]} />
-        </View>
 
         <TouchableOpacity
           style={styles.actionBtn}
@@ -472,7 +537,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 28,
     paddingTop: 56,
-    paddingBottom: 112,
+    paddingBottom: 76,
   },
 
   // ── 1. Header ──────────────────────────────────────────────────────────────
@@ -481,10 +546,7 @@ const styles = StyleSheet.create({
     marginBottom: 44,
   },
   dateText: {
-    fontSize: 11,
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
-    fontWeight: '500',
+    ...TYPOGRAPHY.presets.label,
   },
   planetBadge: {
     flexDirection: 'row',
@@ -502,30 +564,25 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   planetText: {
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: 0.3,
+    ...TYPOGRAPHY.presets.badge,
   },
 
   // ── 2. Quote ───────────────────────────────────────────────────────────────
   quoteBlock: {
     marginBottom: 48,
+    flexDirection: 'row',
+    gap: 18,
   },
-  openMark: {
-    fontFamily: GEORGIA,
-    fontSize: 80,
-    lineHeight: 64,
-    fontWeight: '400',
+  // Línea vertical de acento — ancla editorial sin ambigüedad
+  quoteAccent: {
+    width: 2,
+    borderRadius: 1,
+    marginTop: 4,
     marginBottom: 4,
-    marginLeft: -4,
   },
   quoteText: {
-    fontFamily: GEORGIA,
-    fontSize: 26,
-    fontStyle: 'italic',
-    fontWeight: '400',
-    lineHeight: 44,
-    letterSpacing: -0.3,
+    flex: 1,
+    ...TYPOGRAPHY.presets.quote,
   },
 
   // ── 3. Ilustración ─────────────────────────────────────────────────────────
@@ -552,58 +609,67 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   sectionLabel: {
-    fontFamily: GEORGIA,
-    fontSize: 13,
-    fontStyle: 'italic',
-    fontWeight: '400',
-    letterSpacing: 0.1,
+    ...TYPOGRAPHY.presets.sectionTitle,
   },
   contextText: {
-    fontSize: 14,
-    lineHeight: 23,
-    fontWeight: '400',
-    letterSpacing: 0.1,
+    ...TYPOGRAPHY.presets.bodyLg,
   },
 
   // ── 5. Numerología ─────────────────────────────────────────────────────────
   numerologyBlock: {
-    gap: 20,
+    gap: 12,
   },
   hairline: {
     height: 1,
   },
-  numerologyRow: {
+  // Card surface por cada métrica numerológica
+  numCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 16,
+    gap: 10,
+  },
+  // Overline: nombre de la métrica — 11px bold uppercase garantiza AA en todos los paletas
+  numCardLabel: {
+    ...TYPOGRAPHY.presets.label,
+  },
+  numCardBody: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
   },
-  numerologyLeft: {
-    alignItems: 'center',
-    gap: 3,
-    minWidth: 48,
-  },
-  numerologyNumber: {
-    fontFamily: GEORGIA,
-    fontSize: 48,
+  // Número grande en Georgia
+  numCardNumber: {
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 52,
     fontWeight: '300',
-    lineHeight: 50,
+    lineHeight: 54,
+    width: 44,
+    textAlign: 'center',
   },
-  numerologyCaption: {
-    fontSize: 9,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    fontWeight: '500',
-  },
-  numerologyDivider: {
+  // Línea divisoria vertical
+  numCardVline: {
     width: 1,
-    height: 40,
+    alignSelf: 'stretch',
   },
-  numerologyPhrase: {
+  numCardRight: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 21,
-    fontWeight: '400',
-    letterSpacing: 0.1,
+    gap: 6,
+  },
+  // Texto explicativo "qué es" — 13px sin opacity, color textSecondary ~5.4:1 ✓ AA
+  numCardWhat: {
+    ...TYPOGRAPHY.presets.captionItalic,
+  },
+  // Frase / arquetipo — 16px color text (blanco) — 20:1 ✓ AAA
+  numCardPhrase: {
+    ...TYPOGRAPHY.presets.bodyLgStrong,
+  },
+  // Keywords secundarias — 13px textSecondary ✓ AA
+  numCardKeywords: {
+    ...TYPOGRAPHY.presets.caption,
+    letterSpacing: 0.3,
   },
 
   // ── Off-screen share card ──────────────────────────────────────────────────
@@ -624,7 +690,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   generatingText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.presets.caption,
     letterSpacing: 0.8,
     fontWeight: '500',
   },
@@ -637,36 +703,25 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
     paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.md,
-    paddingBottom: 32,
+    paddingTop: 6,
+    paddingBottom: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   actionBtn: {
     alignItems: 'center',
-    gap: 5,
-    minWidth: 64,
+    justifyContent: 'center',
+    gap: 2,
+    minWidth: 88,
+    minHeight: 44,      // WCAG 2.5.5 — touch target mínimo 44×44pt
   },
   actionIcon: {
-    fontSize: 22,
+    fontSize: 18,
   },
   actionLabel: {
     fontSize: 11,
+    fontWeight: '500',
     letterSpacing: 0.3,
-  },
-  ornament: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  ornamentDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-  },
-  ornamentLine: {
-    width: 24,
-    height: 1,
   },
 });

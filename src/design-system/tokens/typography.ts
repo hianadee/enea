@@ -1,5 +1,5 @@
 /**
- * ENEA Design System - Typography Tokens
+ * Astro Enea Design System - Typography Tokens
  */
 
 export const typography = {

@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { colors } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -112,7 +113,7 @@ export const OnboardingCompleteScreen: React.FC = () => {
     }
   };
 
-  const greeting = firstName ? `Tu ENEA está lista, ${firstName}.` : 'Tu ENEA está lista.';
+  const greeting = firstName ? `Tu Astro Enea está lista, ${firstName}.` : 'Tu Astro Enea está lista.';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -184,13 +185,13 @@ export const OnboardingCompleteScreen: React.FC = () => {
                 <Text style={styles.sentTitle}>Revisa tu email</Text>
                 <Text style={styles.sentSubtitle}>
                   Te hemos enviado un enlace a {email.trim().toLowerCase()}.{'\n'}
-                  Púlsalo para guardar tu ENEA para siempre.
+                  Púlsalo para guardar tu Astro Enea para siempre.
                 </Text>
               </View>
             ) : (
               /* Estado: formulario */
               <>
-                <Text style={styles.emailLabel}>Guarda tu ENEA</Text>
+                <Text style={styles.emailLabel}>Guarda tu Astro Enea</Text>
                 <Text style={styles.emailSubtitle}>
                   Introduce tu email para no perder tu perfil ni tu historial.
                 </Text>
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 36,
     color: colors.fg.primary,
     fontWeight: '300',
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emailLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 20,
     color: colors.fg.primary,
     fontWeight: '300',

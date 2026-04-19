@@ -1,6 +1,6 @@
 /**
  * numerologyUtils.ts
- * Cálculos numerológicos integrados para ENEA.
+ * Cálculos numerológicos integrados para Astro Enea.
  * Basado en numerología pitagórica occidental (reducción a 1–9, con maestros 11, 22, 33).
  */
 

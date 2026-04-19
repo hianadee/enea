@@ -8,32 +8,41 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { TYPOGRAPHY, FONT_FAMILY } from '@/constants/theme';
+import { GenderPreference } from '@/types';
 import { OnboardingStackParamList } from '@/navigation/types';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'FirstName'>;
 };
 
-const SERIF = Platform.OS === 'ios' ? 'Georgia' : 'serif';
 const TOTAL = 10;
+const ACCENT = '#FC8181';
+
+const GENDER_OPTIONS: { value: GenderPreference; label: string }[] = [
+  { value: 'femenino',  label: 'En femenino' },
+  { value: 'masculino', label: 'En masculino' },
+  { value: 'neutro',    label: 'Sin género' },
+];
 
 export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
-  const { setFirstName, setStep } = useOnboardingStore();
+  const { setFirstName, setGenderPreference, setStep } = useOnboardingStore();
   const posthog = usePostHog();
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<GenderPreference | null>(null);
 
-  const isValid = name.trim().length > 0;
+  const isNameValid  = name.trim().length > 0;
+  const isValid      = isNameValid; // género es opcional, default 'neutro'
 
   const handleContinue = () => {
     if (!isValid) return;
     setFirstName(name.trim());
-    posthog?.capture('onboarding_name_entered');
+    setGenderPreference(gender ?? 'neutro');
+    posthog?.capture('onboarding_name_entered', { gender: gender ?? 'neutro' });
     setStep('birth_date');
     navigation.navigate('BirthDate');
   };
@@ -55,6 +64,7 @@ export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.content}>
           <Text style={styles.heading}>¿Cómo te llamas?</Text>
           <Text style={styles.subheading}>Así sabré cómo dirigirme a ti.</Text>
+
           <TextInput
             style={styles.input}
             placeholder="Tu nombre"
@@ -70,6 +80,39 @@ export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
             onSubmitEditing={handleContinue}
             accessibilityLabel="Tu nombre"
           />
+
+          {/* Gender chips — aparecen cuando el nombre tiene al menos 1 carácter */}
+          {isNameValid && (
+            <View style={styles.genderBlock}>
+              <Text style={styles.genderLabel}>¿Cómo prefieres que te hable?</Text>
+              <View style={styles.genderChips}>
+                {GENDER_OPTIONS.map(opt => {
+                  const active = gender === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[
+                        styles.chip,
+                        {
+                          borderColor: active ? ACCENT : '#2A2A3A',
+                          backgroundColor: active ? ACCENT + '14' : 'transparent',
+                        },
+                      ]}
+                      onPress={() => setGender(active ? null : opt.value)}
+                      activeOpacity={0.7}
+                      accessibilityRole="radio"
+                      accessibilityLabel={opt.label}
+                      accessibilityState={{ checked: active }}
+                    >
+                      <Text style={[styles.chipText, { color: active ? ACCENT : '#8B8A9E' }]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Footer */}
@@ -96,22 +139,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
-  flex: {
-    flex: 1,
-  },
+  flex: { flex: 1 },
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  headerSpacer: {
-    width: 40,
-  },
+  headerSpacer: { width: 40 },
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -121,42 +160,68 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 34,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     lineHeight: 44,
     marginBottom: 8,
   },
   subheading: {
-    fontSize: 16,
-    color: '#A8A8B8',
-    lineHeight: 24,
+    ...TYPOGRAPHY.presets.bodyLg,
+    color: '#8B8A9E',
     marginBottom: 44,
   },
   input: {
     fontSize: 28,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: '#2A2A3A',
     paddingVertical: 12,
     paddingHorizontal: 0,
   },
+
+  // ── Bloque de género ──────────────────────────────────────────────────────────
+  genderBlock: {
+    marginTop: 36,
+  },
+  genderLabel: {
+    ...TYPOGRAPHY.presets.label,
+    color: '#8B8A9E',
+    marginBottom: 12,
+  },
+  genderChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    height: 32,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    borderWidth: 1,
+    justifyContent: 'center',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  // ── Footer ────────────────────────────────────────────────────────────────────
   footer: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   ctaBtn: {
-    backgroundColor: colors.fg.primary,
+    backgroundColor: '#F0EEF6',
     borderRadius: 100,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaBtnDisabled: {
-    opacity: 0.3,
-  },
+  ctaBtnDisabled: { opacity: 0.3 },
   ctaBtnText: {
-    color: colors.bg.primary,
+    color: '#1A2332',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.3,

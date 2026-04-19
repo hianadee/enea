@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   BirthData,
   EnneagramType,
+  GenderPreference,
   TonePreferences,
   NatalChart,
   NumerologyProfile,
@@ -16,6 +17,7 @@ interface OnboardingState {
   step: OnboardingStep;
   firstName: string;
   fullName: string;
+  genderPreference: GenderPreference;
   birthData: Partial<BirthData>;
   natalChart: NatalChart | null;
   numerologyProfile: NumerologyProfile | null;
@@ -27,6 +29,7 @@ interface OnboardingState {
   setStep: (step: OnboardingStep) => void;
   setFirstName: (name: string) => void;
   setFullName: (name: string) => void;
+  setGenderPreference: (gender: GenderPreference) => void;
   setBirthData: (data: Partial<BirthData>) => void;
   setNatalChart: (chart: NatalChart) => void;
   setNumerologyProfile: (profile: NumerologyProfile) => void;
@@ -41,6 +44,7 @@ const initialState = {
   step: 'first_name' as OnboardingStep,
   firstName: '',
   fullName: '',
+  genderPreference: 'neutro' as GenderPreference,
   birthData: {},
   natalChart: null,
   numerologyProfile: null,
@@ -58,6 +62,8 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   setFirstName: (firstName) => set({ firstName }),
 
   setFullName: (fullName) => set({ fullName }),
+
+  setGenderPreference: (genderPreference) => set({ genderPreference }),
 
   setBirthData: (data) =>
     set((state) => ({ birthData: { ...state.birthData, ...data } })),

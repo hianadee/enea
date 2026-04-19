@@ -4,12 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FONT_FAMILY, TYPOGRAPHY } from '@/constants/theme';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -24,6 +22,8 @@ const OPTIONS: { value: ReligionResponse; label: string }[] = [
   { value: 'espiritual', label: 'Interés espiritual, pero sin religión' },
   { value: 'no',         label: 'Prefiero no responder' },
 ];
+
+const TOTAL = 10;
 
 export const ReligionScreen: React.FC<Props> = ({ navigation }) => {
   const { setReligionResponse, setStep } = useOnboardingStore();
@@ -43,6 +43,7 @@ export const ReligionScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -52,34 +53,43 @@ export const ReligionScreen: React.FC<Props> = ({ navigation }) => {
         >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.stepCounter}>8 de 10</Text>
+        <Text style={styles.stepCounter}>8 de {TOTAL}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.heading}>¿Eres religioso/a?</Text>
+        {/* Género neutral: sin -o/a */}
+        <Text style={styles.heading}>¿Practicas{'\n'}alguna religión?</Text>
         <Text style={styles.subtitle}>
           Conocerlo me permitirá hablarte en un lenguaje que conecte contigo.
         </Text>
 
-        <View style={styles.options}>
-          {OPTIONS.map(option => (
-            <TouchableOpacity
-              key={option.value}
-              style={[styles.optionRow, selected === option.value && styles.optionRowActive]}
-              onPress={() => handleSelect(option.value)}
-              activeOpacity={0.7}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected === option.value }}
-            >
-              <View style={[styles.radio, selected === option.value && styles.radioActive]}>
-                {selected === option.value && <View style={styles.radioDot} />}
-              </View>
-              <Text style={[styles.optionText, selected === option.value && styles.optionTextActive]}>
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View
+          style={styles.options}
+          accessibilityRole="radiogroup"
+          accessibilityLabel="¿Practicas alguna religión?"
+        >
+          {OPTIONS.map(option => {
+            const isActive = selected === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.optionRow, isActive && styles.optionRowActive]}
+                onPress={() => handleSelect(option.value)}
+                activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityLabel={option.label}
+                accessibilityState={{ checked: isActive }}
+              >
+                <View style={[styles.radio, isActive && styles.radioActive]}>
+                  {isActive && <View style={styles.radioDot} />}
+                </View>
+                <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     </SafeAreaView>
@@ -91,84 +101,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
+
+  // ── Header ─────────────────────────────────────────────────────────────────
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backBtn: { width: 40, height: 44, justifyContent: 'center' },
-  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  backBtn:      { width: 44, height: 44, justifyContent: 'center' },
+  backArrow:    { color: '#F0EEF6', fontSize: 22 },
   headerSpacer: { width: 40 },
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     fontSize: 14,
     letterSpacing: 0.3,
   },
+
+  // ── Content ────────────────────────────────────────────────────────────────
   content: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 40,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 34,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     lineHeight: 44,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#A8A8B8',
-    lineHeight: 22,
+    ...TYPOGRAPHY.presets.bodyLg,
+    color: '#8B8A9E',
     marginBottom: 48,
   },
+
+  // ── Options — idéntico a ReligionTypeScreen ────────────────────────────────
   options: {
-    gap: 12,
+    gap: 16,
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(116, 116, 128, 0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(252, 165, 165, 0.6)',
-    borderRadius: 24,
-    height: 48,
-    paddingHorizontal: 16,
-    gap: 19,
-    overflow: 'hidden',
+    backgroundColor: '#111118',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#2A2A3A',
+    borderRadius: 16,
+    minHeight: 64,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 16,
   },
   optionRowActive: {
-    borderColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F0EEF6',
+    backgroundColor: '#16161F',
   },
   radio: {
-    width: 19.45,
-    height: 19.45,
-    borderRadius: 9.72,
-    borderWidth: 1,
-    borderColor: '#FC8181',
-    backgroundColor: 'transparent',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: '#3A3A4A',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   radioActive: {
     borderColor: '#FC8181',
   },
   radioDot: {
-    width: 11.45,
-    height: 11.45,
-    borderRadius: 5.72,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#FC8181',
-    position: 'absolute',
   },
   optionText: {
-    fontSize: 16,
-    color: '#FFFFFF',
     flex: 1,
+    ...TYPOGRAPHY.presets.body,
+    color: '#F0EEF6',
   },
   optionTextActive: {
     color: '#FFFFFF',
+    fontWeight: '500',
   },
 });

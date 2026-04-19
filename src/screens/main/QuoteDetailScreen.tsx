@@ -7,6 +7,7 @@ import {
   ScrollView,
   Share,
   Animated,
+  Vibration,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing } from '@/design-system/tokens';
@@ -20,7 +21,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { EmailGateSheet } from '@/design-system/components/EmailGateSheet';
 
 const EMAIL_GATE_KEY = 'enea-email-gate-shown';
-import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
+import { TYPOGRAPHY, FONT_FAMILY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
 import { formatLongDate } from '@/utils/dateUtils';
@@ -63,6 +64,8 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!quote) return;
     const wasFavorite = quote.isFavorite;
     toggleSave(quote.id);
+    // Haptic feedback — breve confirmación táctil (P1)
+    Vibration.vibrate(30);
     Animated.sequence([
       Animated.spring(heartAnim, { toValue: 1.5, tension: 200, friction: 4, useNativeDriver: true }),
       Animated.spring(heartAnim, { toValue: 1, tension: 200, friction: 8, useNativeDriver: true }),
@@ -86,7 +89,7 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!quote) return;
     try {
       await Share.share({
-        message: `"${quote.text}"\n\n— ENEA · ${quote.planetaryContext ?? ''}`,
+        message: `"${quote.text}"\n\n— Astro Enea · ${quote.planetaryContext ?? ''}`,
       });
     } catch (_) {}
   };
@@ -147,16 +150,24 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </Animated.View>
 
         {/* Quote hero */}
-        <Animated.View style={[styles.quoteContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-          <Text style={[styles.openingMark, { color: palette.primary }]}>"</Text>
-          <Text style={[styles.quoteText, { color: colors.text }]}>{quote.text}</Text>
-          <Text style={[styles.closingMark, { color: palette.primary }]}>"</Text>
+        <Animated.View
+          style={[styles.quoteContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}
+          accessible={true}
+          accessibilityLabel={quote.text}
+        >
+          <Text style={[styles.openingMark, { color: palette.primary }]} accessibilityElementsHidden={true} importantForAccessibility="no-hide-descendants">"</Text>
+          <Text style={[styles.quoteText, { color: colors.text }]} accessibilityElementsHidden={true} importantForAccessibility="no-hide-descendants">{quote.text}</Text>
+          <Text style={[styles.closingMark, { color: palette.primary }]} accessibilityElementsHidden={true} importantForAccessibility="no-hide-descendants">"</Text>
         </Animated.View>
 
         {/* Exclusivity mark */}
-        <Animated.View style={[styles.exclusivityRow, { opacity: fadeAnim }]}>
+        <Animated.View
+          style={[styles.exclusivityRow, { opacity: fadeAnim }]}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        >
           <View style={[styles.exclusivityLine, { backgroundColor: palette.primary + '30' }]} />
-          <Text style={[styles.exclusivityText, { color: palette.primary + '70' }]}>
+          <Text style={[styles.exclusivityText, { color: palette.primary }]}>
             compuesta únicamente para ti
           </Text>
           <View style={[styles.exclusivityLine, { backgroundColor: palette.primary + '30' }]} />
@@ -171,7 +182,7 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         {/* Type tag */}
         {typeInfo && quote.enneagramType && (
           <Animated.View style={[styles.typeTag, { opacity: fadeAnim }]}>
-            <Text style={[styles.typeTagText, { color: palette.primary + 'AA' }]}>
+            <Text style={[styles.typeTagText, { color: palette.primary }]}>
               Tipo {quote.enneagramType} · {typeInfo.name}
               {tonePreferences.lifeFocus ? `  ·  ${tonePreferences.lifeFocus}` : ''}
             </Text>
@@ -195,7 +206,11 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.centerOrnament}>
+        <View
+          style={styles.centerOrnament}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        >
           <View style={[styles.ornamentDot, { backgroundColor: palette.primary + '60' }]} />
           <View style={[styles.ornamentLine, { backgroundColor: palette.primary + '20' }]} />
           <View style={[styles.ornamentDot, { backgroundColor: palette.primary + '60' }]} />
@@ -249,9 +264,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   planetText: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '500',
-    letterSpacing: 0.3,
+    ...TYPOGRAPHY.presets.bodySmMedium,
   },
   scroll: {
     flexGrow: 1,
@@ -281,7 +294,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 38,
     letterSpacing: -0.3,
-    fontFamily: 'serif',
+    fontFamily: FONT_FAMILY.serif,
   },
   closingMark: {
     fontSize: 80,
@@ -318,7 +331,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   explanationText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    ...TYPOGRAPHY.presets.bodySm,
     lineHeight: 22,
     fontWeight: '500',
   },
@@ -346,15 +359,17 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
     minWidth: 56,
+    minHeight: 44,      // WCAG 2.5.5 — touch target mínimo 44×44pt
+    paddingVertical: 8,
   },
   actionIcon: {
     fontSize: 22,
   },
   actionLabel: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    letterSpacing: 0.3,
+    ...TYPOGRAPHY.presets.micro,
   },
   centerOrnament: {
     flexDirection: 'row',

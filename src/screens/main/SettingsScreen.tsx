@@ -14,22 +14,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNotifications } from '@/notifications/useNotifications';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/contexts/ThemeContext';
-import { TYPOGRAPHY, SPACING, DEFAULT_PALETTE, PLANET_PALETTES } from '@/constants/theme';
+import { TYPOGRAPHY, FONT_FAMILY, SPACING, DEFAULT_PALETTE, PLANET_PALETTES } from '@/constants/theme';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import {
-  SpiritualTradition, LanguageStyle, EnergyType, LifeFocus, TonePreferences,
+  SpiritualTradition, LanguageStyle, EnergyType, LifeFocus,
 } from '@/types';
-import { getSunSign, PLANET_SYMBOLS } from '@/utils/astroUtils';
+import { getSunSign, PLANET_SYMBOLS, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { NatalChartWheel } from '@/design-system/components/NatalChartWheel';
 import { calculatePersonalYear, NUMEROLOGY_MEANINGS } from '@/utils/numerologyUtils';
 
-// ─── Tone preference data ─────────────────────────────────────────────────────
+// ─── Constante de acento ─────────────────────────────────────────────────────
+const ACCENT = '#FC8181';
 
+// ─── Datos de tono ────────────────────────────────────────────────────────────
 const SPIRITUAL_TRADITIONS: SpiritualTradition[] = [
   'Budista', 'Estoica', 'Cristiana', 'Hindú', 'Secular', 'Taoísta', 'Islámica', 'Judía',
 ];
@@ -42,15 +42,13 @@ const LANGUAGE_STYLES: { value: LanguageStyle; desc: string }[] = [
 const ENERGY_TYPES: EnergyType[] = ['Centrador', 'Motivador', 'Reflexivo', 'Elevador'];
 const LIFE_FOCUSES: LifeFocus[]   = ['Carrera', 'Relaciones', 'Crecimiento interior', 'Salud', 'Creatividad'];
 
-// ─── Custom toggle ────────────────────────────────────────────────────────────
-
-interface ToggleProps {
+// ─── Toggle ───────────────────────────────────────────────────────────────────
+const ENEAToggle: React.FC<{
   value: boolean;
   onToggle: () => void;
   accentColor: string;
-}
-
-const ENEAToggle: React.FC<ToggleProps> = ({ value, onToggle, accentColor }) => {
+  accessibilityLabel?: string;
+}> = ({ value, onToggle, accentColor, accessibilityLabel }) => {
   const { colors } = useTheme();
   const translateX = useRef(new Animated.Value(value ? 20 : 0)).current;
   const bgOpacity  = useRef(new Animated.Value(value ? 1  : 0)).current;
@@ -64,78 +62,55 @@ const ENEAToggle: React.FC<ToggleProps> = ({ value, onToggle, accentColor }) => 
 
   const bgColor = bgOpacity.interpolate({
     inputRange:  [0, 1],
-    outputRange: [colors.border, accentColor + 'CC'],
+    outputRange: [colors.border, accentColor],
   });
 
   return (
-    <TouchableOpacity onPress={onToggle} activeOpacity={0.8} style={{ minHeight: 44, justifyContent: 'center' }}>
-      <Animated.View style={[toggle.track, { backgroundColor: bgColor, borderColor: value ? accentColor + '60' : colors.border }]}>
-        <Animated.View style={[toggle.thumb, { transform: [{ translateX }], backgroundColor: value ? '#fff' : colors.textMuted }]} />
+    <TouchableOpacity
+      onPress={onToggle}
+      activeOpacity={0.8}
+      style={{ minHeight: 44, justifyContent: 'center' }}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value }}
+    >
+      <Animated.View style={[tog.track, { backgroundColor: bgColor, borderColor: value ? accentColor + '60' : colors.border }]}>
+        <Animated.View style={[tog.thumb, { transform: [{ translateX }], backgroundColor: value ? '#fff' : colors.textMuted }]} />
       </Animated.View>
     </TouchableOpacity>
   );
 };
 
-const toggle = StyleSheet.create({
-  track: {
-    width: 46,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  thumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
+const tog = StyleSheet.create({
+  track: { width: 46, height: 26, borderRadius: 13, borderWidth: 1, justifyContent: 'center', paddingHorizontal: 3 },
+  thumb: { width: 20, height: 20, borderRadius: 10 },
 });
 
-// ─── Reusable section header ──────────────────────────────────────────────────
-
-const SectionHeader: React.FC<{ label: string }> = ({ label }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={section.row}>
-      <Text style={[section.label, { color: colors.textMuted }]}>{label}</Text>
-      <View style={[section.line, { backgroundColor: ACCENT + '20' }]} />
-    </View>
-  );
-};
-
-const section = StyleSheet.create({
-  row:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, marginTop: 36 },
-  label: { fontSize: 10, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 },
-  line:  { flex: 1, height: 1 },
-});
-
-// ─── Chip selector row ────────────────────────────────────────────────────────
-
-interface ChipRowProps<T extends string> {
+// ─── Chip row ─────────────────────────────────────────────────────────────────
+function ChipRow<T extends string>({
+  items, selected, onSelect, accentColor,
+}: {
   items: { value: T; label?: string }[];
   selected: T | undefined;
   onSelect: (v: T) => void;
   accentColor: string;
-}
-
-function ChipRow<T extends string>({ items, selected, onSelect, accentColor }: ChipRowProps<T>) {
+}) {
   const { colors } = useTheme();
   return (
-    <View style={chip.row}>
+    <View style={chip.row} accessibilityRole="radiogroup">
       {items.map((item) => {
         const active = selected === item.value;
         return (
           <TouchableOpacity
             key={item.value}
-            style={[
-              chip.pill,
-              { borderColor: active ? accentColor : colors.border, backgroundColor: active ? accentColor + '14' : colors.surface },
-            ]}
+            style={[chip.pill, { borderColor: active ? accentColor : colors.border, backgroundColor: active ? accentColor + '14' : 'transparent' }]}
             onPress={() => onSelect(item.value)}
             activeOpacity={0.7}
+            accessibilityRole="radio"
+            accessibilityLabel={item.label ?? item.value}
+            accessibilityState={{ checked: active }}
           >
-            <Text style={[chip.text, { color: active ? accentColor : colors.textSecondary }]}>
+            <Text style={[chip.text, { color: active ? accentColor : colors.textSecondary }]} accessibilityElementsHidden={true}>
               {item.label ?? item.value}
             </Text>
           </TouchableOpacity>
@@ -146,608 +121,420 @@ function ChipRow<T extends string>({ items, selected, onSelect, accentColor }: C
 }
 
 const chip = StyleSheet.create({
-  row:  { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs },
-  pill: { paddingVertical: 6, paddingHorizontal: SPACING.md, borderRadius: 100, borderWidth: 1 },
-  text: { fontSize: TYPOGRAPHY.sizes.sm, fontWeight: '500' },
+  row:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pill: { height: 32, paddingHorizontal: 14, borderRadius: 100, borderWidth: 1, justifyContent: 'center' },
+  text: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
 });
 
-// ─── Settings row (label + right element) ────────────────────────────────────
+// ─── Section overline ─────────────────────────────────────────────────────────
+const SectionHeader: React.FC<{ label: string }> = ({ label }) => {
+  const { colors } = useTheme();
+  return <Text style={[sec.heading, { color: colors.text }]}>{label}</Text>;
+};
 
-interface SettingsRowProps {
+const sec = StyleSheet.create({
+  heading: {
+    ...TYPOGRAPHY.presets.heading3,
+    marginBottom: 8,
+  },
+});
+
+// ─── Row genérico label + right ───────────────────────────────────────────────
+const Row: React.FC<{
   label: string;
-  right: React.ReactNode;
   sublabel?: string;
-}
-
-const SettingsRow: React.FC<SettingsRowProps> = ({ label, right, sublabel }) => {
+  right: React.ReactNode;
+  last?: boolean;
+}> = ({ label, sublabel, right, last }) => {
   const { colors } = useTheme();
   return (
-    <View style={[row.container, { borderBottomColor: colors.border }]}>
-      <View style={row.left}>
-        <Text style={[row.label, { color: colors.text }]}>{label}</Text>
-        {sublabel && <Text style={[row.sublabel, { color: colors.textMuted }]}>{sublabel}</Text>}
+    <View style={[rw.container, { borderBottomColor: colors.border }, last && { borderBottomWidth: 0 }]}>
+      <View style={rw.left}>
+        <Text style={[rw.label, { color: colors.text }]}>{label}</Text>
+        {sublabel ? <Text style={[rw.sublabel, { color: colors.textMuted }]}>{sublabel}</Text> : null}
       </View>
       {right}
     </View>
   );
 };
 
-const row = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: SPACING.md, borderBottomWidth: 1 },
+const rw = StyleSheet.create({
+  container: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
   left:      { flex: 1, gap: 2 },
-  label:     { fontSize: TYPOGRAPHY.sizes.md, fontWeight: '400' },
-  sublabel:  { fontSize: TYPOGRAPHY.sizes.xs, letterSpacing: 0.2 },
+  label:     { ...TYPOGRAPHY.presets.body },
+  sublabel:  { ...TYPOGRAPHY.presets.caption },
 });
 
-// ─── Natal chart card ─────────────────────────────────────────────────────────
-
-const NatalChartCard: React.FC = () => {
+// ─── Separador de sección ─────────────────────────────────────────────────────
+const Divider: React.FC = () => {
   const { colors } = useTheme();
-  const { birthData, natalChart } = useOnboardingStore();
-  const palette = natalChart?.dominantPlanet ? PLANET_PALETTES[natalChart.dominantPlanet] : DEFAULT_PALETTE;
-  const sunSign  = getSunSign(birthData.date ?? '');
-
-  const rows: { symbol: string; label: string; value: string }[] = [
-    {
-      symbol: '☉',
-      label: 'Sol',
-      value: sunSign ? `${sunSign.symbol} ${sunSign.name}` : (birthData.date ? '—' : 'Añade tu fecha de nacimiento'),
-    },
-    {
-      symbol: '☽',
-      label: 'Luna',
-      value: natalChart?.moonSign ?? 'Requiere carta natal',
-    },
-    {
-      symbol: '↑',
-      label: 'Asc',
-      value: natalChart?.risingSign ?? 'Requiere hora y lugar',
-    },
-    {
-      symbol: PLANET_SYMBOLS[natalChart?.dominantPlanet ?? 'Moon'] ?? '◉',
-      label: 'Dom.',
-      value: natalChart?.dominantPlanet ?? 'Luna',
-    },
-  ];
-
-  return (
-    <View style={natCard.container}>
-      {/* Rueda natal */}
-      {birthData.date && (
-        <View style={natCard.wheelRow}>
-          <NatalChartWheel birthData={birthData} natalChart={natalChart} size={160} />
-        </View>
-      )}
-
-      {/* Filas de planetas */}
-      {rows.map((r, i) => (
-        <View
-          key={r.label}
-          style={[
-            natCard.row,
-            { borderBottomColor: ACCENT + '12' },
-            i === rows.length - 1 && { borderBottomWidth: 0 },
-          ]}
-        >
-          <Text style={[natCard.symbol, { color: palette.primary }]}>{r.symbol}</Text>
-          <Text style={[natCard.rowLabel, { color: colors.textMuted }]}>{r.label}</Text>
-          <Text style={[natCard.value, { color: colors.text }]}>{r.value}</Text>
-        </View>
-      ))}
-
-      {/* Datos de nacimiento */}
-      {(birthData.date || birthData.locationName) && (
-        <View style={[natCard.birthRow, { borderTopColor: ACCENT + '12' }]}>
-          <Text style={[natCard.birthText, { color: colors.textMuted }]}>
-            {[birthData.date, birthData.time, birthData.locationName].filter(Boolean).join('  ·  ')}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
+  return <View style={[div.line, { backgroundColor: colors.border }]} />;
 };
 
-const natCard = StyleSheet.create({
-  container: { overflow: 'hidden' },
-  wheelRow:  { alignItems: 'center', paddingVertical: 16, marginBottom: 8 },
-  row:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, gap: 12 },
-  symbol:    { fontSize: 17, width: 22, textAlign: 'center' },
-  rowLabel:  { width: 36, fontSize: 12, fontWeight: '500', letterSpacing: 0.2 },
-  value:     { flex: 1, fontSize: 14 },
-  birthRow:  { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 4 },
-  birthText: { fontSize: 11, letterSpacing: 0.3, lineHeight: 18 },
-});
-
-// ─── Enneagram card ───────────────────────────────────────────────────────────
-
-const EnneagramCard: React.FC = () => {
-  const { colors } = useTheme();
-  const { enneagramType } = useOnboardingStore();
-  if (!enneagramType) return null;
-  const info = ENNEAGRAM_TYPES[enneagramType];
-
-  return (
-    <View style={ennCard.container}>
-      {/* Número grande — identidad tipográfica */}
-      <Text style={[ennCard.number, { color: ACCENT }]}>{enneagramType}</Text>
-      <View style={[ennCard.divider, { backgroundColor: ACCENT + '20' }]} />
-      <View style={ennCard.text}>
-        <Text style={[ennCard.name, { color: colors.text }]}>{info.name}</Text>
-        <Text style={[ennCard.tagline, { color: colors.textMuted }]}>{info.tagline}</Text>
-      </View>
-    </View>
-  );
-};
-
-const ennCard = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingVertical: 8 },
-  number:    { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 56, fontWeight: '300', width: 52, textAlign: 'center', lineHeight: 60 },
-  divider:   { width: 1, height: 44 },
-  text:      { flex: 1, gap: 4 },
-  name:      { fontSize: 17, fontWeight: '300', letterSpacing: 0.1 },
-  tagline:   { fontSize: 13, lineHeight: 19, letterSpacing: 0.1 },
-});
-
-// ─── Numerology card ──────────────────────────────────────────────────────────
-
-const NumerologyCard: React.FC = () => {
-  const { colors } = useTheme();
-  const { birthData, numerologyProfile } = useOnboardingStore();
-
-  if (!numerologyProfile) return null;
-
-  const lifePathMeaning     = NUMEROLOGY_MEANINGS[numerologyProfile.lifePath];
-  const personalYear        = birthData?.date ? calculatePersonalYear(birthData.date) : null;
-  const personalYearMeaning = personalYear ? NUMEROLOGY_MEANINGS[personalYear] : null;
-
-  return (
-    <View style={numCard.container}>
-      {/* Camino de vida — permanente */}
-      <View style={numCard.row}>
-        <Text style={[numCard.number, { color: ACCENT }]}>{numerologyProfile.lifePath}</Text>
-        <View style={[numCard.vline, { backgroundColor: ACCENT + '20' }]} />
-        <View style={numCard.textCol}>
-          <Text style={[numCard.rowTitle, { color: colors.text }]}>
-            Camino de vida{lifePathMeaning ? `  ·  ${lifePathMeaning.titleShort}` : ''}
-          </Text>
-          {lifePathMeaning && (
-            <Text style={[numCard.rowDesc, { color: colors.textMuted }]} numberOfLines={2}>
-              {lifePathMeaning.description}
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* Hairline separador */}
-      {personalYear && (
-        <View style={[numCard.separator, { backgroundColor: ACCENT + '15' }]} />
-      )}
-
-      {/* Año Personal — se recalcula cada 1 de enero */}
-      {personalYear && (
-        <View style={numCard.row}>
-          <Text style={[numCard.number, { color: ACCENT + 'BB' }]}>{personalYear}</Text>
-          <View style={[numCard.vline, { backgroundColor: ACCENT + '20' }]} />
-          <View style={numCard.textCol}>
-            <Text style={[numCard.rowTitle, { color: colors.text }]}>
-              Año Personal{personalYearMeaning ? `  ·  ${personalYearMeaning.titleShort}` : ''}
-            </Text>
-            {personalYearMeaning && (
-              <Text style={[numCard.rowDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                {personalYearMeaning.description}
-              </Text>
-            )}
-          </View>
-        </View>
-      )}
-    </View>
-  );
-};
-
-const numCard = StyleSheet.create({
-  container:  { gap: 0 },
-  row:        { flexDirection: 'row', alignItems: 'center', gap: 20, paddingVertical: 10 },
-  number:     { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 40, fontWeight: '300', width: 40, textAlign: 'center', lineHeight: 44 },
-  vline:      { width: 1, height: 36 },
-  textCol:    { flex: 1, gap: 3 },
-  rowTitle:   { fontSize: 14, fontWeight: '400', letterSpacing: 0.1 },
-  rowDesc:    { fontSize: 12, lineHeight: 18, letterSpacing: 0.1 },
-  separator:  { height: 1, marginVertical: 4 },
-});
-
-// ─── Constante tipográfica ────────────────────────────────────────────────────
-const GEORGIA = Platform.OS === 'ios' ? 'Georgia' : 'serif';
-const ACCENT   = '#FC8181';
-
-// ─── Tab selector interno ─────────────────────────────────────────────────────
-
-type InternalTab = 'chart' | 'ajustes';
-
-interface InternalTabBarProps {
-  active: InternalTab;
-  onChange: (tab: InternalTab) => void;
-}
-
-const InternalTabBar: React.FC<InternalTabBarProps> = ({ active, onChange }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={[itab.container, { borderBottomColor: ACCENT + '18' }]}>
-      {(['chart', 'ajustes'] as InternalTab[]).map((tab) => {
-        const isActive = active === tab;
-        const label = tab === 'chart' ? 'Chart' : 'Ajustes';
-        return (
-          <TouchableOpacity
-            key={tab}
-            style={itab.tab}
-            onPress={() => onChange(tab)}
-            activeOpacity={0.7}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isActive }}
-          >
-            <Text style={[itab.label, { color: isActive ? ACCENT : colors.textMuted }]}>
-              {label}
-            </Text>
-            {isActive && (
-              <View style={[itab.indicator, { backgroundColor: ACCENT }]} />
-            )}
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-};
-
-const itab = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    marginBottom: 4,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 14,
-    position: 'relative',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-  indicator: {
-    position: 'absolute',
-    bottom: -1,
-    left: '20%',
-    right: '20%',
-    height: 2,
-    borderRadius: 1,
-  },
+const div = StyleSheet.create({
+  line: { height: StyleSheet.hairlineWidth, marginVertical: 32 },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
-
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { firstName, tonePreferences, setTonePreference } = useOnboardingStore();
+  const { firstName, birthData, natalChart, enneagramType, numerologyProfile, tonePreferences, setTonePreference } = useOnboardingStore();
   const { isDark: isDarkSetting, setIsDark } = useSettingsStore();
-  const palette = { ...DEFAULT_PALETTE, primary: ACCENT };
 
-  const [activeTab, setActiveTab] = useState<InternalTab>('chart');
+  const palette = natalChart?.dominantPlanet ? PLANET_PALETTES[natalChart.dominantPlanet] : DEFAULT_PALETTE;
+  const accentColor = palette.primary;
 
-  const {
-    dailyQuote,
-    permissionGranted,
-    toggle:      toggleNotification,
-    updateTime,
-  } = useNotifications();
+  const { dailyQuote, permissionGranted, toggle: toggleNotification, updateTime } = useNotifications();
 
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempHour,       setTempHour]       = useState(dailyQuote.hour);
+  const [tempMinute,     setTempMinute]     = useState(dailyQuote.minute);
 
-  // ── Detección de cambios (dirty state) ────────────────────────────────────
-  // Snapshot de los ajustes al entrar a la pantalla
-  const snapshot = useRef({
-    spiritualTradition: tonePreferences.spiritualTradition,
-    languageStyle:      tonePreferences.languageStyle,
-    energy:             tonePreferences.energy,
-    lifeFocus:          tonePreferences.lifeFocus,
-    isDark:             isDarkSetting,
-    notifEnabled:       dailyQuote.enabled,
-    notifHour:          dailyQuote.hour,
-    notifMinute:        dailyQuote.minute,
-  });
+  // ── Dirty state — solo true si el usuario cambia algo en esta sesión ─────
+  const [isDirty, setIsDirty] = useState(false);
 
-  const isDirty =
-    tonePreferences.spiritualTradition !== snapshot.current.spiritualTradition ||
-    tonePreferences.languageStyle      !== snapshot.current.languageStyle      ||
-    tonePreferences.energy             !== snapshot.current.energy             ||
-    tonePreferences.lifeFocus          !== snapshot.current.lifeFocus          ||
-    isDarkSetting                      !== snapshot.current.isDark             ||
-    dailyQuote.enabled                 !== snapshot.current.notifEnabled       ||
-    dailyQuote.hour                    !== snapshot.current.notifHour          ||
-    dailyQuote.minute                  !== snapshot.current.notifMinute;
+  const markDirty = () => setIsDirty(true);
 
   const handleDone = () => {
-    // Actualizar snapshot para que isDirty vuelva a false
-    snapshot.current = {
-      spiritualTradition: tonePreferences.spiritualTradition,
-      languageStyle:      tonePreferences.languageStyle,
-      energy:             tonePreferences.energy,
-      lifeFocus:          tonePreferences.lifeFocus,
-      isDark:             isDarkSetting,
-      notifEnabled:       dailyQuote.enabled,
-      notifHour:          dailyQuote.hour,
-      notifMinute:        dailyQuote.minute,
-    };
+    setIsDirty(false);
     navigation.navigate('Today');
   };
 
-  const timePickerDate = (() => {
-    const d = new Date();
-    d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0);
-    return d;
-  })();
-
   const formattedTime = `${String(dailyQuote.hour).padStart(2, '0')}:${String(dailyQuote.minute).padStart(2, '0')}`;
+  const timePickerDate = (() => { const d = new Date(); d.setHours(tempHour, tempMinute, 0, 0); return d; })();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, []);
 
+  // ── Datos astrológicos ────────────────────────────────────────────────────
+  const sunSign        = getSunSign(birthData?.date ?? '');
+  const sunSignEs      = sunSign ? ZODIAC_SIGNS.find(z => z.name === sunSign.name)?.nameEs : null;
+  const moonSignEs     = natalChart?.moonSign ?? null;
+  const risingSignEs   = natalChart?.risingSign ?? null;
+  const dominantPlanet = natalChart?.dominantPlanet ?? null;
+
+  // ── Eneagrama ─────────────────────────────────────────────────────────────
+  const ennInfo = enneagramType ? ENNEAGRAM_TYPES[enneagramType] : null;
+
+  // ── Numerología ───────────────────────────────────────────────────────────
+  const lifePathMeaning     = numerologyProfile ? NUMEROLOGY_MEANINGS[numerologyProfile.lifePath] : null;
+  const personalYear        = birthData?.date ? calculatePersonalYear(birthData.date) : null;
+  const personalYearMeaning = personalYear ? NUMEROLOGY_MEANINGS[personalYear] : null;
+
+  // ── Fecha de nacimiento formateada ────────────────────────────────────────
+  const birthSummary = [birthData?.date, birthData?.time, birthData?.locationName].filter(Boolean).join('  ·  ');
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-      {/* ── BARRA SUPERIOR: nombre ──────────────────────────────────────── */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <Animated.View style={[styles.topBarInner, { opacity: fadeAnim }]}>
-          <Text style={[styles.pageTitle, { color: colors.text }]}>
-            {firstName ? firstName : 'Tú'}
-          </Text>
-        </Animated.View>
-        <View style={[styles.pageHairline, { backgroundColor: ACCENT + '20' }]} />
-
-        {/* ── TABS INTERNOS ──────────────────────────────────────────────── */}
-        <InternalTabBar active={activeTab} onChange={setActiveTab} />
-      </View>
-
+    <View style={[s.container, { backgroundColor: colors.background }]}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[s.scroll, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 24) + (isDirty ? 80 : 16) }]}
         showsVerticalScrollIndicator={false}
-        key={activeTab}
       >
 
-        {/* ══════════════════════ TAB: CHART ══════════════════════════════ */}
-        {activeTab === 'chart' && (
-          <>
-            <SectionHeader label="Carta natal" />
-            <NatalChartCard />
+        {/* ══ HERO: nombre ════════════════════════════════════════════════ */}
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <Text style={[s.heroName, { color: colors.text }]}>
+            {firstName || 'Tú'}
+          </Text>
+          {birthSummary ? (
+            <Text style={[s.heroBirth, { color: colors.textMuted }]}>{birthSummary}</Text>
+          ) : null}
+        </Animated.View>
 
-            <View style={styles.cardGap} />
+        <Divider />
 
-            <SectionHeader label="Eneagrama" />
-            <EnneagramCard />
+        {/* ══ SECCIÓN: TU MAPA ════════════════════════════════════════════ */}
+        <SectionHeader label="Tu mapa" />
 
-            <View style={styles.cardGap} />
-
-            <SectionHeader label="Numerología" />
-            <NumerologyCard />
-          </>
+        {/* Rueda natal centrada */}
+        {birthData?.date && (
+          <View style={s.wheelWrap}>
+            <NatalChartWheel birthData={birthData} natalChart={natalChart} size={148} />
+          </View>
         )}
 
-        {/* ══════════════════════ TAB: AJUSTES ════════════════════════════ */}
-        {activeTab === 'ajustes' && (
-          <>
-            {/* ── VOZ DE ENEA ─────────────────────────────────────────── */}
-            <SectionHeader label="Voz de Enea" />
-            <Text style={[styles.sectionIntro, { color: colors.textMuted }]}>
-              Así habla Enea contigo. Puedes cambiarlo cuando quieras.
+        {/* Big Three horizontal */}
+        <View style={[s.bigThree, { borderColor: colors.border }]}>
+          <BigThreeCell
+            glyph="☉" label="Sol"
+            value={sunSignEs ?? '—'}
+            color={PLANET_PALETTES.Sun.primary}
+          />
+          <View style={[s.bigThreeDivider, { backgroundColor: colors.border }]} />
+          <BigThreeCell
+            glyph="☽" label="Luna"
+            value={moonSignEs ?? '—'}
+            color={PLANET_PALETTES.Moon.primary}
+          />
+          <View style={[s.bigThreeDivider, { backgroundColor: colors.border }]} />
+          <BigThreeCell
+            glyph="↑" label="Asc"
+            value={risingSignEs ?? '—'}
+            color={colors.textSecondary}
+          />
+        </View>
+
+        {/* Eneagrama */}
+        {ennInfo && enneagramType && (
+          <View style={[s.dataRow, { borderBottomColor: colors.border }]}>
+            <Text style={[s.dataGlyph, { color: ACCENT }]}>{enneagramType}</Text>
+            <View style={[s.dataVline, { backgroundColor: colors.border }]} />
+            <View style={s.dataText}>
+              <Text style={[s.dataTitle, { color: colors.text }]}>{ennInfo.name}</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]}>{ennInfo.tagline}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Planeta dominante */}
+        {dominantPlanet && (
+          <View style={[s.dataRow, { borderBottomColor: colors.border }]}>
+            <Text style={[s.dataGlyph, { color: accentColor }]}>
+              {PLANET_SYMBOLS[dominantPlanet] ?? '◉'}
             </Text>
-
-            <View style={styles.toneGroup}>
-              <Text style={[styles.toneLabel, { color: colors.textSecondary }]}>Tradición espiritual</Text>
-              <ChipRow<SpiritualTradition>
-                items={SPIRITUAL_TRADITIONS.map((v) => ({ value: v }))}
-                selected={tonePreferences.spiritualTradition}
-                onSelect={(v) => setTonePreference('spiritualTradition', v)}
-                accentColor={palette.primary}
-              />
+            <View style={[s.dataVline, { backgroundColor: colors.border }]} />
+            <View style={s.dataText}>
+              <Text style={[s.dataTitle, { color: colors.text }]}>Planeta dominante</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]}>{dominantPlanet}</Text>
             </View>
-
-            <View style={styles.toneGroup}>
-              <Text style={[styles.toneLabel, { color: colors.textSecondary }]}>Estilo de lenguaje</Text>
-              <ChipRow<LanguageStyle>
-                items={LANGUAGE_STYLES.map((s) => ({ value: s.value, label: `${s.value} · ${s.desc}` }))}
-                selected={tonePreferences.languageStyle}
-                onSelect={(v) => setTonePreference('languageStyle', v)}
-                accentColor={palette.primary}
-              />
-            </View>
-
-            <View style={styles.toneGroup}>
-              <Text style={[styles.toneLabel, { color: colors.textSecondary }]}>Energía</Text>
-              <ChipRow<EnergyType>
-                items={ENERGY_TYPES.map((v) => ({ value: v }))}
-                selected={tonePreferences.energy}
-                onSelect={(v) => setTonePreference('energy', v)}
-                accentColor={palette.primary}
-              />
-            </View>
-
-            <View style={styles.toneGroup}>
-              <Text style={[styles.toneLabel, { color: colors.textSecondary }]}>Enfoque vital</Text>
-              <ChipRow<LifeFocus>
-                items={LIFE_FOCUSES.map((v) => ({ value: v }))}
-                selected={tonePreferences.lifeFocus}
-                onSelect={(v) => setTonePreference('lifeFocus', v)}
-                accentColor={palette.primary}
-              />
-            </View>
-
-            {/* ── AVISOS ─────────────────────────────────────────────── */}
-            <SectionHeader label="Avisos" />
-
-            {permissionGranted === false && (
-              <View style={[notifStyles.banner, { backgroundColor: ACCENT + '12', borderColor: ACCENT + '35' }]}>
-                <Text style={[notifStyles.bannerText, { color: colors.text }]}>
-                  Activa los permisos para recibir tu mensaje diario
-                </Text>
-                <TouchableOpacity
-                  onPress={() => Linking.openSettings()}
-                  style={[notifStyles.bannerBtn, { borderColor: ACCENT }]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[notifStyles.bannerBtnText, { color: ACCENT }]}>Abrir ajustes del sistema</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <SettingsRow
-              label="Cita diaria"
-              sublabel={dailyQuote.enabled ? `${formattedTime} · Cada día` : 'Pausada'}
-              right={
-                <View style={notifStyles.rightGroup}>
-                  <TouchableOpacity
-                    style={[notifStyles.timeBtn, { borderColor: dailyQuote.enabled ? ACCENT + '55' : colors.border }]}
-                    onPress={() => setShowTimePicker(true)}
-                    disabled={!dailyQuote.enabled}
-                    activeOpacity={0.7}
-                    accessibilityLabel={`Hora de notificación: ${formattedTime}`}
-                    accessibilityRole="button"
-                  >
-                    <Text style={[notifStyles.timeBtnText, { color: dailyQuote.enabled ? ACCENT : colors.textMuted }]}>
-                      {formattedTime}
-                    </Text>
-                  </TouchableOpacity>
-                  <ENEAToggle
-                    value={dailyQuote.enabled}
-                    onToggle={() => toggleNotification(!dailyQuote.enabled)}
-                    accentColor={palette.primary}
-                  />
-                </View>
-              }
-            />
-
-            <Modal
-              visible={showTimePicker}
-              transparent
-              animationType="fade"
-              onRequestClose={() => setShowTimePicker(false)}
-            >
-              <TouchableOpacity
-                style={notifStyles.modalOverlay}
-                onPress={() => setShowTimePicker(false)}
-                activeOpacity={1}
-              >
-                <View
-                  style={[notifStyles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
-                  onStartShouldSetResponder={() => true}
-                >
-                  <View style={notifStyles.modalHeader}>
-                    <TouchableOpacity onPress={() => setShowTimePicker(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                      <Text style={[notifStyles.modalAction, { color: colors.textMuted }]}>Cancelar</Text>
-                    </TouchableOpacity>
-                    <Text style={[notifStyles.modalTitle, { color: colors.text }]}>Hora del aviso</Text>
-                    <TouchableOpacity onPress={() => setShowTimePicker(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                      <Text style={[notifStyles.modalAction, { color: ACCENT, fontWeight: '600' }]}>Listo</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={timePickerDate}
-                    mode="time"
-                    is24Hour
-                    display="spinner"
-                    onChange={(_event, selectedDate) => {
-                      if (!selectedDate) return;
-                      updateTime(selectedDate.getHours(), selectedDate.getMinutes());
-                      if (Platform.OS === 'android') setShowTimePicker(false);
-                    }}
-                    style={notifStyles.picker}
-                    {...(Platform.OS === 'ios' && { textColor: colors.text })}
-                  />
-                </View>
-              </TouchableOpacity>
-            </Modal>
-
-            {/* ── APARIENCIA ─────────────────────────────────────────── */}
-            <SectionHeader label="Apariencia" />
-
-            <SettingsRow
-              label="Modo oscuro"
-              sublabel={isDark ? 'Activado' : 'Modo claro activo'}
-              right={
-                <ENEAToggle
-                  value={isDarkSetting}
-                  onToggle={() => setIsDark(!isDarkSetting)}
-                  accentColor={palette.primary}
-                />
-              }
-            />
-
-            {/* ── ACERCA DE ──────────────────────────────────────────── */}
-            <SectionHeader label="Acerca de" />
-
-            <SettingsRow
-              label="Versión"
-              right={<Text style={[styles.metaText, { color: colors.textMuted }]}>1.0.0</Text>}
-            />
-            <SettingsRow
-              label="Política de privacidad"
-              right={
-                <TouchableOpacity
-                  onPress={() => Linking.openURL('https://hianadee.github.io/enea/privacy-policy.html')}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Abrir política de privacidad"
-                  accessibilityRole="link"
-                >
-                  <Text style={[styles.linkText, { color: ACCENT }]}>Ver →</Text>
-                </TouchableOpacity>
-              }
-            />
-            <SettingsRow
-              label="Soporte"
-              right={
-                <TouchableOpacity
-                  onPress={() => Linking.openURL('mailto:hi@astroenea.com')}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Enviar email de soporte"
-                  accessibilityRole="link"
-                >
-                  <Text style={[styles.linkText, { color: ACCENT }]}>hi@astroenea.com →</Text>
-                </TouchableOpacity>
-              }
-            />
-          </>
+          </View>
         )}
 
-        {/* Footer ornamental */}
-        <View style={styles.footer}>
-          <View style={[styles.footerDot, { backgroundColor: ACCENT + '40' }]} />
-          <View style={[styles.footerLine, { backgroundColor: ACCENT + '18' }]} />
-          <Text style={[styles.footerEnea, { color: ACCENT + '50' }]}>ENEA</Text>
-          <View style={[styles.footerLine, { backgroundColor: ACCENT + '18' }]} />
-          <View style={[styles.footerDot, { backgroundColor: ACCENT + '40' }]} />
+        {/* Camino de vida */}
+        {numerologyProfile && lifePathMeaning && (
+          <View style={[s.dataRow, { borderBottomColor: colors.border }]}>
+            <Text style={[s.dataGlyph, { color: ACCENT }]}>{numerologyProfile.lifePath}</Text>
+            <View style={[s.dataVline, { backgroundColor: colors.border }]} />
+            <View style={s.dataText}>
+              <Text style={[s.dataTitle, { color: colors.text }]}>Camino de vida  ·  {lifePathMeaning.titleShort}</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]} numberOfLines={2}>{lifePathMeaning.description}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Año Personal */}
+        {personalYear && personalYearMeaning && (
+          <View style={[s.dataRow, { borderBottomColor: colors.border }, s.dataRowLast]}>
+            <Text style={[s.dataGlyph, { color: ACCENT }]}>{personalYear}</Text>
+            <View style={[s.dataVline, { backgroundColor: colors.border }]} />
+            <View style={s.dataText}>
+              <Text style={[s.dataTitle, { color: colors.text }]}>Año Personal  ·  {personalYearMeaning.titleShort}</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]} numberOfLines={2}>{personalYearMeaning.description}</Text>
+            </View>
+          </View>
+        )}
+
+        <Divider />
+
+        {/* ══ SECCIÓN: VOZ DE ENEA ════════════════════════════════════════ */}
+        <SectionHeader label="Voz de Enea" />
+        <Text style={[s.sectionIntro, { color: colors.text }]}>
+          Así habla Enea contigo. Cámbialo cuando quieras.
+        </Text>
+
+        <View style={s.toneBlock}>
+          <ToneGroup label="Tradición espiritual">
+            <ChipRow<SpiritualTradition>
+              items={SPIRITUAL_TRADITIONS.map(v => ({ value: v }))}
+              selected={tonePreferences.spiritualTradition}
+              onSelect={v => { setTonePreference('spiritualTradition', v); markDirty(); }}
+              accentColor={ACCENT}
+            />
+          </ToneGroup>
+          <ToneGroup label="Lenguaje">
+            <ChipRow<LanguageStyle>
+              items={LANGUAGE_STYLES.map(s => ({ value: s.value, label: `${s.value} · ${s.desc}` }))}
+              selected={tonePreferences.languageStyle}
+              onSelect={v => { setTonePreference('languageStyle', v); markDirty(); }}
+              accentColor={ACCENT}
+            />
+          </ToneGroup>
+          <ToneGroup label="Energía">
+            <ChipRow<EnergyType>
+              items={ENERGY_TYPES.map(v => ({ value: v }))}
+              selected={tonePreferences.energy}
+              onSelect={v => { setTonePreference('energy', v); markDirty(); }}
+              accentColor={ACCENT}
+            />
+          </ToneGroup>
+          <ToneGroup label="Enfoque vital">
+            <ChipRow<LifeFocus>
+              items={LIFE_FOCUSES.map(v => ({ value: v }))}
+              selected={tonePreferences.lifeFocus}
+              onSelect={v => { setTonePreference('lifeFocus', v); markDirty(); }}
+              accentColor={ACCENT}
+            />
+          </ToneGroup>
+        </View>
+
+        <Divider />
+
+        {/* ══ SECCIÓN: AVISOS ═════════════════════════════════════════════ */}
+        <SectionHeader label="Avisos" />
+
+        {permissionGranted === false && (
+          <View style={[s.permBanner, { backgroundColor: ACCENT + '12', borderColor: ACCENT + '35' }]}>
+            <Text style={[s.permBannerText, { color: colors.text }]}>
+              Activa los permisos para recibir tu mensaje diario
+            </Text>
+            <TouchableOpacity
+              onPress={() => Linking.openSettings()}
+              style={[s.permBannerBtn, { borderColor: ACCENT }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[s.permBannerBtnText, { color: ACCENT }]}>Abrir ajustes del sistema</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <Row
+          label="Cita diaria"
+          sublabel={dailyQuote.enabled ? `${formattedTime} · Cada día` : 'Pausada'}
+          last
+          right={
+            <View style={s.notifRight}>
+              <TouchableOpacity
+                style={[s.timeBtn, { borderColor: dailyQuote.enabled ? ACCENT + '55' : colors.border }]}
+                onPress={() => { setTempHour(dailyQuote.hour); setTempMinute(dailyQuote.minute); setShowTimePicker(true); }}
+                disabled={!dailyQuote.enabled}
+                activeOpacity={0.7}
+                accessibilityLabel={`Hora de notificación: ${formattedTime}`}
+                accessibilityRole="button"
+              >
+                <Text style={[s.timeBtnText, { color: dailyQuote.enabled ? ACCENT : colors.textMuted }]}>
+                  {formattedTime}
+                </Text>
+              </TouchableOpacity>
+              <ENEAToggle
+                value={dailyQuote.enabled}
+                onToggle={() => { toggleNotification(!dailyQuote.enabled); markDirty(); }}
+                accentColor={ACCENT}
+                accessibilityLabel="Activar cita diaria"
+              />
+            </View>
+          }
+        />
+
+        <Divider />
+
+        {/* ══ SECCIÓN: APARIENCIA ═════════════════════════════════════════ */}
+        <SectionHeader label="Apariencia" />
+
+        <Row
+          label="Modo oscuro"
+          sublabel={isDarkSetting ? 'Activado' : 'Modo claro activo'}
+          last
+          right={
+            <ENEAToggle
+              value={isDarkSetting}
+              onToggle={() => { setIsDark(!isDarkSetting); markDirty(); }}
+              accentColor={ACCENT}
+            />
+          }
+        />
+
+        <Divider />
+
+        {/* ══ SECCIÓN: INFO ═══════════════════════════════════════════════ */}
+        <SectionHeader label="Info" />
+
+        <Row
+          label="Versión"
+          right={<Text style={[s.metaText, { color: colors.textMuted }]}>1.0.0</Text>}
+        />
+        <Row
+          label="Política de privacidad"
+          right={
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://hianadee.github.io/enea/privacy-policy.html')}
+              activeOpacity={0.7}
+              accessibilityLabel="Abrir política de privacidad"
+              accessibilityRole="link"
+            >
+              <Text style={[s.linkText, { color: ACCENT }]}>Ver →</Text>
+            </TouchableOpacity>
+          }
+        />
+        <Row
+          label="Soporte"
+          last
+          right={
+            <TouchableOpacity
+              onPress={() => Linking.openURL('mailto:hi@astroenea.com')}
+              activeOpacity={0.7}
+              accessibilityLabel="Enviar email de soporte"
+              accessibilityRole="link"
+            >
+              <Text style={[s.linkText, { color: ACCENT }]}>hi@astroenea.com →</Text>
+            </TouchableOpacity>
+          }
+        />
+
+        {/* Footer */}
+        <View style={s.footer}>
+          <View style={[s.footerDot, { backgroundColor: ACCENT + '40' }]} />
+          <View style={[s.footerLine, { backgroundColor: ACCENT + '18' }]} />
+          <Text style={[s.footerEnea, { color: ACCENT }]}>ASTRO ENEA</Text>
+          <View style={[s.footerLine, { backgroundColor: ACCENT + '18' }]} />
+          <View style={[s.footerDot, { backgroundColor: ACCENT + '40' }]} />
         </View>
 
       </ScrollView>
 
-      {/* ── TIRA HECHO: pegada sobre la tab bar, solo en Ajustes con cambios */}
-      {activeTab === 'ajustes' && isDirty && (
+      {/* ── Time picker modal ──────────────────────────────────────────────── */}
+      <Modal visible={showTimePicker} transparent animationType="fade" onRequestClose={() => setShowTimePicker(false)}>
+        <TouchableOpacity style={s.modalOverlay} onPress={() => setShowTimePicker(false)} activeOpacity={1}>
+          <View style={[s.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]} onStartShouldSetResponder={() => true}>
+            <View style={s.modalHeader}>
+              <TouchableOpacity onPress={() => setShowTimePicker(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel="Cancelar">
+                <Text style={[s.modalAction, { color: colors.textMuted }]} accessibilityElementsHidden={true}>Cancelar</Text>
+              </TouchableOpacity>
+              <Text style={[s.modalTitle, { color: colors.text }]}>Hora del aviso</Text>
+              <TouchableOpacity
+                onPress={() => { updateTime(tempHour, tempMinute); setShowTimePicker(false); markDirty(); }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Listo"
+              >
+                <Text style={[s.modalAction, { color: ACCENT, fontWeight: '600' }]} accessibilityElementsHidden={true}>Listo</Text>
+              </TouchableOpacity>
+            </View>
+            <DateTimePicker
+              value={timePickerDate}
+              mode="time"
+              is24Hour
+              display="spinner"
+              onChange={(_event, selectedDate) => {
+                if (!selectedDate) return;
+                setTempHour(selectedDate.getHours());
+                setTempMinute(selectedDate.getMinutes());
+                if (Platform.OS === 'android') {
+                  updateTime(selectedDate.getHours(), selectedDate.getMinutes());
+                  setShowTimePicker(false);
+                  markDirty();
+                }
+              }}
+              style={{ width: '100%' }}
+              {...(Platform.OS === 'ios' && { textColor: colors.text })}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── Tira "Hecho" flotante ─────────────────────────────────────────── */}
+      {isDirty && (
         <Animated.View
           style={[
-            styles.doneStrip,
-            {
-              bottom: Math.max(insets.bottom, 12) + 74,
-              backgroundColor: colors.background,
-              borderTopColor: ACCENT + '28',
-            },
+            s.doneStrip,
+            { bottom: 0, backgroundColor: colors.surfaceElevated, borderTopColor: ACCENT + '28' },
             { opacity: fadeAnim },
           ]}
         >
-          <Text style={[styles.doneStripLabel, { color: colors.textMuted }]}>
-            Cambios sin guardar
-          </Text>
+          <Text style={[s.doneLabel, { color: colors.text }]}>Cambios sin guardar</Text>
           <TouchableOpacity
             onPress={handleDone}
             activeOpacity={0.7}
@@ -755,7 +542,7 @@ export const SettingsScreen: React.FC = () => {
             accessibilityLabel="Guardar cambios y volver a Hoy"
             accessibilityRole="button"
           >
-            <Text style={[styles.doneBtnText, { color: ACCENT }]}>Hecho</Text>
+            <Text style={[s.doneBtnText, { color: ACCENT }]}>Hecho</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -763,128 +550,139 @@ export const SettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+// ─── BigThreeCell ─────────────────────────────────────────────────────────────
+const BigThreeCell: React.FC<{ glyph: string; label: string; value: string; color: string }> = ({ glyph, label, value, color }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={bt.cell}>
+      <Text style={[bt.glyph, { color }]}>{glyph}</Text>
+      <Text style={[bt.label, { color: colors.textMuted }]}>{label}</Text>
+      <Text style={[bt.value, { color: colors.text }]}>{value}</Text>
+    </View>
+  );
+};
+
+const bt = StyleSheet.create({
+  cell:  { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 14 },
+  glyph: { fontSize: 18 },
+  label: { ...TYPOGRAPHY.presets.micro },
+  value: { ...TYPOGRAPHY.presets.bodySmMedium, textAlign: 'center' },
+});
+
+// ─── ToneGroup ────────────────────────────────────────────────────────────────
+const ToneGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[tg.group, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[tg.label, { color: colors.textSecondary }]}>{label}</Text>
+      {children}
+    </View>
+  );
+};
+
+const tg = StyleSheet.create({
+  group: {
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  label: { ...TYPOGRAPHY.presets.label },
+});
+
+// ─── Estilos principales ─────────────────────────────────────────────────────
+const s = StyleSheet.create({
   container: { flex: 1 },
 
-  // ── Barra superior fija ────────────────────────────────────────────────────
-  topBar: {
-    paddingHorizontal: 28,
+  scroll: {
+    paddingHorizontal: 24,
   },
-  topBarInner: {
-    paddingBottom: 14,
-  },
-  pageTitle: {
-    fontFamily: GEORGIA,
-    fontSize: 44,
+
+  // ── Hero ────────────────────────────────────────────────────────────────────
+  heroName: {
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 48,
     fontWeight: '300',
     letterSpacing: -0.5,
     fontStyle: 'italic',
-    lineHeight: 48,
+    lineHeight: 52,
   },
-  pageHairline: {
-    height: 1,
-    marginBottom: 0,
+  heroBirth: {
+    ...TYPOGRAPHY.presets.caption,
+    marginTop: 6,
+    letterSpacing: 0.2,
   },
 
-  // ── Tira "Hecho" pegada a la tab bar ──────────────────────────────────────
-  doneStrip: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 48,
+  // ── Tu mapa ─────────────────────────────────────────────────────────────────
+  wheelWrap: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  bigThree: {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  bigThreeDivider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+  },
+  dataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 28,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 16,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  doneStripLabel: {
-    fontSize: 12,
-    letterSpacing: 0.2,
+  dataRowLast: {
+    borderBottomWidth: 0,
   },
-  doneBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+  dataGlyph: {
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 32,
+    fontWeight: '300',
+    width: 38,
+    textAlign: 'center',
+    lineHeight: 36,
   },
+  dataVline: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+  },
+  dataText: { flex: 1, gap: 2 },
+  dataTitle: { ...TYPOGRAPHY.presets.body },
+  dataDesc:  { ...TYPOGRAPHY.presets.caption },
 
-  scroll: {
-    paddingHorizontal: 28,
-    paddingBottom: 48,
-  },
-
-  // ── Cards ──────────────────────────────────────────────────────────────────
-  cardGap: { height: 12 },
-
-  // ── Voz de Enea ────────────────────────────────────────────────────────────
+  // ── Voz de Enea ─────────────────────────────────────────────────────────────
   sectionIntro: {
-    fontSize: 13,
-    lineHeight: 20,
-    letterSpacing: 0.1,
-    marginTop: -4,
-    marginBottom: 20,
+    ...TYPOGRAPHY.presets.bodyLg,
+    marginBottom: 16,
+    marginTop: 4,
   },
-  toneGroup: {
-    marginBottom: 20,
-    gap: 8,
-  },
-  toneLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
+  toneBlock: { gap: 12 },
 
-  // ── Genéricos ──────────────────────────────────────────────────────────────
-  metaText: { fontSize: 13 },
-  linkText:  { fontSize: 13, fontWeight: '500' },
-
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 48,
-    gap: 10,
-  },
-  footerDot:  { width: 3, height: 3, borderRadius: 2 },
-  footerLine: { width: 28, height: 1 },
-  footerEnea: { fontSize: 10, fontWeight: '600', letterSpacing: 2 },
-
-});
-
-// ─── Notification-specific styles ─────────────────────────────────────────────
-
-const notifStyles = StyleSheet.create({
-  // Banner de permisos denegados
-  banner: {
+  // ── Avisos ───────────────────────────────────────────────────────────────────
+  permBanner: {
     borderRadius: 12,
     borderWidth: 1,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    padding: 14,
+    gap: 10,
+    marginBottom: 12,
   },
-  bannerText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    lineHeight: 20,
-  },
-  bannerBtn: {
+  permBannerText: { ...TYPOGRAPHY.presets.bodySm, lineHeight: 20 },
+  permBannerBtn: {
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 100,
-    paddingVertical: 6,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
   },
-  bannerBtnText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '600',
-  },
+  permBannerBtnText: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '600' },
 
-  // Fila derecha: botón de hora + toggle
-  rightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
+  notifRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timeBtn: {
     borderWidth: 1,
     borderRadius: 8,
@@ -893,18 +691,29 @@ const notifStyles = StyleSheet.create({
     minWidth: 52,
     alignItems: 'center',
   },
-  timeBtnText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
+  timeBtnText: { ...TYPOGRAPHY.presets.bodySmMedium, letterSpacing: 0.5 },
 
-  // Modal del time picker
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
+  // ── Genéricos ────────────────────────────────────────────────────────────────
+  metaText: { ...TYPOGRAPHY.presets.bodySm },
+  linkText:  { ...TYPOGRAPHY.presets.bodySm, fontWeight: '500' },
+
+  // ── Done strip ───────────────────────────────────────────────────────────────
+  doneStrip: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
   },
+  doneLabel:   { fontSize: 15, fontWeight: '500', letterSpacing: 0.1 },
+  doneBtnText: { fontSize: 17, fontWeight: '700', letterSpacing: 0.2 },
+
+  // ── Modal ─────────────────────────────────────────────────────────────────────
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalCard: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -921,14 +730,18 @@ const notifStyles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  modalTitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '500',
+  modalTitle:  { ...TYPOGRAPHY.presets.body, fontWeight: '500' },
+  modalAction: { ...TYPOGRAPHY.presets.body },
+
+  // ── Footer ────────────────────────────────────────────────────────────────────
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    gap: 10,
   },
-  modalAction: {
-    fontSize: TYPOGRAPHY.sizes.md,
-  },
-  picker: {
-    width: '100%',
-  },
+  footerDot:  { width: 3, height: 3, borderRadius: 2 },
+  footerLine: { width: 28, height: 1 },
+  footerEnea: { fontSize: 10, fontWeight: '600', letterSpacing: 2 },
 });

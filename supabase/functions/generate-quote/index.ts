@@ -78,6 +78,7 @@ function sanitizeInt(value: unknown, fallback: number): number {
 
 interface QuoteRequest {
   firstName:           unknown;
+  genderPreference?:   unknown;
   enneatype:           unknown;
   enneatypeName:       unknown;
   enneaPassion:        unknown;
@@ -99,6 +100,7 @@ interface QuoteRequest {
 
 interface SanitizedRequest {
   firstName:           string;
+  genderPreference:    'femenino' | 'masculino' | 'neutro';
   enneatype:           number;
   enneatypeName:       string;
   enneaPassion:        string;
@@ -129,8 +131,14 @@ interface QuoteResponse {
 function sanitizePayload(raw: QuoteRequest): SanitizedRequest {
   const enneatype = sanitizeInt(raw.enneatype, 9);
 
+  const rawGender = sanitize(raw.genderPreference, 20).toLowerCase();
+  const genderPreference = (['femenino', 'masculino', 'neutro'] as const).includes(rawGender as any)
+    ? (rawGender as 'femenino' | 'masculino' | 'neutro')
+    : 'neutro';
+
   return {
     firstName:          sanitize(raw.firstName, 50) || 'amigo',
+    genderPreference,
     enneatype:          Math.min(Math.max(enneatype, 1), 9), // solo 1–9
     enneatypeName:      sanitize(raw.enneatypeName, 60),
     enneaPassion:       sanitize(raw.enneaPassion, 60),
@@ -189,10 +197,17 @@ function buildUserPrompt(ctx: SanitizedRequest): string {
     'Elevador':   'La frase debe expandir, abrir posibilidades, dar perspectiva.',
   };
 
+  const genderInstruction: Record<string, string> = {
+    'femenino':  'Usa género gramatical femenino en toda la frase y explicación (ej: "estás lista", "eres capaz", "cansada").',
+    'masculino': 'Usa género gramatical masculino en toda la frase y explicación (ej: "estás listo", "eres capaz", "cansado").',
+    'neutro':    'Evita adjetivos predicativos con género. Usa verbos puros ("sientes", "cargas", "puedes"), sustantivos abstractos ("hay en ti un peso", "la claridad que traes") y metáforas donde la imagen no tenga género. Nunca uses formas como "estás listo/a", "eres fuerte/fuerte". La frase debe sonar completa sin revelar género.',
+  };
+
   return `Genera la frase diaria para esta persona:
 
 PERSONA
 - Nombre: ${ctx.firstName}
+- Género gramatical: ${ctx.genderPreference} — ${genderInstruction[ctx.genderPreference]}
 - Fecha de hoy: ${ctx.todayDate}
 
 ENEAGRAMA (Naranjo)
@@ -300,7 +315,7 @@ serve(async (req: Request) => {
         'content-type':      'application/json',
       },
       body: JSON.stringify({
-        model:      'claude-opus-4-5',
+        model:      'claude-sonnet-4-6',
         max_tokens: 900,
         system:     buildSystemPrompt(),
         messages: [

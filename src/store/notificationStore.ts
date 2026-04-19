@@ -60,8 +60,20 @@ export const useNotificationStore = create<NotificationState>()(
         set((s) => ({ dailyQuote: { ...s.dailyQuote, scheduledId } })),
     }),
     {
-      name:    'enea-notifications',
+      name:    'astro-enea-notifications',
       storage: createJSONStorage(() => AsyncStorage),
+      // Migración: leer key antigua 'enea-notifications' si la nueva no existe
+      migrate: async (persistedState: unknown) => {
+        if (persistedState) return persistedState;
+        try {
+          const old = await AsyncStorage.getItem('enea-notifications');
+          if (old) {
+            await AsyncStorage.removeItem('enea-notifications');
+            return JSON.parse(old);
+          }
+        } catch {}
+        return persistedState;
+      },
     },
   ),
 );

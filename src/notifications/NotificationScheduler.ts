@@ -1,7 +1,7 @@
 /**
  * NotificationScheduler.ts
  * Programación y cancelación de notificaciones locales diarias con expo-notifications.
- * Todas las notificaciones ENEA se identifican con el prefijo ENEA_ID_PREFIX.
+ * Todas las notificaciones de Astro Enea se identifican con el prefijo ENEA_ID_PREFIX.
  */
 
 import * as Notifications from 'expo-notifications';
@@ -9,8 +9,8 @@ import { Platform } from 'react-native';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CHANNEL_ID    = 'enea-daily-quote';
-const ENEA_ID_PREFIX = 'enea-dq-';
+const CHANNEL_ID     = 'astro-enea-daily-quote';
+const ENEA_ID_PREFIX = 'astro-enea-dq-';
 
 // ─── Android Channel ──────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export async function cancelNotification(id: string): Promise<void> {
 }
 
 /**
- * Cancela TODAS las notificaciones diarias de ENEA.
+ * Cancela TODAS las notificaciones diarias de Astro Enea.
  * Útil antes de reprogramar o al desactivar la feature.
  */
 export async function cancelAllDailyQuoteNotifications(): Promise<void> {
@@ -76,7 +76,7 @@ export async function cancelAllDailyQuoteNotifications(): Promise<void> {
 // ─── Query ────────────────────────────────────────────────────────────────────
 
 /**
- * Devuelve las notificaciones ENEA que siguen programadas en el sistema.
+ * Devuelve las notificaciones de Astro Enea que siguen programadas en el sistema.
  */
 export async function getScheduledDailyQuotes(): Promise<Notifications.NotificationRequest[]> {
   const all = await Notifications.getAllScheduledNotificationsAsync();

@@ -1,6 +1,6 @@
 /**
  * promptUtils.ts
- * Sistema de prompts mejorado para GPT-4o en ENEA.
+ * Sistema de prompts mejorado para GPT-4o en Astro Enea.
  * Integra astrología (Sol/Luna/Ascendente + tránsitos), Eneagrama de Claudio Naranjo
  * y numerología (Camino de Vida + Año Personal + Día Universal).
  */

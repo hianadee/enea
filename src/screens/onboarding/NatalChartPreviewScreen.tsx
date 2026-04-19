@@ -6,15 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NatalChartWheel } from '@/design-system/components/NatalChartWheel';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { PLANET_PALETTES } from '@/constants/theme';
+import { PLANET_PALETTES, FONT_FAMILY, TYPOGRAPHY } from '@/constants/theme';
 import { OnboardingStackParamList } from '@/navigation/types';
 import { calculateFullNatalChart, signNameEs, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { NatalChart } from '@/types';
@@ -23,7 +20,8 @@ type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'NatalChartPreview'>;
 };
 
-const TOTAL = 10;
+const TOTAL  = 10;
+const ACCENT = '#FC8181';
 
 export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
   const { birthData, setNatalChart, setStep } = useOnboardingStore();
@@ -62,7 +60,7 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
     const parts = [`${parseInt(day, 10)} de ${mName} de ${year}`];
     if (birthData.time) parts.push(birthData.time + 'h');
     if (birthData.locationName) parts.push(birthData.locationName);
-    return parts.join(' · ');
+    return parts.join(' • ');
   }, [birthData]);
 
   const sun  = chart?.planets?.find(p => p.name === 'Sun');
@@ -113,11 +111,29 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         ) : (
           <>
+            {/* Pre-título */}
+            <Text style={styles.preTitle}>TUS ASTROS</Text>
+
+            {/* Título principal */}
             <Text style={styles.heading}>Tu carta natal</Text>
-            <Text style={styles.subhead}>
-              Este es el cielo en el momento en que naciste. Sol, Luna y Ascendente son los tres puntos que más te definen.
-            </Text>
-            <Text style={styles.birthSummary}>{birthSummary}</Text>
+
+            {/* Fecha · hora · lugar en coral, pegado al título */}
+            {birthSummary ? (
+              <Text style={styles.birthSummary}>{birthSummary}</Text>
+            ) : null}
+
+            {/* Texto introductorio — 32px de distancia */}
+            <View style={styles.introBlock}>
+              <Text style={styles.introParagraph}>
+                El cielo exacto del momento en que naciste.
+              </Text>
+              <Text style={styles.introParagraph}>
+                Sol, Luna y Ascendente — los tres puntos que más te definen.
+              </Text>
+              <Text style={styles.introParagraph}>
+                Sus movimientos actuales activan ese mapa: marcan tus momentos.
+              </Text>
+            </View>
 
             {/* Chart wheel */}
             <View style={styles.wheelContainer}>
@@ -179,7 +195,7 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
                       <Text style={styles.planetPos}>
                         {p.degreesInSign}°{String(p.minutesInSign).padStart(2, '0')}'
                       </Text>
-                      <Text style={[styles.planetSign, { color: p.color + 'AA' }]}>
+                      <Text style={[styles.planetSign, { color: p.color }]}>
                         {signNameEs(p.sign)}
                       </Text>
                     </View>
@@ -243,14 +259,40 @@ const BigThreeItem: React.FC<BigThreeItemProps> = ({
 );
 
 const bigThreeStyles = StyleSheet.create({
-  item: { flex: 1, alignItems: 'center', gap: 3 },
-  glyph: { fontSize: 22 },
-  label: { fontSize: 14, color: colors.fg.secondary, letterSpacing: 0.4, textTransform: 'uppercase' },
-  description: { fontSize: 14, color: '#8A8A9A', textAlign: 'center', lineHeight: 21 },
-  signRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  signSymbol: { fontSize: 14, color: '#8A8A9A' },
-  sign: { fontSize: 14, color: colors.fg.primary, fontWeight: '500' },
-  deg: { fontSize: 14, color: colors.fg.secondary },
+  item: { flex: 1, alignItems: 'center', paddingHorizontal: 6 },
+
+  // Nivel 1 — símbolo del planeta (decorativo, grande)
+  glyph: { fontSize: 24, marginBottom: 10 },
+
+  // Nivel 2 — categoría (SOL / LUNA / ASCENDENTE)
+  label: {
+    ...TYPOGRAPHY.presets.label,
+    color: '#8B8A9E',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+
+  // Nivel 3 — contexto breve (muted, caption)
+  description: {
+    ...TYPOGRAPHY.presets.caption,
+    color: '#7D7C8F',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+
+  // Nivel 4 — EL DATO: nombre del signo (hero de cada columna)
+  signRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
+  signSymbol: { fontSize: 13, color: '#8B8A9E' },
+  sign: {
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 17,
+    fontWeight: '400',
+    color: '#F0EEF6',
+  },
+
+  // Nivel 5 — grados (técnico, secundario)
+  deg: { fontSize: 12, color: '#7D7C8F', letterSpacing: 0.3 },
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -285,12 +327,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   backBtn: { width: 40, height: 44, justifyContent: 'center' },
-  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  backArrow: { color: '#F0EEF6', fontSize: 22 },
   headerSpacer: { width: 40 },
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -308,41 +350,59 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   loadingHeading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 26,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     lineHeight: 36,
     textAlign: 'center',
     paddingHorizontal: 16,
   },
   loadingSubtext: {
     fontSize: 14,
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     textAlign: 'center',
   },
   errorText: { color: '#666666', fontSize: 14, textAlign: 'center' },
+  // ── Encabezado de sección ─────────────────────────────────────────────────
+  preTitle: {
+    fontSize: 11,
+    color: '#8B8A9E',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    marginBottom: 8,
+  },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 32,
-    color: colors.fg.primary,
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 36,
+    color: '#F0EEF6',
+    fontWeight: '300',
+    letterSpacing: -0.3,
     alignSelf: 'flex-start',
-    marginBottom: 6,
-    marginTop: 8,
+    marginBottom: 8,
+    lineHeight: 42,
   },
-  subhead: {
-    fontSize: 14,
-    color: colors.fg.secondary,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-    lineHeight: 20,
-    fontWeight: '500',
-  },
+
+  // ── Fecha en coral, vinculada al título ───────────────────────────────────
   birthSummary: {
     fontSize: 14,
-    color: colors.fg.secondary,
+    color: ACCENT,
     alignSelf: 'flex-start',
+    lineHeight: 21,
+    letterSpacing: 0.1,
+  },
+
+  // ── Bloque de texto introductorio — 32px del birth summary ────────────────
+  introBlock: {
+    alignSelf: 'stretch',
+    marginTop: 24,
     marginBottom: 28,
-    lineHeight: 20,
+    gap: 12,
+  },
+  introParagraph: {
+    ...TYPOGRAPHY.presets.bodyLg,
+    color: '#8B8A9E',
   },
   wheelContainer: {
     width: 300,
@@ -354,51 +414,51 @@ const styles = StyleSheet.create({
   bigThreeRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#111111',
+    backgroundColor: '#111118',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: '#2A2A3A',
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    marginBottom: 28,
+    paddingVertical: 20,
+    paddingHorizontal: 4,
+    marginBottom: 32,
     width: '100%',
   },
   divider: {
     width: StyleSheet.hairlineWidth,
     alignSelf: 'stretch',
-    backgroundColor: colors.border,
+    backgroundColor: '#2A2A3A',
     marginVertical: 4,
   },
   planetList: {
     width: '100%',
-    gap: 2,
     marginBottom: 16,
   },
   planetListTitle: {
-    fontSize: 14,
-    color: colors.fg.secondary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 10,
+    ...TYPOGRAPHY.presets.label,
+    color: '#8B8A9E',
+    marginBottom: 14,
   },
   planetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 7,
+    paddingVertical: 11,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1A1A1A',
-    gap: 10,
+    borderBottomColor: '#1C1C26',
   },
-  planetSymbol: { fontSize: 16, width: 20, textAlign: 'center' },
-  planetName: { width: 80, fontSize: 14, color: colors.fg.secondary },
-  planetPos: { flex: 1, fontSize: 14, color: '#AAAAAA' },
-  planetSign: { fontSize: 14 },
+  // Col 1 — símbolo del planeta (colored)
+  planetSymbol: { fontSize: 16, width: 28, textAlign: 'center' },
+  // Col 2 — nombre (dato principal → color text)
+  planetName: { flex: 1, ...TYPOGRAPHY.presets.body, color: '#F0EEF6' },
+  // Col 3 — grados (secundario → muted, monoespaciado visual)
+  planetPos: { ...TYPOGRAPHY.presets.caption, color: '#7D7C8F', width: 52, textAlign: 'right', marginRight: 12 },
+  // Col 4 — signo (accent del planeta)
+  planetSign: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '500', width: 68, textAlign: 'right' },
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
   ctaBtn: {
-    backgroundColor: colors.fg.primary,
+    backgroundColor: '#F0EEF6',
     borderRadius: 100,
     height: 56,
     alignItems: 'center',

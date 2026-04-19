@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
   Image,
   Dimensions,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { usePostHog } from 'posthog-react-native';
 import { colors } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { OnboardingStackParamList } from '@/navigation/types';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -68,10 +68,10 @@ export const IntroScreen: React.FC<Props> = ({ navigation }) => {
         {/* Upper half — logo hero */}
         <View style={styles.logoArea}>
           <Image
-            source={require('../../../assets/enea_logo.png')}
+            source={require('../../../assets/astroenea_logo.png')}
             style={styles.logo}
             resizeMode="contain"
-            accessibilityLabel="Logo de Enea"
+            accessibilityLabel="Logo de Astro Enea"
             accessibilityRole="image"
           />
         </View>
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   headline: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 34,
     color: colors.fg.primary,
     lineHeight: 44,

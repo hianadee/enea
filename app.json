@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ENEA",
-    "slug": "enea",
+    "name": "Astro Enea",
+    "slug": "astro-enea",
     "description": "Tu frase diaria compuesta para ti con astrología y eneagrama.",
     "version": "1.0.0",
     "runtimeVersion": {
@@ -16,11 +16,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "scheme": "enea",
+    "scheme": "astroenea",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.astroenea.app",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -54,7 +54,7 @@
           "color": "#0D0D0D",
           "sounds": [],
           "androidMode": "default",
-          "androidCollapsedTitle": "Enea"
+          "androidCollapsedTitle": "Astro Enea"
         }
       ],
       "expo-secure-store",
@@ -62,7 +62,7 @@
       [
         "@sentry/react-native",
         {
-          "organization": "enea-90",
+          "organization": "astro-enea",
           "project": "react-native"
         }
       ]

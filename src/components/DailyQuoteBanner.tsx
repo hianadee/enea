@@ -122,7 +122,7 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
         style={styles.card}
         onPress={() => { exit(); onPress(); }}
         activeOpacity={0.9}
-        accessibilityLabel="Enea: Tu frase diaria está lista. Toca para verla."
+        accessibilityLabel="Astro Enea: Tu frase diaria está lista. Toca para verla."
         accessibilityRole="button"
       >
         {/* App icon */}
@@ -134,7 +134,7 @@ export const DailyQuoteBanner: React.FC<DailyQuoteBannerProps> = ({
         {/* Text content */}
         <View style={styles.textColumn}>
           <View style={styles.headerRow}>
-            <Text style={styles.appName}>Enea</Text>
+            <Text style={styles.appName}>Astro Enea</Text>
             <Text style={styles.timestamp}>ahora</Text>
           </View>
           <Text style={styles.body} numberOfLines={2}>

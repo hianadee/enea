@@ -298,7 +298,7 @@ export async function geocodeLocation(locationName: string): Promise<{ lat: numb
     const encoded = encodeURIComponent(locationName);
     const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'ENEA-App/1.0' },
+      headers: { 'User-Agent': 'AstroEnea-App/1.0' },
     });
     const data = await res.json();
     if (data.length > 0) {

@@ -7,6 +7,7 @@
 
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { buildProfilePayload, upsertProfile } from '@/services/profileService';
 import {
   saveProfileBackup,
@@ -15,8 +16,9 @@ import {
 import { linkEmail, ensureSession } from '@/services/authService';
 
 export function useOnboardingSave() {
-  const onboarding = useOnboardingStore();
-  const settings   = useSettingsStore();
+  const onboarding      = useOnboardingStore();
+  const settings        = useSettingsStore();
+  const { dailyQuote }  = useNotificationStore();
 
   /**
    * 1. Asegura que hay sesión anónima activa
@@ -39,7 +41,7 @@ export function useOnboardingSave() {
       religionResponse:     onboarding.religionResponse,
       religion:             onboarding.religion,
       tonePreferences:      onboarding.tonePreferences,
-      notificationsEnabled: settings.notificationsEnabled,
+      notificationsEnabled: dailyQuote.enabled,
       isDark:               settings.isDark,
     });
 
@@ -71,7 +73,7 @@ export function useOnboardingSave() {
       religionResponse:     onboarding.religionResponse,
       religion:             onboarding.religion,
       tonePreferences:      onboarding.tonePreferences,
-      notificationsEnabled: settings.notificationsEnabled,
+      notificationsEnabled: dailyQuote.enabled,
       isDark:               settings.isDark,
     });
 

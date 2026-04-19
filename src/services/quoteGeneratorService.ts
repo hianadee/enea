@@ -6,7 +6,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
-import { Quote, EnneagramType, NatalChart, NumerologyProfile, TonePreferences } from '@/types';
+import { Quote, EnneagramType, GenderPreference, NatalChart, NumerologyProfile, TonePreferences } from '@/types';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { NUMEROLOGY_MEANINGS, calculateUniversalDay, calculatePersonalYear } from '@/utils/numerologyUtils';
 import { signNameEs } from '@/utils/astroUtils';
@@ -16,6 +16,7 @@ import { getPlaceholderQuote } from '@/constants/placeholderQuotes';
 
 interface GenerateQuoteParams {
   firstName:         string;
+  genderPreference:  GenderPreference;
   enneagramType:     EnneagramType | null;
   natalChart:        NatalChart | null;
   numerologyProfile: NumerologyProfile | null;
@@ -89,7 +90,7 @@ async function callEdgeFunction(
   params: GenerateQuoteParams,
   today: string,
 ): Promise<GeneratedQuote> {
-  const { enneagramType, natalChart, numerologyProfile, tonePreferences, firstName, birthDate } = params;
+  const { enneagramType, natalChart, numerologyProfile, tonePreferences, firstName, genderPreference, birthDate } = params;
 
   if (!enneagramType) throw new Error('No enneatype');
 
@@ -101,6 +102,7 @@ async function callEdgeFunction(
 
   const payload = {
     firstName:           sanitizeFirstName(firstName),
+    genderPreference:    genderPreference ?? 'neutro',
     enneatype:           enneagramType,
     enneatypeName:       typeInfo.name,
     enneaPassion:        ENNEAGRAM_PASSIONS[enneagramType],
@@ -124,19 +126,10 @@ async function callEdgeFunction(
     todayDate:           today,
   };
 
-  // ── Garantizar sesión JWT válida ─────────────────────────────────────────
-  // Si no hay sesión activa, crearla antes de invocar la Edge Function.
-  // Así el cliente envía un Bearer JWT real, no la clave anon (sb_publishable_...)
-  // que el gateway de Supabase rechazaría con 401 "Invalid JWT".
-  {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const { error: signInError } = await supabase.auth.signInAnonymously();
-      if (signInError) {
-        logger.warn('[QuoteGenerator] No se pudo crear sesión anónima:', signInError.message);
-      }
-    }
-  }
+  // Sin sesión activa, el cliente Supabase envía el anon key (HS256) como Bearer.
+  // La Edge Function acepta el anon key directamente (línea isValidApiKey).
+  // NO crear sesión anónima: Supabase ahora emite esos tokens con ES256,
+  // algoritmo que el runtime de Edge Functions rechaza con UNSUPPORTED_TOKEN_ALGORITHM.
 
   // Timeout de 20 s — si la Edge Function no responde, cae al fallback
   const timeoutPromise = new Promise<never>((_, reject) =>

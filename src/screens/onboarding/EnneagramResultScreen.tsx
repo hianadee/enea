@@ -5,15 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePostHog } from 'posthog-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
+import { TYPOGRAPHY, FONT_FAMILY } from '@/constants/theme';
 import { EnneagramType } from '@/types';
 import { OnboardingStackParamList } from '@/navigation/types';
 
@@ -21,7 +19,8 @@ type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'EnneagramResult'>;
 };
 
-const TOTAL = 10;
+const TOTAL  = 10;
+const ACCENT = '#FC8181';
 
 export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
   const { enneagramType, setEnneagramType, setStep } = useOnboardingStore();
@@ -61,17 +60,20 @@ export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Large type number */}
+        {/* Número héroe */}
         <Text style={styles.typeLabel}>Tu tipo:</Text>
         <Text style={styles.typeNumber}>{enneagramType}</Text>
         <Text style={styles.typeName}>{typeInfo.name}</Text>
+
+        {/* Pasión · Fijación — en text, no en ACCENT */}
         <Text style={styles.typeTagline}>{typeInfo.tagline}</Text>
 
         <View style={styles.hairline} />
 
+        {/* Descripción */}
         <Text style={styles.typeDescription}>{typeInfo.description}</Text>
 
-        {/* Change type section */}
+        {/* Selector de otro tipo */}
         <Text style={styles.resonateLabel}>¿No te resuena? Elige otro tipo:</Text>
         <View style={styles.typeChips}>
           {otherTypes.map(t => (
@@ -107,7 +109,7 @@ export const EnneagramResultScreen: React.FC<Props> = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Repetir el test"
         >
-          <Text style={styles.retakeBtnText} accessibilityElementsHidden={true}>Repetir el test</Text>
+          <Text style={styles.retakeBtnText}>Repetir el test</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -119,74 +121,81 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
+
+  // ── Header ────────────────────────────────────────────────────────────────────
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backBtn: { width: 44, height: 44, justifyContent: 'center' },
-  backArrow: { color: colors.fg.primary, fontSize: 22 },
-  headerSpacer: { width: 40 },
+  backBtn:       { width: 44, height: 44, justifyContent: 'center' },
+  backArrow:     { color: '#F0EEF6', fontSize: 22 },
+  headerSpacer:  { width: 40 },
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     fontSize: 14,
     letterSpacing: 0.3,
   },
+
+  // ── Scroll ────────────────────────────────────────────────────────────────────
   scroll: {
     paddingHorizontal: 28,
-    paddingTop: 32,
+    paddingTop: 24,
     paddingBottom: 16,
     alignItems: 'center',
   },
+
+  // ── Hero ──────────────────────────────────────────────────────────────────────
   typeLabel: {
-    fontSize: 14,
-    color: '#A8A8B8',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    ...TYPOGRAPHY.presets.label,
+    color: '#8B8A9E',
     marginBottom: 4,
   },
   typeNumber: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 96,
-    color: '#FC8181',
-    fontWeight: '200',
-    lineHeight: 100,
+    ...TYPOGRAPHY.presets.display,
+    color: ACCENT,
+    lineHeight: 104,
     marginBottom: 8,
   },
   typeName: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 28,
-    color: '#FC8181',
+    color: ACCENT,
     fontWeight: '400',
-    marginBottom: 8,
     textAlign: 'center',
+    marginBottom: 8,
   },
+
+  // Pasión · Fijación — texto primario, no ACCENT
   typeTagline: {
-    fontSize: 14,
-    color: '#FC8181',
-    fontWeight: '500',
+    ...TYPOGRAPHY.presets.bodySm,
+    color: '#F0EEF6',
     textAlign: 'center',
     marginBottom: 24,
   },
+
   hairline: {
     width: 40,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#FC818130',
+    backgroundColor: ACCENT + '30',
     marginBottom: 24,
   },
+
+  // ── Descripción ───────────────────────────────────────────────────────────────
   typeDescription: {
-    fontSize: 16,
-    color: '#A8A8B8',
-    lineHeight: 26,
+    ...TYPOGRAPHY.presets.bodyLg,
+    color: '#8B8A9E',
     textAlign: 'center',
     marginBottom: 40,
   },
+
+  // ── Selector de tipo ──────────────────────────────────────────────────────────
   resonateLabel: {
-    fontSize: 14,
-    color: '#A8A8B8',
+    ...TYPOGRAPHY.presets.bodySm,
+    color: '#8B8A9E',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -197,41 +206,44 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
+  // Círculo — mismo spec que EnneagramIntroScreen
   typeChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1,
-    borderColor: '#FC8181',
+    borderColor: '#FC8181B3',
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeChipText: {
-    color: '#FC8181',
+    color: '#FC8181E6',
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '500',
   },
+
+  // ── Footer ────────────────────────────────────────────────────────────────────
   footer: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingBottom: 20,
     gap: 10,
   },
   ctaBtn: {
-    backgroundColor: colors.fg.primary,
+    backgroundColor: '#F0EEF6',
     borderRadius: 100,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaBtnText: { color: '#1A2332', fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
+  ctaBtnText:   { color: '#1A2332', fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
   retakeBtn: {
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   retakeBtnText: {
-    color: colors.fg.secondary,
-    fontSize: 14,
+    ...TYPOGRAPHY.presets.bodySm,
+    color: '#8B8A9E',
     letterSpacing: 0.2,
   },
 });

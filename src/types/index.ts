@@ -10,6 +10,8 @@ export type SpiritualTradition =
   | 'Islámica'
   | 'Judía';
 
+export type GenderPreference = 'femenino' | 'masculino' | 'neutro';
+
 export type LanguageStyle = 'Poético' | 'Directo' | 'Metafórico' | 'Científico';
 
 export type EnergyType = 'Centrador' | 'Motivador' | 'Reflexivo' | 'Elevador';
