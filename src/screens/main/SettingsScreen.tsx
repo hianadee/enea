@@ -11,7 +11,8 @@ import {
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { TabParamList } from '@/navigation/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNotifications } from '@/notifications/useNotifications';
 import { useOnboardingStore } from '@/store/onboardingStore';
@@ -25,6 +26,7 @@ import {
 import { getSunSign, PLANET_SYMBOLS, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { NatalChartWheel } from '@/design-system/components/NatalChartWheel';
 import { calculatePersonalYear, NUMEROLOGY_MEANINGS } from '@/utils/numerologyUtils';
+import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
 
 // ─── Constante de acento ─────────────────────────────────────────────────────
 const ACCENT = '#FC8181';
@@ -178,7 +180,10 @@ const div = StyleSheet.create({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<RouteProp<TabParamList, 'Settings'>>();
   const insets = useSafeAreaInsets();
+  const scrollRef   = useRef<ScrollView>(null);
+  const avisosY     = useRef<number>(0);
   const { colors, isDark } = useTheme();
   const { firstName, birthData, natalChart, enneagramType, numerologyProfile, tonePreferences, setTonePreference } = useOnboardingStore();
   const { isDark: isDarkSetting, setIsDark } = useSettingsStore();
@@ -189,8 +194,12 @@ export const SettingsScreen: React.FC = () => {
   const { dailyQuote, permissionGranted, toggle: toggleNotification, updateTime } = useNotifications();
 
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [tempHour,       setTempHour]       = useState(dailyQuote.hour);
-  const [tempMinute,     setTempMinute]     = useState(dailyQuote.minute);
+  // Una sola fuente de verdad: la fecha del picker.
+  // Se sincroniza con dailyQuote al abrir el modal.
+  const [pickerDate, setPickerDate] = useState<Date>(() => {
+    const d = new Date(); d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0); return d;
+  });
+  const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   // ── Dirty state — solo true si el usuario cambia algo en esta sesión ─────
   const [isDirty, setIsDirty] = useState(false);
@@ -203,12 +212,23 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const formattedTime = `${String(dailyQuote.hour).padStart(2, '0')}:${String(dailyQuote.minute).padStart(2, '0')}`;
-  const timePickerDate = (() => { const d = new Date(); d.setHours(tempHour, tempMinute, 0, 0); return d; })();
+
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, []);
+
+  // Scroll automático a "Avisos" si venimos con scrollTo='avisos'
+  useEffect(() => {
+    const params = route.params as { scrollTo?: string } | undefined;
+    if (params?.scrollTo === 'avisos' && avisosY.current > 0) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: avisosY.current - 120, animated: true });
+      }, 350); // pequeño delay para que el screen esté montado
+      return () => clearTimeout(timer);
+    }
+  }, [route.params]);
 
   // ── Datos astrológicos ────────────────────────────────────────────────────
   const sunSign        = getSunSign(birthData?.date ?? '');
@@ -226,13 +246,24 @@ export const SettingsScreen: React.FC = () => {
   const personalYearMeaning = personalYear ? NUMEROLOGY_MEANINGS[personalYear] : null;
 
   // ── Fecha de nacimiento formateada ────────────────────────────────────────
-  const birthSummary = [birthData?.date, birthData?.time, birthData?.locationName].filter(Boolean).join('  ·  ');
+  const formatBirthDate = (dateStr: string | undefined): string | null => {
+    if (!dateStr || dateStr.length < 10) return null;
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+  const birthSummary = [formatBirthDate(birthData?.date), birthData?.time, birthData?.locationName].filter(Boolean).join('  ·  ');
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1 }}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[s.scroll, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 24) + (isDirty ? 80 : 16) }]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
       >
 
         {/* ══ HERO: nombre ════════════════════════════════════════════════ */}
@@ -311,7 +342,7 @@ export const SettingsScreen: React.FC = () => {
             <View style={[s.dataVline, { backgroundColor: colors.border }]} />
             <View style={s.dataText}>
               <Text style={[s.dataTitle, { color: colors.text }]}>Camino de vida  ·  {lifePathMeaning.titleShort}</Text>
-              <Text style={[s.dataDesc, { color: colors.textMuted }]} numberOfLines={2}>{lifePathMeaning.description}</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]}>{lifePathMeaning.description}</Text>
             </View>
           </View>
         )}
@@ -323,7 +354,7 @@ export const SettingsScreen: React.FC = () => {
             <View style={[s.dataVline, { backgroundColor: colors.border }]} />
             <View style={s.dataText}>
               <Text style={[s.dataTitle, { color: colors.text }]}>Año Personal  ·  {personalYearMeaning.titleShort}</Text>
-              <Text style={[s.dataDesc, { color: colors.textMuted }]} numberOfLines={2}>{personalYearMeaning.description}</Text>
+              <Text style={[s.dataDesc, { color: colors.textMuted }]}>{personalYearMeaning.description}</Text>
             </View>
           </View>
         )}
@@ -374,6 +405,7 @@ export const SettingsScreen: React.FC = () => {
         <Divider />
 
         {/* ══ SECCIÓN: AVISOS ═════════════════════════════════════════════ */}
+        <View onLayout={(e) => { avisosY.current = e.nativeEvent.layout.y; }}>
         <SectionHeader label="Avisos" />
 
         {permissionGranted === false && (
@@ -399,7 +431,12 @@ export const SettingsScreen: React.FC = () => {
             <View style={s.notifRight}>
               <TouchableOpacity
                 style={[s.timeBtn, { borderColor: dailyQuote.enabled ? ACCENT + '55' : colors.border }]}
-                onPress={() => { setTempHour(dailyQuote.hour); setTempMinute(dailyQuote.minute); setShowTimePicker(true); }}
+                onPress={() => {
+                  const d = new Date();
+                  d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0);
+                  setPickerDate(d);
+                  setShowTimePicker(true);
+                }}
                 disabled={!dailyQuote.enabled}
                 activeOpacity={0.7}
                 accessibilityLabel={`Hora de notificación: ${formattedTime}`}
@@ -418,6 +455,8 @@ export const SettingsScreen: React.FC = () => {
             </View>
           }
         />
+
+        </View>{/* /avisos */}
 
         <Divider />
 
@@ -484,6 +523,8 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
       </ScrollView>
+      <ScrollFadeHint visible={showFade} bgColor={colors.background} />
+      </View>
 
       {/* ── Time picker modal ──────────────────────────────────────────────── */}
       <Modal visible={showTimePicker} transparent animationType="fade" onRequestClose={() => setShowTimePicker(false)}>
@@ -495,7 +536,11 @@ export const SettingsScreen: React.FC = () => {
               </TouchableOpacity>
               <Text style={[s.modalTitle, { color: colors.text }]}>Hora del aviso</Text>
               <TouchableOpacity
-                onPress={() => { updateTime(tempHour, tempMinute); setShowTimePicker(false); markDirty(); }}
+                onPress={() => {
+                  updateTime(pickerDate.getHours(), pickerDate.getMinutes());
+                  setShowTimePicker(false);
+                  markDirty();
+                }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 accessibilityRole="button"
                 accessibilityLabel="Listo"
@@ -504,19 +549,25 @@ export const SettingsScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             <DateTimePicker
-              value={timePickerDate}
+              value={pickerDate}
               mode="time"
               is24Hour
               display="spinner"
-              onChange={(_event, selectedDate) => {
-                if (!selectedDate) return;
-                setTempHour(selectedDate.getHours());
-                setTempMinute(selectedDate.getMinutes());
+              onChange={(event, selectedDate) => {
+                // Android: el picker se cierra solo; aquí confirmamos o cancelamos
                 if (Platform.OS === 'android') {
-                  updateTime(selectedDate.getHours(), selectedDate.getMinutes());
                   setShowTimePicker(false);
-                  markDirty();
+                  if (event.type === 'set' && selectedDate) {
+                    setPickerDate(selectedDate);
+                    updateTime(selectedDate.getHours(), selectedDate.getMinutes());
+                    markDirty();
+                  }
+                  return;
                 }
+                // iOS: spinner emite onChange continuamente — actualizamos state.
+                // No causa snap-back porque pasamos al picker el mismo valor que
+                // acaba de emitir; la posición visual no cambia.
+                if (selectedDate) setPickerDate(selectedDate);
               }}
               style={{ width: '100%' }}
               {...(Platform.OS === 'ios' && { textColor: colors.text })}
@@ -652,9 +703,9 @@ const s = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
     alignSelf: 'stretch',
   },
-  dataText: { flex: 1, gap: 2 },
-  dataTitle: { ...TYPOGRAPHY.presets.body },
-  dataDesc:  { ...TYPOGRAPHY.presets.caption },
+  dataText: { flex: 1, gap: 4 },
+  dataTitle: { ...TYPOGRAPHY.presets.bodyLg },
+  dataDesc:  { ...TYPOGRAPHY.presets.bodySm, lineHeight: 20 },
 
   // ── Voz de Enea ─────────────────────────────────────────────────────────────
   sectionIntro: {

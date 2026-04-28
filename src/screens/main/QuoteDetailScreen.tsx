@@ -26,6 +26,7 @@ import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
 import { formatLongDate } from '@/utils/dateUtils';
 import { MainStackParamList } from '@/navigation/types';
+import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
 
 type Props = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'QuoteDetail'>;
@@ -39,6 +40,7 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { isAnonymous } = useAuthContext();
   const [gateVisible, setGateVisible] = useState(false);
+  const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   const quote = history.find((q) => q.id === quoteId);
 
@@ -143,6 +145,10 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
       >
         {/* Date */}
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -189,6 +195,9 @@ export const QuoteDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           </Animated.View>
         )}
       </ScrollView>
+
+      {/* Fade hint — indica contenido por debajo, encima del action bar */}
+      <ScrollFadeHint visible={showFade} bgColor={colors.background} bottom={80} height={56} />
 
       {/* Email gate */}
       <EmailGateSheet visible={gateVisible} onDismiss={handleGateDismiss} />

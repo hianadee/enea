@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ENEA · Empty States · Mockup</title>
+<style>
+  /* ─── Tokens del design system (theme.ts) ──────────────────────────── */
+  :root {
+    --bg:          #0A0A0F;
+    --surface:     #13131A;
+    --surfaceEl:   #1C1C26;
+    --border:      #2A2A3A;
+    --text:        #F0EEF6;
+    --textSec:     #8B8A9E;
+    --textMuted:   #7D7C8F;
+    --accent:      #FC8181;
+    --serif:       Georgia, serif;
+    --sans:        -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  html, body { margin: 0; padding: 0; background: #1d1d22; font-family: var(--sans); }
+  body {
+    display: flex;
+    gap: 40px;
+    padding: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  /* ─── iPhone frame ─────────────────────────────────────────────────── */
+  .phone {
+    width: 320px;
+    height: 692px;
+    border-radius: 44px;
+    background: var(--bg);
+    border: 8px solid #000;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+  }
+  .notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 24px; background: #000;
+    border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+    z-index: 10;
+  }
+  .status-bar {
+    padding: 14px 24px 0; display: flex; justify-content: space-between;
+    color: var(--text); font-size: 14px; font-weight: 600;
+  }
+
+  .label {
+    text-align: center; color: var(--textSec); margin-top: 24px;
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+  }
+
+  /* ─── Pantalla común ───────────────────────────────────────────────── */
+  .screen {
+    height: 100%;
+    padding: 32px 24px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header-title {
+    text-align: center;
+    color: var(--text);
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-top: 32px;
+  }
+  .header-sub {
+    text-align: center;
+    color: var(--textMuted);
+    font-size: 13px;
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── Filter pills (réplica del Diario) ───────────────────────────── */
+  .filters {
+    display: flex; gap: 10px; margin-top: 28px;
+  }
+  .pill {
+    padding: 10px 18px;
+    border-radius: 22px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    color: var(--textMuted);
+    background: transparent;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pill.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(252,129,129,0.10);
+  }
+
+  /* ─── Empty state body ─────────────────────────────────────────────── */
+  .empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 16px 80px;
+    gap: 22px;
+  }
+  .empty-glyph {
+    width: 64px; height: 64px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--textMuted);
+    font-size: 24px;
+    font-family: var(--serif);
+    font-style: italic;
+  }
+  .empty-glyph.heart {
+    border-color: rgba(252,129,129,0.25);
+    color: var(--accent);
+  }
+  .empty-headline {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: 26px;
+    color: var(--text);
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    max-width: 240px;
+  }
+  .empty-body {
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--textMuted);
+    max-width: 240px;
+  }
+  .empty-hint {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--textMuted);
+    letter-spacing: 0.4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .empty-hint .heart-mini {
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  /* ─── Tab bar ──────────────────────────────────────────────────────── */
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 84px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    padding-top: 8px;
+  }
+  .tab {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    gap: 4px;
+    color: var(--textMuted);
+    font-size: 11px;
+  }
+  .tab .icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+  .tab.active { color: var(--accent); }
+  .tab.active .icon {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+  .tab.diamond .icon {
+    border-radius: 4px;
+    transform: rotate(45deg);
+    width: 16px; height: 16px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <!-- 1. DIARIO · TODAS · Empty                       -->
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span>•••</span></div>
+
+      <div class="screen">
+        <div class="header-title">DIARIO</div>
+        <div class="header-sub">0 entradas</div>
+
+        <div class="filters">
+          <div class="pill active">Todas</div>
+          <div class="pill">♡ Guardadas</div>
+        </div>
+
+        <div class="empty">
+          <div class="empty-glyph">∗</div>
+          <div class="empty-headline">Tu diario empieza<br>con la frase de hoy.</div>
+          <div class="empty-body">
+            Cada día que abras Enea, la frase quedará guardada aquí. Con el tiempo verás tu historia.
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab"><div class="icon">●</div>Hoy</div>
+        <div class="tab diamond active"><div class="icon"></div>Diario</div>
+        <div class="tab"><div class="icon">○</div>Tú</div>
+      </div>
+    </div>
+    <div class="label">Diario · Todas (sin frases)</div>
+  </div>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <!-- 2. DIARIO · GUARDADAS · Empty                   -->
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span>•••</span></div>
+
+      <div class="screen">
+        <div class="header-title">DIARIO</div>
+        <div class="header-sub">3 entradas</div>
+
+        <div class="filters">
+          <div class="pill">Todas</div>
+          <div class="pill active">♡ Guardadas</div>
+        </div>
+
+        <div class="empty">
+          <div class="empty-glyph heart">♡</div>
+          <div class="empty-headline">Aún no has guardado<br>ninguna frase.</div>
+          <div class="empty-body">
+            Cuando una frase te resuene, tócala con el corazón. Aquí encontrarás las que más te importan.
+          </div>
+          <div class="empty-hint"><span class="heart-mini">♡</span> Toca el corazón en cualquier frase</div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab"><div class="icon">●</div>Hoy</div>
+        <div class="tab diamond active"><div class="icon"></div>Diario</div>
+        <div class="tab"><div class="icon">○</div>Tú</div>
+      </div>
+    </div>
+    <div class="label">Diario · Guardadas (sin favoritos)</div>
+  </div>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <!-- 3. HOY · Loading / sin conexión inicial         -->
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span>•••</span></div>
+
+      <div class="screen" style="justify-content: center; align-items: center;">
+        <div class="empty" style="padding: 0;">
+          <div class="empty-glyph">w</div>
+          <div class="empty-headline">Tu frase está<br>preparándose.</div>
+          <div class="empty-body">
+            Estamos leyendo el cielo de hoy. Vuelve en un momento.
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab active"><div class="icon">●</div>Hoy</div>
+        <div class="tab diamond"><div class="icon"></div>Diario</div>
+        <div class="tab"><div class="icon">○</div>Tú</div>
+      </div>
+    </div>
+    <div class="label">Hoy · Sin frase aún (network / generando)</div>
+  </div>
+
+</body>
+</html>

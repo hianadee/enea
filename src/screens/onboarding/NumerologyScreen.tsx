@@ -18,10 +18,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
-  Platform,
 } from 'react-native';
 import { colors, typography, spacing } from '@/design-system/tokens';
 import { Button, Card, Input } from '@/design-system/components';
+import { FONT_FAMILY } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '@/navigation/types';
@@ -229,58 +229,11 @@ export const NumerologyScreen: React.FC<Props> = ({ navigation }) => {
                 key={i}
                 style={[styles.keyword, { borderColor: accentColor + '30' }]}
               >
-                <Text style={[styles.keywordText, { color: accentColor + 'BB' }]}>
+                <Text style={[styles.keywordText, { color: accentColor }]}>
                   {kw}
                 </Text>
               </View>
             ))}
-          </View>
-        </Animated.View>
-
-        {/* Separador */}
-        <Animated.View
-          style={[
-            styles.dividerRow,
-            { opacity: detailsFadeAnim },
-          ]}
-        >
-          <View style={[styles.dividerLine, { backgroundColor: accentColor + '20' }]} />
-          <Text style={[styles.dividerText, { color: '#FC8181' }]}>
-            CONTEXTO DEL DÍA
-          </Text>
-          <View style={[styles.dividerLine, { backgroundColor: accentColor + '20' }]} />
-        </Animated.View>
-
-        {/* Contexto del día */}
-        <Animated.View
-          style={[
-            styles.contextContainer,
-            { opacity: detailsFadeAnim },
-          ]}
-        >
-          {/* Día Universal */}
-          <View style={styles.contextRow}>
-            <View style={styles.contextLabelContainer}>
-              <Text style={styles.contextLabel}>DÍA UNIVERSAL</Text>
-              <Text style={[styles.contextNumber, { color: accentColor }]}>
-                {profile.universalDay}
-              </Text>
-            </View>
-            <Text style={styles.contextDescription}>{dailyPhrase}</Text>
-          </View>
-
-          {/* Año Personal */}
-          <View style={[styles.contextRow, styles.contextRowLast]}>
-            <View style={styles.contextLabelContainer}>
-              <Text style={styles.contextLabel}>AÑO PERSONAL</Text>
-              <Text style={[styles.contextNumber, { color: accentColor }]}>
-                {profile.personalYear}
-              </Text>
-            </View>
-            <Text style={styles.contextDescription}>
-              {NUMEROLOGY_MEANINGS[profile.personalYear]?.titleShort ?? ''} ·{' '}
-              {NUMEROLOGY_MEANINGS[profile.personalYear]?.keywords[0] ?? ''}
-            </Text>
           </View>
         </Animated.View>
 
@@ -354,7 +307,7 @@ const styles = StyleSheet.create({
 
   // Título
   preTitle: {
-    fontSize: 14,
+    fontSize: 11,
     color: colors.fg.secondary,
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -362,7 +315,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 30,
     color: colors.fg.primary,
     fontWeight: '300',
@@ -392,7 +345,7 @@ const styles = StyleSheet.create({
     fontWeight: '200',
     lineHeight: 130,
     letterSpacing: -4,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
   },
   numberUnderline: {
     width: 60,
@@ -427,7 +380,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   meaningPhrase: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 22,
     color: colors.fg.primary,
     lineHeight: 32,
@@ -435,9 +388,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   meaningDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#A8A8B8',
-    lineHeight: 22,
+    lineHeight: 26,
   },
   keywordsRow: {
     flexDirection: 'row',
@@ -456,73 +409,6 @@ const styles = StyleSheet.create({
     textTransform: 'lowercase',
   },
 
-  // Separador
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontSize: 14,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
-
-  // Contexto del día
-  contextContainer: {
-    backgroundColor: '#0A0A0A',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#1E1E1E',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    gap: 0,
-  },
-  contextRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1A1A1A',
-    marginBottom: 16,
-  },
-  contextRowLast: {
-    paddingBottom: 0,
-    borderBottomWidth: 0,
-    marginBottom: 0,
-  },
-  contextLabelContainer: {
-    alignItems: 'center',
-    minWidth: 48,
-  },
-  contextLabel: {
-    fontSize: 14,
-    color: colors.fg.secondary,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  contextNumber: {
-    fontSize: 28,
-    fontWeight: '200',
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    lineHeight: 32,
-  },
-  contextDescription: {
-    flex: 1,
-    fontSize: 14,
-    color: '#A8A8B8',
-    lineHeight: 21,
-    marginTop: 8,
-    fontWeight: '500',
-  },
-
   // Sombra
   shadowContainer: {
     borderLeftWidth: 2,
@@ -531,16 +417,17 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   shadowLabel: {
-    fontSize: 14,
-    color: colors.fg.secondary,
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    marginBottom: 8,
   },
   shadowText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.fg.secondary,
-    lineHeight: 21,
-    fontWeight: '500',
+    lineHeight: 25,
+    fontWeight: '400',
   },
 
   // Footer

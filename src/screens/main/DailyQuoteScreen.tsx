@@ -14,14 +14,18 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useQuoteStore } from '@/store/quoteStore';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useNotificationStore } from '@/store/notificationStore';
 import { TYPOGRAPHY, FONT_FAMILY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { GeometryBackground } from '@/design-system/components/GeometryBackground';
 import { calculateUniversalDay, getDailyNumerologyPhrase, NUMEROLOGY_MEANINGS } from '@/utils/numerologyUtils';
 import { getSunSign, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { generateDailyQuote } from '@/services/quoteGeneratorService';
+import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
 
 
 // ─── Dimensiones de la tarjeta de compartir (ratio 4:5) ──────────────────────
@@ -189,7 +193,20 @@ export const DailyQuoteScreen: React.FC = () => {
     useOnboardingStore();
   const { todayQuote, setTodayQuote, toggleSave } = useQuoteStore();
   const { colors, isDark } = useTheme();
+  const { dailyQuote: notif } = useNotificationStore();
+  const navigation = useNavigation<any>();
+  const { isBlocked, hydrated: subHydrated } = useSubscription();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Redirigir al paywall cada vez que la pantalla recibe el foco y el trial expiró
+  useFocusEffect(
+    useCallback(() => {
+      if (subHydrated && isBlocked) {
+        navigation.navigate('Paywall');
+      }
+    }, [subHydrated, isBlocked]),
+  );
+  const { showFade, onScroll: onFadeScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   const palette = natalChart?.dominantPlanet
     ? PLANET_PALETTES[natalChart.dominantPlanet]
@@ -231,7 +248,18 @@ export const DailyQuoteScreen: React.FC = () => {
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
-    if (todayQuote && todayQuote.date === today) { animateIn(); return; }
+
+    // Frase real del día ya cargada → mostrar directamente
+    if (todayQuote && todayQuote.date === today && !todayQuote.isPlaceholder) {
+      animateIn();
+      return;
+    }
+
+    // Sin frase, o solo hay un placeholder → generar (o reintentar)
+    // Si hay placeholder lo mostramos de inmediato mientras generamos la real
+    if (todayQuote?.isPlaceholder) {
+      animateIn(); // muestra el placeholder suavemente
+    }
 
     setIsGenerating(true);
     generateDailyQuote({
@@ -243,8 +271,16 @@ export const DailyQuoteScreen: React.FC = () => {
       tonePreferences,
       birthDate:        birthData?.date,
     })
-      .then(setTodayQuote)
-      .finally(() => { setIsGenerating(false); animateIn(); });
+      .then((quote) => {
+        setTodayQuote(quote);
+        if (!quote.isPlaceholder) {
+          // Frase real obtenida: reanimar para revelar el contenido actualizado
+          animHeader.setValue(0);
+          animQuote.setValue(0);
+          animateIn();
+        }
+      })
+      .finally(() => setIsGenerating(false));
   }, []);
 
   // Estilo reutilizable: fade + subida 18px
@@ -253,8 +289,9 @@ export const DailyQuoteScreen: React.FC = () => {
     transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
   });
 
-  // Handler de scroll — dispara secciones según threshold
-  const handleScroll = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+  // Handler de scroll — dispara secciones según threshold + actualiza fade hint
+  const handleScroll = (e: any) => {
+    onFadeScroll(e);
     if (!isReady.current) return;
     const y = e.nativeEvent.contentOffset.y;
     if (!scrollFired.current.illus   && y > 60)  { scrollFired.current.illus   = true; reveal(animIllus); }
@@ -297,6 +334,30 @@ export const DailyQuoteScreen: React.FC = () => {
 
   const isSaved = todayQuote?.isFavorite ?? false;
 
+  // Empty state: primera vez del día, Claude está generando, no hay nada que mostrar.
+  // Evita la pantalla negra mientras llega la respuesta.
+  const showEmptyState = !todayQuote && isGenerating;
+
+  if (showEmptyState) {
+    return (
+      <View style={[styles.container, styles.emptyContainer, { backgroundColor: colors.background }]}>
+        <GeometryBackground color={palette.primary} />
+        <View style={[
+          styles.emptyGlyph,
+          { borderColor: palette.primary + '40' },
+        ]}>
+          <Text style={[styles.emptyGlyphChar, { color: palette.primary }]}>w</Text>
+        </View>
+        <Text style={[styles.emptyHeadline, { color: colors.text }]}>
+          Tu frase está{'\n'}preparándose.
+        </Text>
+        <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
+          Estamos leyendo el cielo de hoy.{'\n'}Vuelve en un momento.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <GeometryBackground color={palette.primary} />
@@ -307,6 +368,8 @@ export const DailyQuoteScreen: React.FC = () => {
         bounces={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
       >
 
         {/* ── 1. ANCLA TEMPORAL: fecha ──────────────────────────────────── */}
@@ -322,6 +385,36 @@ export const DailyQuoteScreen: React.FC = () => {
               </Text>
             </View>
           )}
+        </Animated.View>
+
+        {/* ── 1b. STRIP DE NOTIFICACIÓN DIARIA ─────────────────────────── */}
+        <Animated.View style={[styles.notifStrip, revealStyle(animHeader)]}>
+          <TouchableOpacity
+            style={[styles.notifInner, { borderColor: palette.primary + '22', backgroundColor: palette.primary + '08' }]}
+            onPress={() => navigation.navigate('Settings', { scrollTo: 'avisos' })}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={
+              notif.enabled
+                ? `Frase nueva cada día. Aviso a las ${String(notif.hour).padStart(2,'0')}:${String(notif.minute).padStart(2,'0')}. Ir a Ajustes`
+                : 'Frase nueva cada día. Activa el aviso en Ajustes'
+            }
+          >
+            <Text style={[styles.notifBell, { color: notif.enabled ? palette.primary : colors.textMuted }]}>
+              {notif.enabled ? '🔔' : '🔕'}
+            </Text>
+            <View style={styles.notifText}>
+              <Text style={[styles.notifMain, { color: colors.text }]}>
+                Frase nueva cada día
+              </Text>
+              <Text style={[styles.notifSub, { color: colors.textMuted }]}>
+                {notif.enabled
+                  ? `Aviso a las ${String(notif.hour).padStart(2,'0')}:${String(notif.minute).padStart(2,'0')}`
+                  : 'Activa el aviso en Ajustes'}
+              </Text>
+            </View>
+            <Text style={[styles.notifChevron, { color: colors.textMuted }]}>›</Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* ── 2. FRASE: protagonista absoluto ──────────────────────────── */}
@@ -446,6 +539,9 @@ export const DailyQuoteScreen: React.FC = () => {
 
       </ScrollView>
 
+      {/* Fade hint — indica contenido por debajo, encima del action bar */}
+      <ScrollFadeHint visible={showFade} bgColor={colors.background} bottom={64} height={56} />
+
       {/* ── GENERATING OVERLAY ───────────────────────────────────────────── */}
       {isGenerating && (
         <View
@@ -533,6 +629,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  // ── Empty state (primera carga del día) ────────────────────────────────────
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 22,
+  },
+  emptyGlyph: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyGlyphChar: {
+    fontSize: 26,
+    fontFamily: FONT_FAMILY.serif,
+    fontStyle: 'italic',
+  },
+  emptyHeadline: {
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 26,
+    fontWeight: '300',
+    lineHeight: 34,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+    maxWidth: 260,
+  },
+  emptyBody: {
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 260,
+  },
+
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 28,
@@ -543,7 +675,39 @@ const styles = StyleSheet.create({
   // ── 1. Header ──────────────────────────────────────────────────────────────
   header: {
     gap: 12,
-    marginBottom: 44,
+    marginBottom: 20,
+  },
+
+  // ── Notification strip ─────────────────────────────────────────────────────
+  notifStrip: {
+    marginBottom: 28,
+  },
+  notifInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  notifBell: {
+    fontSize: 16,
+  },
+  notifText: {
+    flex: 1,
+    gap: 2,
+  },
+  notifMain: {
+    ...TYPOGRAPHY.presets.bodySm,
+    fontWeight: '500',
+  },
+  notifSub: {
+    ...TYPOGRAPHY.presets.caption,
+  },
+  notifChevron: {
+    fontSize: 20,
+    lineHeight: 22,
   },
   dateText: {
     ...TYPOGRAPHY.presets.label,

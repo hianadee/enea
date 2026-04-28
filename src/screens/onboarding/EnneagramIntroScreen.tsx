@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { colors, typography, spacing } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -51,6 +51,7 @@ export const EnneagramIntroScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.preTitle}>TU ENEATIPO</Text>
         <Text style={styles.heading}>Unas preguntas{'\n'}para conocerte mejor</Text>
         <Text style={styles.subtitle}>
           El Eneagrama describe nueve formas de ver el mundo. Responde con lo primero que sientas, sin pensarlo mucho.
@@ -133,15 +134,22 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 40,
   },
+  preTitle: {
+    fontSize: 11,
+    color: '#8B8A9E',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 34,
     color: colors.fg.primary,
     lineHeight: 44,
     marginBottom: 16,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#A8A8B8',
     lineHeight: 22,
     marginBottom: 32,

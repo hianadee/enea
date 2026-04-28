@@ -21,6 +21,7 @@ import { useOnboardingStore } from '../../store/onboardingStore';
 import { usePostHog } from 'posthog-react-native';
 import { useOnboardingSave } from '../../hooks/useOnboardingSave';
 import { useUserStore } from '../../store/userStore';
+import { useSubscriptionStore } from '../../store/subscriptionStore';
 import { ENNEAGRAM_TYPES } from '../../constants/enneagram';
 import { RootStackParamList } from '../../navigation/types';
 
@@ -64,6 +65,7 @@ export const OnboardingCompleteScreen: React.FC = () => {
 
   const setOnboardingCompleted = useUserStore((s) => s.setOnboardingCompleted);
   const setProfileSynced       = useUserStore((s) => s.setProfileSynced);
+  const startTrial             = useSubscriptionStore((s) => s.startTrial);
   const posthog = usePostHog();
 
   const handleBegin = async () => {
@@ -80,6 +82,7 @@ export const OnboardingCompleteScreen: React.FC = () => {
       // useAppReady reintentará el sync en el próximo arranque.
     }
     posthog?.capture('onboarding_completed');
+    startTrial(); // inicia el trial de 3 días desde este momento
     setOnboardingCompleted(true);
     setProfileSynced(synced);
     rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });

@@ -29,10 +29,9 @@ function buildSeedHistory(enneagramType: EnneagramType | null): Quote[] {
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
 
-    // Rotate nearby types for textual variety
-    const typeIndex = ((baseType - 1 + i) % 9) as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-    const quoteType = (typeIndex + 1) as EnneagramType;
-    const typeQuotes = PLACEHOLDER_QUOTES[quoteType];
+    // Siempre usar las frases del tipo real del usuario.
+    // Rotar entre los placeholders disponibles para ese tipo.
+    const typeQuotes = PLACEHOLDER_QUOTES[baseType];
     const placeholder = typeQuotes[i % typeQuotes.length];
 
     const planet = SEED_PLANETS[i % SEED_PLANETS.length];
@@ -47,7 +46,7 @@ function buildSeedHistory(enneagramType: EnneagramType | null): Quote[] {
       isFavorite: i % 4 === 0,
       planetaryContext: context,
       dominantPlanet: planet,
-      enneagramType: quoteType,
+      enneagramType: baseType,
     });
   }
 
@@ -70,12 +69,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   isHistorySeeded: false,
 
   setTodayQuote: (quote) => {
-    set({ todayQuote: quote });
-    // Prepend today to history if not already present
-    const { history } = get();
-    if (!history.find((q) => q.id === quote.id)) {
-      set({ history: [quote, ...history] });
-    }
+    // Operación atómica: actualiza todayQuote e history en un solo set.
+    // Evita race conditions entre dos llamadas set() separadas.
+    set((state) => {
+      const idx = state.history.findIndex((q) => q.id === quote.id);
+      if (idx === -1) {
+        // No estaba en history → añadir al principio
+        return { todayQuote: quote, history: [quote, ...state.history] };
+      }
+      // Ya estaba → actualizar el texto/contenido pero respetar isFavorite guardado
+      const updated = state.history.map((q) =>
+        q.id === quote.id ? { ...quote, isFavorite: q.isFavorite } : q
+      );
+      return { todayQuote: { ...quote, isFavorite: state.history[idx].isFavorite }, history: updated };
+    });
   },
 
   seedHistory: (enneagramType) => {
@@ -90,13 +97,27 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
 
   toggleSave: (quoteId) => {
     set((state) => {
-      const history = state.history.map((q) =>
-        q.id === quoteId ? { ...q, isFavorite: !q.isFavorite } : q
+      // Determinar el nuevo valor de isFavorite
+      const currentFavorite =
+        state.history.find((q) => q.id === quoteId)?.isFavorite ??
+        (state.todayQuote?.id === quoteId ? state.todayQuote.isFavorite : false);
+      const newFavorite = !currentFavorite;
+
+      // Si la quote no está en history (edge case), añadirla desde todayQuote
+      const inHistory = state.history.some((q) => q.id === quoteId);
+      const baseHistory =
+        !inHistory && state.todayQuote?.id === quoteId
+          ? [state.todayQuote, ...state.history]
+          : state.history;
+
+      const history = baseHistory.map((q) =>
+        q.id === quoteId ? { ...q, isFavorite: newFavorite } : q
       );
       const todayQuote =
         state.todayQuote?.id === quoteId
-          ? { ...state.todayQuote, isFavorite: !state.todayQuote.isFavorite }
+          ? { ...state.todayQuote, isFavorite: newFavorite }
           : state.todayQuote;
+
       return { history, todayQuote };
     });
   },

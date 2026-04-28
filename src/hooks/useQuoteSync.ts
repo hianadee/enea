@@ -69,8 +69,10 @@ export function useQuoteSync() {
   }, []);
 
   // ── 2. Guardar la frase del día cuando aparece por primera vez ───────────
+  // Los placeholders (fallback sin conexión) NO se guardan: así Supabase
+  // nunca los devuelve como "frase de hoy" y la app reintenta al volver a abrir.
   useEffect(() => {
-    if (!todayQuote) return;
+    if (!todayQuote || todayQuote.isPlaceholder) return;
 
     saveQuote({ quote: todayQuote, tonePreferences }).catch(() => {
       // Fallo silencioso — la frase existe en local igualmente

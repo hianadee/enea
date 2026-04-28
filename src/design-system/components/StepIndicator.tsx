@@ -14,10 +14,17 @@ export const StepIndicator: React.FC<Props> = ({
   accentColor = '#C4B5FD',
 }) => {
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`Paso ${current + 1} de ${total}`}
+      accessibilityValue={{ min: 1, max: total, now: current + 1 }}
+    >
       {Array.from({ length: total }).map((_, i) => (
         <View
           key={i}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
           style={[
             styles.dot,
             i === current

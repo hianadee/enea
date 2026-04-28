@@ -51,12 +51,27 @@ const TabItem: React.FC<TabItemProps> = ({ config, active, onPress, hasBadge, in
   const labelColor = colorAnim.interpolate({ inputRange: [0, 1], outputRange: [inactiveColor, ACCENT] });
 
   return (
-    <TouchableOpacity style={styles.tabItem} onPress={handlePress} activeOpacity={1}>
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={handlePress}
+      activeOpacity={1}
+      accessibilityRole="tab"
+      accessibilityLabel={config.label}
+      accessibilityState={{ selected: active }}
+    >
       <Animated.View style={[styles.tabInner, { transform: [{ scale: scaleAnim }] }]}>
-        <Animated.Text style={[styles.tabIcon, { color: iconColor }]}>
+        <Animated.Text
+          style={[styles.tabIcon, { color: iconColor }]}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        >
           {config.icon(active, hasBadge)}
         </Animated.Text>
-        <Animated.Text style={[styles.tabLabel, { color: labelColor }]}>
+        <Animated.Text
+          style={[styles.tabLabel, { color: labelColor }]}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        >
           {config.label}
         </Animated.Text>
       </Animated.View>
@@ -102,9 +117,9 @@ export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 const styles = StyleSheet.create({
   container: {},
   separator: { height: 1 },
-  tabs: { flexDirection: 'row', paddingTop: 10 },
+  tabs: { flexDirection: 'row', paddingTop: 6 },
   tabItem:  { flex: 1, alignItems: 'center', minHeight: 44 },
-  tabInner: { alignItems: 'center', gap: 3, paddingHorizontal: SPACING.xs, paddingVertical: 4 },
-  tabIcon:  { fontSize: 18 },
-  tabLabel: { fontSize: 14, fontWeight: '500', letterSpacing: 0.4 },
+  tabInner: { alignItems: 'center', gap: 2, paddingHorizontal: SPACING.xs, paddingVertical: 2 },
+  tabIcon:  { fontSize: 16 },
+  tabLabel: { fontSize: 11, fontWeight: '500', letterSpacing: 0.4 },
 });

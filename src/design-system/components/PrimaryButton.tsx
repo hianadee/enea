@@ -34,6 +34,9 @@ export const PrimaryButton: React.FC<Props> = ({
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: isDisabled }}
       style={[
         styles.button,
         variant === 'filled' && { backgroundColor: accentColor },
@@ -47,6 +50,7 @@ export const PrimaryButton: React.FC<Props> = ({
         <ActivityIndicator
           color={variant === 'filled' ? COLORS.dark.background : accentColor}
           size="small"
+          accessibilityLabel="Cargando"
         />
       ) : (
         <Text
@@ -55,6 +59,7 @@ export const PrimaryButton: React.FC<Props> = ({
             variant === 'filled' && { color: COLORS.dark.background },
             variant !== 'filled' && { color: accentColor },
           ]}
+          accessibilityElementsHidden={true}
         >
           {label}
         </Text>

@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { colors, typography, spacing } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -125,7 +126,7 @@ export const BirthPlaceScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* Content */}
         <View style={styles.content}>
-          <Text style={styles.heading}>¿Dónde naciste?</Text>
+          <Text style={styles.heading}>¿En qué lugar naciste?</Text>
           <Text style={styles.helper}>El lugar importa. Determina la posición exacta de los astros en ese momento.</Text>
 
           {/* Search input */}
@@ -241,16 +242,17 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 32,
     color: colors.fg.primary,
     lineHeight: 42,
     marginBottom: 8,
   },
   helper: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#A8A8B8',
     fontWeight: '500',
+    lineHeight: 22,
     marginBottom: 36,
   },
   inputRow: {

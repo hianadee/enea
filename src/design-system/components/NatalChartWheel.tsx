@@ -8,17 +8,13 @@ import Svg, {
   Defs,
   RadialGradient,
   Stop,
+  Polygon,
 } from 'react-native-svg';
 import { BirthData, NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS } from '@/utils/astroUtils';
 
 // ─── Geometry helpers ─────────────────────────────────────────────────────────
 
-/**
- * Convert an ecliptic longitude to an SVG angle (degrees, 0=top, clockwise).
- * The Ascendant is placed at the 9-o'clock (left/180°) position per convention.
- * The ecliptic increases counter-clockwise, so we negate after rotation.
- */
 function eclipticToSvgAngle(eclipticLon: number, ascLon: number): number {
   const rotated = eclipticLon - ascLon + 180;
   return ((-(rotated) % 360) + 360) % 360;
@@ -52,26 +48,46 @@ function arcPath(
   ].join(' ');
 }
 
-// ─── Element colors ───────────────────────────────────────────────────────────
+/** Degrees + minutes within sign from raw ecliptic longitude */
+function degMin(eclipticLon: number): { deg: number; min: number } {
+  const norm = ((eclipticLon % 360) + 360) % 360;
+  const raw  = norm % 30;
+  return {
+    deg: Math.floor(raw),
+    min: Math.floor((raw - Math.floor(raw)) * 60),
+  };
+}
 
-const ELEMENT_OF: Record<string, string> = {
-  Aries: 'fire', Leo: 'fire', Sagittarius: 'fire',
-  Taurus: 'earth', Virgo: 'earth', Capricorn: 'earth',
-  Gemini: 'air', Libra: 'air', Aquarius: 'air',
-  Cancer: 'water', Scorpio: 'water', Pisces: 'water',
+// ─── Traditional zodiac sign colors ──────────────────────────────────────────
+
+const SIGN_COLORS: Record<string, string> = {
+  Aries:       '#E05050',
+  Taurus:      '#9E8060',
+  Gemini:      '#D4A820',
+  Cancer:      '#6BAED1',
+  Leo:         '#E88C3A',
+  Virgo:       '#72A870',
+  Libra:       '#E090A8',
+  Scorpio:     '#B03848',
+  Sagittarius: '#D85A3A',
+  Capricorn:   '#9090A0',
+  Aquarius:    '#4EC4CF',
+  Pisces:      '#8878CC',
 };
-const ELEMENT_FILL:   Record<string, string> = { fire: '#FF6B4414', earth: '#4CAF5014', air: '#87CEEB12', water: '#7B68EE14' };
-const ELEMENT_STROKE: Record<string, string> = { fire: '#FF6B4430', earth: '#4CAF5030', air: '#87CEEB28', water: '#7B68EE30' };
 
-// ─── Aspect line colors (semi-transparent) ────────────────────────────────────
+// ─── Aspect line colors ───────────────────────────────────────────────────────
 
 const ASPECT_LINE_COLOR: Record<string, string> = {
-  conjunction: '#F4C54240',
-  sextile:     '#6EE7B740',
-  square:      '#FC818140',
-  trine:       '#93C5FD40',
-  opposition:  '#FDA4AF40',
+  conjunction: '#F4C54268',
+  sextile:     '#6EE7B768',
+  square:      '#FC818168',
+  trine:       '#93C5FD68',
+  opposition:  '#FDA4AF68',
 };
+
+// ─── Roman house numerals ─────────────────────────────────────────────────────
+
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
 
 // ─── Planet spread (avoid overlap) ───────────────────────────────────────────
 
@@ -94,10 +110,24 @@ function spreadPlanets(
   return result;
 }
 
+// ─── Arrow helper ─────────────────────────────────────────────────────────────
+
+/** Returns polygon points for a small arrowhead at the tip of a radial line. */
+function arrowPoints(
+  cx: number, cy: number,
+  r: number, angleDeg: number,
+  size: number,
+): string {
+  const tip  = polar(cx, cy, r, angleDeg);
+  const left = polar(cx, cy, r - size, angleDeg - 4);
+  const right= polar(cx, cy, r - size, angleDeg + 4);
+  return `${f(tip.x)},${f(tip.y)} ${f(left.x)},${f(left.y)} ${f(right.x)},${f(right.y)}`;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface Props {
-  birthData:  Partial<BirthData>;
+  birthData?:  Partial<BirthData>;
   natalChart: NatalChart | null | undefined;
   size?:      number;
 }
@@ -107,16 +137,26 @@ export const NatalChartWheel: React.FC<Props> = ({ natalChart, size = 300 }) => 
   const cy = size / 2;
 
   const outerR     = size * 0.490;
-  const signInnerR = size * 0.372;
-  const houseR     = size * 0.310;
-  const planetR    = size * 0.250;
+  const signInnerR = size * 0.380;
+  const houseR     = size * 0.315;
+  const planetR    = size * 0.255;
   const hubR       = size * 0.068;
+  const labelR     = outerR + size * 0.038; // outside the ring, for ASC/MC labels
 
   const ascLon = natalChart?.ascendantLon ?? 0;
   const mcLon  = natalChart?.mcLon        ?? 270;
   const e2s    = (lon: number) => eclipticToSvgAngle(lon, ascLon);
 
-  // Build angle map for aspect lines
+  // ASC / MC degree strings
+  const ascDM = degMin(ascLon);
+  const mcDM  = degMin(mcLon);
+  const ascLabel = `${ascDM.deg}°${String(ascDM.min).padStart(2,'0')}'`;
+  const mcLabel  = `MC ${mcDM.deg}°${String(mcDM.min).padStart(2,'0')}'`;
+
+  const ascSvgAngle = e2s(ascLon);   // always 180 in this coord system
+  const mcSvgAngle  = e2s(mcLon);
+
+  // Aspect angle map
   const planetAngles: Record<string, number> = {};
   if (natalChart?.planets) {
     for (const p of natalChart.planets) {
@@ -132,82 +172,86 @@ export const NatalChartWheel: React.FC<Props> = ({ natalChart, size = 300 }) => 
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <Defs>
         <RadialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%"   stopColor="#1C1C26" stopOpacity={1} />
-          <Stop offset="100%" stopColor="#0A0A0F" stopOpacity={1} />
+          <Stop offset="0%"   stopColor="#161620" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#080810" stopOpacity={1} />
         </RadialGradient>
         <RadialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%"   stopColor="#2A2A3A" stopOpacity={1} />
-          <Stop offset="100%" stopColor="#13131A" stopOpacity={1} />
+          <Stop offset="0%"   stopColor="#242430" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#0E0E18" stopOpacity={1} />
         </RadialGradient>
       </Defs>
 
       {/* Background */}
-      <Circle cx={cx} cy={cy} r={outerR} fill="url(#bgGrad)" stroke="#2A2A3A" strokeWidth={0.5} />
+      <Circle cx={cx} cy={cy} r={outerR} fill="url(#bgGrad)" />
 
-      {/* Zodiac ring segments */}
+      {/* Zodiac ring — no fill, only hairline separator between segments */}
       {ZODIAC_SIGNS.map((sign, i) => {
         const startDeg = e2s(i * 30);
         const endDeg   = e2s((i + 1) * 30);
-        const el = ELEMENT_OF[sign.name] ?? 'air';
         return (
           <Path
             key={`seg-${i}`}
             d={arcPath(cx, cy, signInnerR, outerR, startDeg, endDeg)}
-            fill={ELEMENT_FILL[el]}
-            stroke={ELEMENT_STROKE[el]}
-            strokeWidth={0.6}
+            fill="none"
+            stroke="#FFFFFF"
+            strokeOpacity={0.08}
+            strokeWidth={0.4}
           />
         );
       })}
 
       {/* Ring borders */}
-      <Circle cx={cx} cy={cy} r={outerR}     fill="none" stroke="#2A2A3A" strokeWidth={0.7} />
-      <Circle cx={cx} cy={cy} r={signInnerR} fill="none" stroke="#2A2A3A" strokeWidth={0.5} />
-      <Circle cx={cx} cy={cy} r={houseR}     fill="none" stroke="#1E1E2E" strokeWidth={0.4} />
+      <Circle cx={cx} cy={cy} r={outerR}     fill="none" stroke="#FFFFFF" strokeOpacity={0.15} strokeWidth={0.8} />
+      <Circle cx={cx} cy={cy} r={signInnerR} fill="none" stroke="#FFFFFF" strokeOpacity={0.12} strokeWidth={0.5} />
+      <Circle cx={cx} cy={cy} r={houseR}     fill="none" stroke="#FFFFFF" strokeOpacity={0.08} strokeWidth={0.4} />
 
-      {/* Placidus house cusp lines */}
+      {/* House cusp lines — from center to sign ring */}
       {(natalChart?.houseCusps ?? Array.from({ length: 12 }, (_, i) => i * 30)).map((cusp, i) => {
-        const angle = e2s(cusp);
-        const inner = polar(cx, cy, 0, angle);
-        const outer = polar(cx, cy, signInnerR, angle);
-        const isAngular = i === 0 || i === 3 || i === 6 || i === 9;
+        const angle   = e2s(cusp);
+        const inner   = polar(cx, cy, hubR + 2, angle);
+        const outer   = polar(cx, cy, signInnerR, angle);
+        const isAngle = i === 0 || i === 3 || i === 6 || i === 9;
         return (
           <Line
             key={`hcusp-${i}`}
             x1={f(inner.x)} y1={f(inner.y)}
             x2={f(outer.x)} y2={f(outer.y)}
-            stroke={isAngular ? '#3A3A52' : '#232330'}
-            strokeWidth={isAngular ? 0.9 : 0.4}
+            stroke="#FFFFFF"
+            strokeOpacity={isAngle ? 0.30 : 0.12}
+            strokeWidth={isAngle ? 0.8 : 0.4}
           />
         );
       })}
 
-      {/* House numbers */}
+      {/* House numbers — Roman numerals */}
       {(natalChart?.houseCusps ?? []).map((cusp, i) => {
-        const cusps = natalChart!.houseCusps!;
-        const nextCusp = cusps[(i + 1) % 12];
-        let mid = cusp + (nextCusp >= cusp ? (nextCusp - cusp) / 2 : (nextCusp + 360 - cusp) / 2);
+        const cusps   = natalChart!.houseCusps!;
+        const next    = cusps[(i + 1) % 12];
+        let mid = cusp + (next >= cusp ? (next - cusp) / 2 : (next + 360 - cusp) / 2);
         mid = ((mid % 360) + 360) % 360;
-        const pos = polar(cx, cy, (houseR + signInnerR) / 2 - size * 0.018, e2s(mid));
+        const pos = polar(cx, cy, (houseR + signInnerR) / 2 - size * 0.012, e2s(mid));
         return (
           <SvgText key={`hnum-${i}`}
             x={f(pos.x)} y={f(pos.y)}
             textAnchor="middle" alignmentBaseline="central"
-            fontSize={size * 0.028} fill="#3A3A58">
-            {i + 1}
+            fontSize={size * 0.026} fill="#FFFFFF" fillOpacity={0.35}>
+            {ROMAN[i]}
           </SvgText>
         );
       })}
 
-      {/* Zodiac sign symbols */}
+      {/* Zodiac sign symbols — traditional colors.
+          ︎ forces text-presentation (no emoji badge) so fill color is visible. */}
       {ZODIAC_SIGNS.map((sign, i) => {
-        const pos = polar(cx, cy, (signInnerR + outerR) / 2, e2s(i * 30 + 15));
+        const pos   = polar(cx, cy, (signInnerR + outerR) / 2, e2s(i * 30 + 15));
+        const color = SIGN_COLORS[sign.name] ?? '#FFFFFF';
         return (
           <SvgText key={`zsym-${i}`}
             x={f(pos.x)} y={f(pos.y)}
             textAnchor="middle" alignmentBaseline="central"
-            fontSize={size * 0.048} fill="#4A4A6A">
-            {sign.symbol}
+            fontFamily="Georgia"
+            fontSize={size * 0.082} fill={color} fillOpacity={0.95}>
+            {sign.symbol + '︎'}
           </SvgText>
         );
       })}
@@ -217,45 +261,70 @@ export const NatalChartWheel: React.FC<Props> = ({ natalChart, size = 300 }) => 
         const a1 = planetAngles[asp.planet1];
         const a2 = planetAngles[asp.planet2];
         if (a1 === undefined || a2 === undefined) return null;
-        const p1 = polar(cx, cy, planetR * 0.88, a1);
-        const p2 = polar(cx, cy, planetR * 0.88, a2);
+        const p1 = polar(cx, cy, planetR * 0.86, a1);
+        const p2 = polar(cx, cy, planetR * 0.86, a2);
         return (
           <Line key={`asp-${i}`}
             x1={f(p1.x)} y1={f(p1.y)} x2={f(p2.x)} y2={f(p2.y)}
-            stroke={ASPECT_LINE_COLOR[asp.type] ?? '#FFFFFF10'}
-            strokeWidth={0.6}
+            stroke={ASPECT_LINE_COLOR[asp.type] ?? '#FFFFFF18'}
+            strokeWidth={0.8}
           />
         );
       })}
 
-      {/* ASC/DSC axis */}
+      {/* ASC axis — arrow + label */}
       {natalChart && (() => {
-        const ascAngle = e2s(ascLon);
         const dscAngle = e2s(ascLon + 180);
-        const aP = polar(cx, cy, signInnerR + size * 0.020, ascAngle);
-        const dP = polar(cx, cy, signInnerR + size * 0.020, dscAngle);
+        const ascTip   = polar(cx, cy, outerR + size * 0.022, ascSvgAngle);
+        const ascLine1 = polar(cx, cy, signInnerR, ascSvgAngle);
+        const ascLine2 = polar(cx, cy, outerR,     ascSvgAngle);
+        const dscLine1 = polar(cx, cy, signInnerR, dscAngle);
+        const dscLine2 = polar(cx, cy, outerR,     dscAngle);
+        const lblPos   = polar(cx, cy, labelR + size * 0.018, ascSvgAngle);
         return (
           <G>
-            <Line x1={f(aP.x)} y1={f(aP.y)} x2={f(dP.x)} y2={f(dP.y)}
-              stroke="#5A5A7A" strokeWidth={0.8} strokeDasharray="2,3" />
-            <SvgText x={f(aP.x)} y={f(aP.y)} dy={-6}
-              textAnchor="middle" fontSize={size * 0.026} fill="#7070A0">AC</SvgText>
+            {/* DSC side — no label, no arrow */}
+            <Line x1={f(dscLine1.x)} y1={f(dscLine1.y)} x2={f(dscLine2.x)} y2={f(dscLine2.y)}
+              stroke="#FFFFFF" strokeOpacity={0.40} strokeWidth={0.8} />
+            {/* ASC side — line + arrow + label */}
+            <Line x1={f(ascLine1.x)} y1={f(ascLine1.y)} x2={f(ascLine2.x)} y2={f(ascLine2.y)}
+              stroke="#FFFFFF" strokeOpacity={0.50} strokeWidth={0.8} />
+            <Polygon
+              points={arrowPoints(cx, cy, outerR + size * 0.018, ascSvgAngle, size * 0.022)}
+              fill="#FFFFFF" fillOpacity={0.70} />
+            <SvgText x={f(lblPos.x)} y={f(lblPos.y)}
+              textAnchor="middle" alignmentBaseline="central"
+              fontSize={size * 0.028} fill="#FFFFFF" fillOpacity={0.70}>
+              {ascLabel}
+            </SvgText>
           </G>
         );
       })()}
 
-      {/* MC/IC axis */}
+      {/* MC axis — arrow + label */}
       {natalChart && (() => {
-        const mcAngle = e2s(mcLon);
-        const icAngle = e2s(mcLon + 180);
-        const mP = polar(cx, cy, signInnerR + size * 0.020, mcAngle);
-        const iP = polar(cx, cy, signInnerR + size * 0.020, icAngle);
+        const icAngle  = e2s(mcLon + 180);
+        const mcLine1  = polar(cx, cy, signInnerR, mcSvgAngle);
+        const mcLine2  = polar(cx, cy, outerR,     mcSvgAngle);
+        const icLine1  = polar(cx, cy, signInnerR, icAngle);
+        const icLine2  = polar(cx, cy, outerR,     icAngle);
+        const lblPos   = polar(cx, cy, labelR + size * 0.022, mcSvgAngle);
         return (
           <G>
-            <Line x1={f(mP.x)} y1={f(mP.y)} x2={f(iP.x)} y2={f(iP.y)}
-              stroke="#5A5A7A" strokeWidth={0.8} strokeDasharray="2,3" />
-            <SvgText x={f(mP.x)} y={f(mP.y)} dy={-6}
-              textAnchor="middle" fontSize={size * 0.026} fill="#7070A0">MC</SvgText>
+            {/* IC side */}
+            <Line x1={f(icLine1.x)} y1={f(icLine1.y)} x2={f(icLine2.x)} y2={f(icLine2.y)}
+              stroke="#FFFFFF" strokeOpacity={0.40} strokeWidth={0.8} />
+            {/* MC side — arrow + label */}
+            <Line x1={f(mcLine1.x)} y1={f(mcLine1.y)} x2={f(mcLine2.x)} y2={f(mcLine2.y)}
+              stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={0.9} />
+            <Polygon
+              points={arrowPoints(cx, cy, outerR + size * 0.018, mcSvgAngle, size * 0.022)}
+              fill="#FFFFFF" fillOpacity={0.75} />
+            <SvgText x={f(lblPos.x)} y={f(lblPos.y)}
+              textAnchor="middle" alignmentBaseline="central"
+              fontSize={size * 0.028} fill="#FFFFFF" fillOpacity={0.75}>
+              {mcLabel}
+            </SvgText>
           </G>
         );
       })()}
@@ -263,45 +332,34 @@ export const NatalChartWheel: React.FC<Props> = ({ natalChart, size = 300 }) => 
       {/* Planet markers */}
       {planetData.map(({ p, svgAngle, r }) => {
         const pos  = polar(cx, cy, r, svgAngle);
-        const line = polar(cx, cy, signInnerR - 2, svgAngle);
+        // Small tick line from sign ring inward to planet position
+        const tick = polar(cx, cy, signInnerR - size * 0.008, svgAngle);
         return (
           <G key={`pl-${p.name}`}>
-            <Line x1={f(line.x)} y1={f(line.y)} x2={f(pos.x)} y2={f(pos.y)}
-              stroke={p.color} strokeWidth={0.5} strokeOpacity={0.30} />
-            <Circle cx={f(pos.x)} cy={f(pos.y)} r={size * 0.044}
-              fill={p.color} fillOpacity={0.10} />
-            <Circle cx={f(pos.x)} cy={f(pos.y)} r={size * 0.018}
-              fill={p.color} fillOpacity={0.9} />
-            <SvgText x={f(pos.x)} y={f(pos.y + size * 0.003)}
+            {/* Tick line */}
+            <Line x1={f(tick.x)} y1={f(tick.y)} x2={f(pos.x)} y2={f(pos.y)}
+              stroke={p.color} strokeWidth={0.4} strokeOpacity={0.25} />
+            {/* Planet symbol */}
+            <SvgText x={f(pos.x)} y={f(pos.y)}
               textAnchor="middle" alignmentBaseline="central"
-              fontSize={size * 0.036} fill={p.color} fillOpacity={0.95}>
+              fontSize={size * 0.040} fill={p.color} fillOpacity={0.95}>
               {p.symbol}
             </SvgText>
-            <SvgText x={f(pos.x)} y={f(pos.y + size * 0.055)}
+            {/* Degree label */}
+            <SvgText x={f(pos.x)} y={f(pos.y + size * 0.048)}
               textAnchor="middle" alignmentBaseline="central"
-              fontSize={size * 0.020} fill={p.color} fillOpacity={0.50}>
+              fontSize={size * 0.021} fill={p.color} fillOpacity={0.60}>
               {p.degreesInSign}°
             </SvgText>
           </G>
         );
       })}
 
-      {/* Cardinal tick marks */}
-      {[0, 90, 180, 270].map((svgAngle, i) => {
-        const inner = polar(cx, cy, outerR - 1, svgAngle);
-        const outer = polar(cx, cy, outerR + size * 0.015, svgAngle);
-        return (
-          <Line key={`card-${i}`}
-            x1={f(inner.x)} y1={f(inner.y)} x2={f(outer.x)} y2={f(outer.y)}
-            stroke="#3A3A54" strokeWidth={1} />
-        );
-      })}
-
       {/* Center hub */}
-      <Circle cx={cx} cy={cy} r={hubR + 3} fill="none" stroke="#2A2A3A" strokeWidth={0.5} />
+      <Circle cx={cx} cy={cy} r={hubR + 2} fill="none" stroke="#FFFFFF" strokeOpacity={0.10} strokeWidth={0.5} />
       <Circle cx={cx} cy={cy} r={hubR} fill="url(#hubGrad)" />
       <SvgText x={f(cx)} y={f(cy + 1)} textAnchor="middle" alignmentBaseline="central"
-        fontSize={size * 0.056} fill="#3A3A5A">◎</SvgText>
+        fontSize={size * 0.048} fill="#FFFFFF" fillOpacity={0.20}>◎</SvgText>
     </Svg>
   );
 };

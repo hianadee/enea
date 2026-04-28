@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { linkEmail } from '@/services/authService';
 import { colors } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 
 interface Props {
   visible:   boolean;
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 22,
     color: colors.fg.primary,
     fontWeight: '300',

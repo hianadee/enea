@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ENEA — Design System</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Dark tokens */
+    --bg:              #0A0A0F;
+    --surface:         #13131A;
+    --surface-el:      #1C1C26;
+    --border:          #2A2A3A;
+    --text:            #F0EEF6;
+    --text-secondary:  #8B8A9E;
+    --text-muted:      #7D7C8F;
+
+    /* Accent */
+    --accent:          #FC8181;
+
+    /* Planets */
+    --sun:      #F4C542;
+    --moon:     #C4B5FD;
+    --mercury:  #6EE7B7;
+    --venus:    #FDA4AF;
+    --mars:     #FC8181;
+    --jupiter:  #93C5FD;
+    --saturn:   #FCD34D;
+    --uranus:   #67E8F9;
+    --neptune:  #A5B4FC;
+    --pluto:    #D8B4FE;
+
+    /* Fonts */
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans:  -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Spacing */
+    --sp-xs:  4px;
+    --sp-sm:  8px;
+    --sp-md:  16px;
+    --sp-lg:  24px;
+    --sp-xl:  32px;
+    --sp-2xl: 48px;
+    --sp-3xl: 64px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────── */
+  .page { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ──────────────────────────────────────────────────────── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .sidebar-logo-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .nav-section {
+    padding: 6px 24px 2px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 16px;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 7px 24px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-link:hover {
+    color: var(--text);
+    background: var(--surface-el);
+    border-left-color: var(--accent);
+  }
+
+  /* ── Main content ─────────────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    padding: 48px 56px;
+    max-width: 1100px;
+  }
+
+  /* ── Section ──────────────────────────────────────────────────────── */
+  .section {
+    margin-bottom: 80px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── Page hero ────────────────────────────────────────────────────── */
+  .hero {
+    margin-bottom: 64px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(252,129,129,.1);
+    border: 1px solid rgba(252,129,129,.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .hero-meta-item {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .hero-meta-item strong {
+    color: var(--text-secondary);
+    display: block;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  /* ── Typography ───────────────────────────────────────────────────── */
+  .type-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .type-row:last-child { border-bottom: none; }
+
+  .type-meta { padding-right: 24px; padding-top: 4px; }
+
+  .type-token {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+    margin-bottom: 3px;
+  }
+
+  .type-spec {
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    letter-spacing: 0.1px;
+  }
+
+  .type-sample { color: var(--text); }
+
+  /* presets */
+  .t-display       { font-family: var(--serif); font-size: 72px; font-weight: 200; line-height: 1.1; letter-spacing: -4px; }
+  .t-heading1      { font-family: var(--serif); font-size: 40px; font-weight: 300; line-height: 1.2; letter-spacing: -0.5px; }
+  .t-heading2      { font-family: var(--serif); font-size: 30px; font-weight: 300; line-height: 1.35; letter-spacing: -0.3px; }
+  .t-heading3      { font-family: var(--serif); font-size: 24px; font-weight: 300; line-height: 1.5; letter-spacing: -0.2px; }
+  .t-quote         { font-family: var(--serif); font-size: 26px; font-style: italic; font-weight: 400; line-height: 1.7; letter-spacing: -0.3px; }
+  .t-sectionTitle  { font-family: var(--serif); font-size: 14px; font-style: italic; font-weight: 400; line-height: 1.6; letter-spacing: 0.1px; }
+  .t-title         { font-size: 20px; font-weight: 400; line-height: 1.4; letter-spacing: 0.1px; }
+  .t-subtitle      { font-size: 18px; font-weight: 600; line-height: 1.45; letter-spacing: 0.2px; }
+  .t-bodyLg        { font-size: 16px; font-weight: 400; line-height: 1.65; letter-spacing: 0.1px; }
+  .t-bodyLgStrong  { font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: 0.1px; }
+  .t-body          { font-size: 15px; font-weight: 400; line-height: 1.6; letter-spacing: 0.1px; }
+  .t-bodySm        { font-size: 14px; font-weight: 400; line-height: 1.6; letter-spacing: 0.1px; }
+  .t-bodySmMedium  { font-size: 14px; font-weight: 500; line-height: 1.6; letter-spacing: 0.3px; }
+  .t-caption       { font-size: 13px; font-weight: 400; line-height: 1.5; letter-spacing: 0.1px; }
+  .t-captionItalic { font-size: 13px; font-style: italic; font-weight: 400; line-height: 1.5; letter-spacing: 0.1px; }
+  .t-label         { font-size: 11px; font-weight: 600; line-height: 1.5; letter-spacing: 1.8px; text-transform: uppercase; }
+  .t-overline      { font-size: 11px; font-weight: 600; line-height: 1.5; letter-spacing: 1.8px; text-transform: uppercase; }
+  .t-badge         { font-size: 12px; font-weight: 500; line-height: 1.5; letter-spacing: 0.3px; }
+  .t-micro         { font-size: 12px; font-weight: 500; line-height: 1.5; letter-spacing: 0.3px; }
+  .t-button        { font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: 0.3px; }
+  .t-tab           { font-size: 14px; font-weight: 500; line-height: 1.4; letter-spacing: 0.4px; }
+
+  /* ── Colors ───────────────────────────────────────────────────────── */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .color-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .color-swatch {
+    height: 72px;
+    position: relative;
+  }
+
+  .color-swatch-inner {
+    width: 100%;
+    height: 100%;
+  }
+
+  .color-info {
+    background: var(--surface);
+    padding: 10px 12px;
+  }
+
+  .color-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .color-hex {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .color-usage {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* Planets grid */
+  .planet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .planet-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .planet-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .planet-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .planet-hex {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* ── Spacing ──────────────────────────────────────────────────────── */
+  .spacing-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spacing-row:last-child { border-bottom: none; }
+
+  .spacing-token {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    width: 40px;
+    flex-shrink: 0;
+  }
+
+  .spacing-value {
+    font-size: 12px;
+    color: var(--text-muted);
+    width: 44px;
+    flex-shrink: 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .spacing-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .spacing-bar {
+    height: 100%;
+    background: rgba(252,129,129,.35);
+    border-radius: 4px;
+    border: 1px solid rgba(252,129,129,.5);
+  }
+
+  /* ── Components ───────────────────────────────────────────────────── */
+
+  /* Button */
+  .comp-section { margin-bottom: 48px; }
+
+  .comp-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .comp-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* Button styles */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100px;
+    height: 56px;
+    padding: 0 32px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn-primary {
+    background: var(--text);
+    color: #1A2332;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #1A1A1A;
+  }
+
+  .btn-sm {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  /* Chips */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .chip-active {
+    border-color: var(--accent);
+    background: rgba(252,129,129,.08);
+    color: var(--accent);
+  }
+
+  /* Toggle */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toggle {
+    width: 46px;
+    height: 26px;
+    border-radius: 13px;
+    border: 1px solid var(--border);
+    background: var(--border);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-active {
+    background: var(--accent);
+    border-color: rgba(252,129,129,.5);
+  }
+
+  .toggle-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    transition: all 0.2s;
+  }
+
+  .toggle-active .toggle-thumb {
+    background: #fff;
+    left: 23px;
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* ToneGroup */
+  .tone-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tone-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* TabBar */
+  .tabbar {
+    display: flex;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 6px 0 16px;
+    width: 360px;
+    border-radius: 0 0 24px 24px;
+    overflow: hidden;
+  }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px;
+    cursor: pointer;
+  }
+
+  .tab-icon {
+    font-size: 16px;
+    color: var(--text-muted);
+  }
+
+  .tab-icon-active { color: var(--accent); }
+
+  .tab-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+  }
+
+  .tab-label-active { color: var(--accent); }
+
+  /* DoneStrip */
+  .done-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 64px;
+    background: var(--surface-el);
+    border-top: 1px solid rgba(252,129,129,.16);
+    width: 360px;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .done-strip-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .done-strip-btn {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* Row */
+  .row-comp {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .row-comp:last-child { border-bottom: none; }
+
+  .row-left { flex: 1; }
+  .row-label { font-size: 15px; color: var(--text); font-weight: 400; }
+  .row-sublabel { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .card-body { padding: 16px; }
+
+  /* Section header (Settings) */
+  .settings-section-header {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.2px;
+    line-height: 1.5;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  /* ── Big Three ────────────────────────────────────────────────────── */
+  .big-three {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    width: 360px;
+  }
+
+  .big-three-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 8px;
+  }
+
+  .big-three-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    margin: 8px 0;
+  }
+
+  .big-three-glyph { font-size: 18px; }
+  .big-three-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
+  .big-three-value { font-size: 14px; font-weight: 500; color: var(--text); }
+
+  /* ── Rules callout ────────────────────────────────────────────────── */
+  .rule {
+    display: flex;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .rule-icon { font-size: 16px; flex-shrink: 0; }
+
+  .rule-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .rule-text strong { color: var(--text); font-weight: 600; }
+
+  /* ── Code block ───────────────────────────────────────────────────── */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  pre .kw  { color: #A5B4FC; }
+  pre .str { color: #86EFAC; }
+  pre .cm  { color: #555570; }
+  pre .fn  { color: #FCD34D; }
+
+  /* ── Table ────────────────────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  td:first-child {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Divider ──────────────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+  /* ── Subtitle text ────────────────────────────────────────────────── */
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    margin-top: 32px;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  .tag {
+    display: inline-block;
+    background: rgba(252,129,129,.1);
+    border: 1px solid rgba(252,129,129,.25);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .tag-blue {
+    background: rgba(147,197,253,.1);
+    border-color: rgba(147,197,253,.25);
+    color: #93C5FD;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-name">Enea</div>
+      <div class="sidebar-logo-sub">Design System · v1.0</div>
+    </div>
+
+    <div class="nav-section">Fundamentos</div>
+    <a class="nav-link" href="#typography">Tipografía</a>
+    <a class="nav-link" href="#colors">Colores</a>
+    <a class="nav-link" href="#spacing">Espaciado</a>
+
+    <div class="nav-section">Componentes</div>
+    <a class="nav-link" href="#buttons">Botones</a>
+    <a class="nav-link" href="#chips">Chips</a>
+    <a class="nav-link" href="#toggles">Toggles</a>
+    <a class="nav-link" href="#tonegroups">ToneGroups</a>
+    <a class="nav-link" href="#rows">Rows</a>
+    <a class="nav-link" href="#tabbar">TabBar</a>
+    <a class="nav-link" href="#strips">Strips & Banners</a>
+    <a class="nav-link" href="#data">Data display</a>
+
+    <div class="nav-section">Reglas</div>
+    <a class="nav-link" href="#rules">Uso correcto</a>
+  </nav>
+
+  <!-- ── MAIN ────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">⬡ Design System</div>
+      <h1 class="hero-title">ENEA<br/>UI Kit</h1>
+      <p class="hero-sub">
+        Referencia visual de tokens, componentes y patrones de interacción.
+        Todo el sistema nace de <code style="font-size:13px;color:var(--accent)">src/constants/theme.ts</code>.
+      </p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <strong>Plataforma</strong>
+          iOS · Android (Expo)
+        </div>
+        <div class="hero-meta-item">
+          <strong>Modo</strong>
+          Dark only
+        </div>
+        <div class="hero-meta-item">
+          <strong>Acento</strong>
+          <span style="color:var(--accent)">#FC8181</span>
+        </div>
+        <div class="hero-meta-item">
+          <strong>Actualizado</strong>
+          19 abril 2026
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TIPOGRAFÍA                                                  -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="typography">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Tipografía</div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+        <div style="padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-muted)">200 <span style="color:var(--text-secondary)">display</span></div>
+        <div style="padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-muted)">300 <span style="color:var(--text-secondary)">headings</span></div>
+        <div style="padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-muted)">400 <span style="color:var(--text-secondary)">body · title</span></div>
+        <div style="padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-muted)">500 <span style="color:var(--text-secondary)">medium · badge · tab</span></div>
+        <div style="padding:6px 14px;background:var(--surface);border:1px solid rgba(252,129,129,.3);border-radius:8px;font-size:13px;color:var(--text-muted)">600 <span style="color:var(--accent)">strong · button · label</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">📐</div>
+        <div class="rule-text">
+          Siempre usa <strong>TYPOGRAPHY.presets</strong> vía spread en <code>StyleSheet.create()</code>.
+          Nunca fontFamily, fontSize ni fontWeight inline.
+          <br/>Color dinámico solo en JSX: <code style="color:var(--accent)">style={[styles.x, &#123; color: colors.text &#125;]}</code>
+        </div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">display</div>
+          <div class="type-spec">serif · 96px<br/>weight 200</div>
+        </div>
+        <div class="type-sample t-display">4</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">heading1</div>
+          <div class="type-spec">serif · 40px<br/>weight 300</div>
+        </div>
+        <div class="type-sample t-heading1">Tu carta natal</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">heading2</div>
+          <div class="type-spec">serif · 30px<br/>weight 300</div>
+        </div>
+        <div class="type-sample t-heading2">Tu camino tiene su propio idioma.</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">heading3</div>
+          <div class="type-spec">serif · 24px<br/>weight 300</div>
+        </div>
+        <div class="type-sample t-heading3">Voz de Enea</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">quote</div>
+          <div class="type-spec">serif · 26px<br/>italic · weight 400</div>
+        </div>
+        <div class="type-sample t-quote">"Lo que resistes, persiste."</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">sectionTitle</div>
+          <div class="type-spec">serif · 14px<br/>italic · weight 400</div>
+        </div>
+        <div class="type-sample t-sectionTitle">Por qué esta frase hoy</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">title</div>
+          <div class="type-spec">sans · 20px<br/>weight 400</div>
+        </div>
+        <div class="type-sample t-title">El Iniciador</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">subtitle</div>
+          <div class="type-spec">sans · 18px<br/>weight 600</div>
+        </div>
+        <div class="type-sample t-subtitle">Desafío del 1</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">bodyLg</div>
+          <div class="type-spec">sans · 16px<br/>weight 400</div>
+        </div>
+        <div class="type-sample t-bodyLg">El cielo exacto del momento en que naciste. Sol, Luna y Ascendente — los tres puntos que más te definen.</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">bodyLgStrong</div>
+          <div class="type-spec">sans · 16px<br/>weight 600</div>
+        </div>
+        <div class="type-sample t-bodyLgStrong">El 1 vibra con la energía del origen.</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">body</div>
+          <div class="type-spec">sans · 15px<br/>weight 400</div>
+        </div>
+        <div class="type-sample t-body">Cita diaria · Cada día · 08:00</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">bodySm</div>
+          <div class="type-spec">sans · 14px<br/>weight 400</div>
+        </div>
+        <div class="type-sample t-bodySm">1990-03-15 · 14:30 · Madrid, España</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">bodySmMedium</div>
+          <div class="type-spec">sans · 14px<br/>weight 500</div>
+        </div>
+        <div class="type-sample t-bodySmMedium">Piscis · Taurus · Virgo</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">caption</div>
+          <div class="type-spec">sans · 13px<br/>weight 400</div>
+        </div>
+        <div class="type-sample t-caption" style="color:var(--text-secondary)">Pasión: envidia · Fijación: melancolía</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">captionItalic</div>
+          <div class="type-spec">sans · 13px<br/>italic · weight 400</div>
+        </div>
+        <div class="type-sample t-captionItalic" style="color:var(--text-secondary)">Tu momento astral más importante del día</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">label</div>
+          <div class="type-spec">sans · 11px<br/>weight 600 · UC · ls 1.8</div>
+        </div>
+        <div class="type-sample t-label" style="color:var(--text-secondary)">Día Universal</div>
+      </div>
+
+      <div class="type-row" style="opacity:0.6">
+        <div class="type-meta">
+          <div class="type-token" style="display:flex;align-items:center;gap:6px">
+            overline
+            <span style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#93C5FD;background:rgba(147,197,253,.1);border:1px solid rgba(147,197,253,.25);padding:1px 6px;border-radius:4px">alias</span>
+          </div>
+          <div class="type-spec">= label · se mantiene<br/>por compatibilidad</div>
+        </div>
+        <div class="type-sample t-overline" style="color:var(--text-secondary)">Tus Astros</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">badge</div>
+          <div class="type-spec">sans · 12px<br/>weight 500</div>
+        </div>
+        <div class="type-sample t-badge">Meditativo · Poético</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">micro</div>
+          <div class="type-spec">sans · 12px<br/>weight 500</div>
+        </div>
+        <div class="type-sample t-micro">Guardado · Compartir</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">button</div>
+          <div class="type-spec">sans · 16px<br/>weight 600</div>
+        </div>
+        <div class="type-sample t-button">Continuar</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-token">tab</div>
+          <div class="type-spec">sans · 14px<br/>weight 500</div>
+        </div>
+        <div class="type-sample t-tab" style="color:var(--text-muted)">Hoy · Diario · Tú</div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- COLORES                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="colors">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Colores</div>
+      </div>
+
+      <h3>Tokens de tema — Dark mode</h3>
+
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#0A0A0F;border-bottom:1px solid #2A2A3A"></div></div>
+          <div class="color-info">
+            <div class="color-name">background</div>
+            <div class="color-hex">#0A0A0F</div>
+            <div class="color-usage">Fondo de pantalla</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#13131A"></div></div>
+          <div class="color-info">
+            <div class="color-name">surface</div>
+            <div class="color-hex">#13131A</div>
+            <div class="color-usage">Tarjetas, ToneGroups</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#1C1C26"></div></div>
+          <div class="color-info">
+            <div class="color-name">surfaceElevated</div>
+            <div class="color-hex">#1C1C26</div>
+            <div class="color-usage">Modales, DoneStrip</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#2A2A3A"></div></div>
+          <div class="color-info">
+            <div class="color-name">border</div>
+            <div class="color-hex">#2A2A3A</div>
+            <div class="color-usage">Separadores, bordes</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#F0EEF6"></div></div>
+          <div class="color-info">
+            <div class="color-name">text</div>
+            <div class="color-hex">#F0EEF6</div>
+            <div class="color-usage">Texto principal</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#8B8A9E"></div></div>
+          <div class="color-info">
+            <div class="color-name">textSecondary</div>
+            <div class="color-hex">#8B8A9E</div>
+            <div class="color-usage">Texto secundario</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#7D7C8F"></div></div>
+          <div class="color-info">
+            <div class="color-name">textMuted</div>
+            <div class="color-hex">#7D7C8F</div>
+            <div class="color-usage">Hints, tabs inactivas<br/>4.85:1 WCAG AA ✓</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch"><div class="color-swatch-inner" style="background:#FC8181"></div></div>
+          <div class="color-info">
+            <div class="color-name">ACCENT (coral)</div>
+            <div class="color-hex">#FC8181</div>
+            <div class="color-usage">CTAs, toggles, chips activos, TabBar</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Rampa de texto</h3>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:32px;max-width:480px">
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:6px;background:#F0EEF6;flex-shrink:0"></div>
+          <div style="flex:1">
+            <span style="font-size:12px;font-weight:600;color:#F0EEF6">text</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-family:monospace">#F0EEF6</span>
+          </div>
+          <span style="font-size:11px;color:#6EE7B7;font-weight:600">17.8:1</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:6px;background:#8B8A9E;flex-shrink:0"></div>
+          <div style="flex:1">
+            <span style="font-size:12px;font-weight:600;color:#8B8A9E">textSecondary</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-family:monospace">#8B8A9E</span>
+          </div>
+          <span style="font-size:11px;color:#6EE7B7;font-weight:600">5.86:1</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--surface);border:2px solid rgba(252,129,129,.4);border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:6px;background:#7D7C8F;flex-shrink:0"></div>
+          <div style="flex:1">
+            <span style="font-size:12px;font-weight:600;color:#7D7C8F">textMuted</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-family:monospace">#7D7C8F</span>
+            <span style="font-size:10px;color:var(--accent);margin-left:6px;font-weight:600">mínimo AA</span>
+          </div>
+          <span style="font-size:11px;color:#6EE7B7;font-weight:600">4.85:1</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;opacity:0.6">
+          <div style="width:28px;height:28px;border-radius:6px;background:#2A2A3A;border:1px solid #3A3A4A;flex-shrink:0"></div>
+          <div style="flex:1">
+            <span style="font-size:12px;font-weight:600;color:var(--text-muted)">border</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-family:monospace">#2A2A3A</span>
+            <span style="font-size:10px;color:#FC8181;margin-left:6px;font-weight:600">NO texto</span>
+          </div>
+          <span style="font-size:11px;color:#FC8181;font-weight:600">1.40:1</span>
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">⚠️</div>
+        <div class="rule-text">
+          <strong>border (#2A2A3A) nunca se usa en textos.</strong>
+          Para texto desactivado usa <strong>textMuted (#7D7C8F)</strong>.
+          Los colores de planeta son solo decorativos — nunca en elementos interactivos.
+        </div>
+      </div>
+
+      <h3>Paleta de planetas</h3>
+
+      <div class="planet-grid">
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--sun)"></div>
+          <div>
+            <div class="planet-name">Sol</div>
+            <div class="planet-hex">#F4C542</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--moon)"></div>
+          <div>
+            <div class="planet-name">Luna</div>
+            <div class="planet-hex">#C4B5FD</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--mercury)"></div>
+          <div>
+            <div class="planet-name">Mercurio</div>
+            <div class="planet-hex">#6EE7B7</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--venus)"></div>
+          <div>
+            <div class="planet-name">Venus</div>
+            <div class="planet-hex">#FDA4AF</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--mars)"></div>
+          <div>
+            <div class="planet-name">Marte</div>
+            <div class="planet-hex">#FC8181</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--jupiter)"></div>
+          <div>
+            <div class="planet-name">Júpiter</div>
+            <div class="planet-hex">#93C5FD</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--saturn)"></div>
+          <div>
+            <div class="planet-name">Saturno</div>
+            <div class="planet-hex">#FCD34D</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--uranus)"></div>
+          <div>
+            <div class="planet-name">Urano</div>
+            <div class="planet-hex">#67E8F9</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--neptune)"></div>
+          <div>
+            <div class="planet-name">Neptuno</div>
+            <div class="planet-hex">#A5B4FC</div>
+          </div>
+        </div>
+        <div class="planet-card">
+          <div class="planet-dot" style="background:var(--pluto)"></div>
+          <div>
+            <div class="planet-name">Plutón</div>
+            <div class="planet-hex">#D8B4FE</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SPACING                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="spacing">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Espaciado</div>
+      </div>
+
+      <div class="spacing-row">
+        <div class="spacing-token">xs</div>
+        <div class="spacing-value">4px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:4px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">sm</div>
+        <div class="spacing-value">8px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:8px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">md</div>
+        <div class="spacing-value">16px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:16px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">lg</div>
+        <div class="spacing-value">24px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:24px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">xl</div>
+        <div class="spacing-value">32px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:32px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">2xl</div>
+        <div class="spacing-value">48px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:48px"></div></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-token">3xl</div>
+        <div class="spacing-value">64px</div>
+        <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:64px"></div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- BOTONES                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="buttons">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Botones</div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-label">CTA primario — btn-primary</div>
+        <div class="comp-row">
+          <button class="btn btn-primary">Continuar</button>
+          <button class="btn btn-primary" style="opacity:.3;cursor:not-allowed">Continuar (disabled)</button>
+        </div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-label">Acento coral — btn-accent</div>
+        <div class="comp-row">
+          <button class="btn btn-accent">Hecho</button>
+        </div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-label">Ghost — btn-ghost</div>
+        <div class="comp-row">
+          <button class="btn btn-ghost">Ver →</button>
+          <button class="btn btn-ghost btn-sm">Cancelar</button>
+        </div>
+      </div>
+
+      <pre><span class="cm">// CTA primario</span>
+<span class="kw">style</span>=<span class="str">{[styles.ctaBtn]}</span>
+ctaBtn: <span class="fn">{</span>
+  backgroundColor: colors.fg.primary,
+  borderRadius: <span class="str">100</span>,
+  height: <span class="str">56</span>,
+  alignItems: <span class="str">'center'</span>,
+  justifyContent: <span class="str">'center'</span>,
+<span class="fn">}</span></pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- CHIPS                                                       -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="chips">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Chips — ChipRow</div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-label">Estado inactivo / activo</div>
+        <div class="comp-row">
+          <div class="chip">Poético</div>
+          <div class="chip chip-active">Directo</div>
+          <div class="chip">Metafórico</div>
+          <div class="chip">Científico</div>
+        </div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-label">Tradición espiritual</div>
+        <div class="comp-row">
+          <div class="chip chip-active">Budista</div>
+          <div class="chip">Estoica</div>
+          <div class="chip">Cristiana</div>
+          <div class="chip">Secular</div>
+          <div class="chip">Taoísta</div>
+        </div>
+      </div>
+
+      <pre><span class="cm">// activo</span>
+borderColor: ACCENT,
+backgroundColor: ACCENT + <span class="str">'14'</span>,  <span class="cm">// 8% opacidad</span>
+color: ACCENT
+
+<span class="cm">// inactivo</span>
+borderColor: colors.border,
+color: colors.textSecondary</pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TOGGLES                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="toggles">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Toggles — ENEAToggle</div>
+      </div>
+
+      <div class="comp-section">
+        <div class="comp-row" style="flex-direction:column;align-items:flex-start;gap:16px">
+          <div class="toggle-wrap">
+            <div class="toggle toggle-active">
+              <div class="toggle-thumb"></div>
+            </div>
+            <span class="toggle-label">Modo oscuro · <span style="color:var(--accent)">Activado</span></span>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle">
+              <div class="toggle-thumb"></div>
+            </div>
+            <span class="toggle-label">Cita diaria · <span style="color:var(--text-muted)">Pausada</span></span>
+          </div>
+        </div>
+      </div>
+
+      <pre><span class="cm">// track activo — siempre ACCENT (sin opacidad)</span>
+outputRange: [colors.border, <span class="fn">ACCENT</span>]
+
+<span class="cm">// ❌ Nunca palette.primary — solo ACCENT</span>
+<span class="cm">// ❌ Nunca ACCENT + 'CC' — fondo 100% opaco</span></pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TONEGROUPS                                                  -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="tonegroups">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">ToneGroups</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:400px">
+        <div class="tone-group">
+          <div class="tone-group-label">Tradición espiritual</div>
+          <div class="chips-row">
+            <div class="chip chip-active">Budista</div>
+            <div class="chip">Estoica</div>
+            <div class="chip">Cristiana</div>
+            <div class="chip">Secular</div>
+          </div>
+        </div>
+
+        <div class="tone-group">
+          <div class="tone-group-label">Lenguaje</div>
+          <div class="chips-row">
+            <div class="chip">Poético · Lírico</div>
+            <div class="chip chip-active">Directo · Claro</div>
+            <div class="chip">Metafórico</div>
+          </div>
+        </div>
+
+        <div class="tone-group">
+          <div class="tone-group-label">Energía</div>
+          <div class="chips-row">
+            <div class="chip">Centrador</div>
+            <div class="chip">Motivador</div>
+            <div class="chip chip-active">Reflexivo</div>
+          </div>
+        </div>
+
+        <div class="tone-group">
+          <div class="tone-group-label">Enfoque vital</div>
+          <div class="chips-row">
+            <div class="chip">Carrera</div>
+            <div class="chip chip-active">Crecimiento interior</div>
+            <div class="chip">Salud</div>
+          </div>
+        </div>
+      </div>
+
+      <pre style="margin-top:20px"><span class="cm">// Gap entre ToneGroups</span>
+toneBlock: <span class="fn">{</span> gap: <span class="str">16</span> <span class="fn">}</span>
+
+<span class="cm">// Cada grupo</span>
+group: <span class="fn">{</span>
+  borderRadius: <span class="str">16</span>,
+  borderWidth: StyleSheet.hairlineWidth,
+  backgroundColor: colors.surface,
+  borderColor: colors.border,
+  paddingVertical: <span class="str">14</span>,
+  paddingHorizontal: <span class="str">16</span>,
+  gap: <span class="str">10</span>,
+<span class="fn">}</span></pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- ROWS                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="rows">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Rows — Settings</div>
+      </div>
+
+      <div style="max-width:420px">
+        <div class="t-heading3" style="color:var(--accent);margin-bottom:16px">Avisos</div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="row-comp">
+              <div class="row-left">
+                <div class="row-label">Cita diaria</div>
+                <div class="row-sublabel">08:00 · Cada día</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="border:1px solid rgba(252,129,129,.4);border-radius:8px;padding:5px 10px">
+                  <span style="color:var(--accent);font-size:13px;font-weight:500">08:00</span>
+                </div>
+                <div class="toggle toggle-active" style="margin:0"><div class="toggle-thumb"></div></div>
+              </div>
+            </div>
+            <div class="row-comp" style="border-bottom:none">
+              <div class="row-left">
+                <div class="row-label">Modo oscuro</div>
+                <div class="row-sublabel">Activado</div>
+              </div>
+              <div class="toggle toggle-active" style="margin:0"><div class="toggle-thumb"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TABBAR                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="tabbar">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">TabBar</div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab-item">
+          <div class="tab-icon">◉</div>
+          <div class="tab-label">Hoy</div>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon">◈</div>
+          <div class="tab-label">Diario</div>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon tab-icon-active">◎</div>
+          <div class="tab-label tab-label-active">Tú</div>
+        </div>
+      </div>
+
+      <table style="margin-top:20px;max-width:400px">
+        <tr><th>Propiedad</th><th>Inactivo</th><th>Activo</th></tr>
+        <tr><td>color</td><td>#7D7C8F (textMuted)</td><td style="color:var(--accent)">#FC8181 (ACCENT)</td></tr>
+        <tr><td>fontSize icono</td><td colspan="2">16px</td></tr>
+        <tr><td>fontSize label</td><td colspan="2">11px · weight 500</td></tr>
+        <tr><td>paddingTop</td><td colspan="2">6px</td></tr>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- STRIPS & BANNERS                                            -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="strips">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Strips & Banners</div>
+      </div>
+
+      <h3>DoneStrip — "Cambios sin guardar"</h3>
+      <div class="done-strip">
+        <span class="done-strip-label">Cambios sin guardar</span>
+        <span class="done-strip-btn">Hecho</span>
+      </div>
+
+      <table style="margin-top:20px;max-width:400px">
+        <tr><th>Propiedad</th><th>Valor</th></tr>
+        <tr><td>height</td><td>64px</td></tr>
+        <tr><td>bottom</td><td>0 (tab screen)</td></tr>
+        <tr><td>background</td><td>surfaceElevated #1C1C26</td></tr>
+        <tr><td>border-top</td><td>1px · ACCENT + 28 (16%)</td></tr>
+        <tr><td>"Cambios"</td><td>15px · text (#F0EEF6) · weight 500</td></tr>
+        <tr><td>"Hecho"</td><td>17px · ACCENT · weight 700 <span style="font-size:10px;color:var(--text-muted)">(valor de componente, no preset)</span></td></tr>
+      </table>
+
+      <div class="rule" style="margin-top:20px">
+        <div class="rule-icon">💡</div>
+        <div class="rule-text">
+          La barra usa <strong>useState(false)</strong> — solo aparece cuando el usuario cambia algo en la sesión.
+          Nunca comparación con snapshot del store (causa falsos positivos por rehidratación de Zustand).
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- DATA DISPLAY                                                -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="data">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Data display</div>
+      </div>
+
+      <h3>Big Three — Sol · Luna · Ascendente</h3>
+      <div class="big-three">
+        <div class="big-three-cell">
+          <div class="big-three-glyph" style="color:var(--sun)">☉</div>
+          <div class="big-three-label">Sol</div>
+          <div class="big-three-value">Piscis</div>
+        </div>
+        <div class="big-three-divider"></div>
+        <div class="big-three-cell">
+          <div class="big-three-glyph" style="color:var(--moon)">☽</div>
+          <div class="big-three-label">Luna</div>
+          <div class="big-three-value">Taurus</div>
+        </div>
+        <div class="big-three-divider"></div>
+        <div class="big-three-cell">
+          <div class="big-three-glyph" style="color:var(--text-secondary)">↑</div>
+          <div class="big-three-label">Asc</div>
+          <div class="big-three-value">Virgo</div>
+        </div>
+      </div>
+
+      <h3>DataRow — Eneagrama / Numerología</h3>
+      <div style="max-width:420px">
+        <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--serif);font-size:32px;font-weight:300;color:var(--accent);width:38px;text-align:center;line-height:1">4</div>
+          <div style="width:1px;align-self:stretch;background:var(--border)"></div>
+          <div style="flex:1">
+            <div style="font-size:15px;color:var(--text)">El Envidioso</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:2px">Pasión: envidia · Fijación: melancolía</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:13px 0">
+          <div style="font-family:var(--serif);font-size:32px;font-weight:300;color:var(--accent);width:38px;text-align:center;line-height:1">1</div>
+          <div style="width:1px;align-self:stretch;background:var(--border)"></div>
+          <div style="flex:1">
+            <div style="font-size:15px;color:var(--text)">Año Personal · Iniciador</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:2px">El 1 vibra con la energía del origen…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- REGLAS                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="rules">
+      <div class="section-header">
+        <div class="section-dot"></div>
+        <div class="section-title">Reglas de uso</div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">✅</div>
+        <div class="rule-text">
+          <strong>Tipografía siempre via presets.</strong>
+          <code>...TYPOGRAPHY.presets.bodyLg</code> en StyleSheet. Color dinámico solo en JSX.
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">✅</div>
+        <div class="rule-text">
+          <strong>Acento coral en todos los interactivos.</strong>
+          Toggles, chips, TabBar activa, CTAs de texto, DoneStrip. Siempre <code>#FC8181</code>.
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">✅</div>
+        <div class="rule-text">
+          <strong>Paleta de planeta solo en decoración.</strong>
+          Glifos, símbolos de la rueda natal, DataRows. Nunca en botones ni toggles.
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">🚫</div>
+        <div class="rule-text">
+          <strong>border nunca en textos.</strong>
+          Para texto desactivado: <code>textMuted (#7D7C8F)</code>.
+          Para texto secundario: <code>textSecondary (#8B8A9E)</code>.
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">🚫</div>
+        <div class="rule-text">
+          <strong>Nunca Platform.OS inline.</strong>
+          Solo <code>FONT_FAMILY.serif</code> — centralizado en theme.ts.
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-icon">🚫</div>
+        <div class="rule-text">
+          <strong>Toggles activos al 100% de opacidad.</strong>
+          Sin sufijos de opacidad (<code>ACCENT + 'CC'</code>). El fondo del track activo es coral puro.
+        </div>
+      </div>
+
+      <div style="margin-top:40px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">Fuente de verdad</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.8">
+          <code style="color:var(--accent)">src/constants/theme.ts</code> — tokens, presets, familias, spacing, paletas<br/>
+          <code style="color:var(--accent)">src/screens/dev/TypographyPreviewScreen.tsx</code> — preview visual en simulador<br/>
+          <code style="color:var(--accent)">src/screens/dev/DevPreviewScreen.tsx</code> — acceso a todas las pantallas en DEV<br/>
+          <code style="color:var(--accent)">docs/design-system.html</code> — este archivo
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

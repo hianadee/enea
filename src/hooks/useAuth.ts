@@ -28,6 +28,9 @@ export function useAuth(): AuthState {
     ensureSession().then((u) => {
       setUser(u);
       setIsLoading(false);
+    }).catch(() => {
+      // Red no disponible o Supabase inalcanzable — continuar sin sesión
+      setIsLoading(false);
     });
 
     // 2. Escuchar cambios de sesión (magic link, sign out, etc.)

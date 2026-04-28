@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Astro Enea",
-    "slug": "astro-enea",
+    "slug": "enea",
     "description": "Tu frase diaria compuesta para ti con astrología y eneagrama.",
     "version": "1.0.0",
     "runtimeVersion": {
@@ -20,12 +20,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.astroenea.app",
-      "buildNumber": "2",
+      "buildNumber": "7",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Astro Enea utiliza Face ID para mantener tu sesión segura sin que tengas que iniciar sesión cada vez."
       }
     },
     "android": {
@@ -71,6 +72,7 @@
       "eas": {
         "projectId": "b698bcc5-fc99-4cd3-92d2-f22a0eaa0338"
       }
-    }
+    },
+    "owner": "anadee"
   }
 }

@@ -19,6 +19,8 @@ import {
 } from '../services/profileBackupService';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { useUserStore } from '../store/userStore';
+import { useSubscriptionStore } from '../store/subscriptionStore';
+import { initRevenueCat, syncSubscriptionStatus } from '../services/revenueCatService';
 import { EnneagramType, NatalChart } from '../types';
 
 /** Carga el perfil de Supabase en el onboardingStore para que
@@ -90,7 +92,12 @@ export function useAppReady(): AppRoute {
 
   // Kick off hydration once
   useEffect(() => {
+    initRevenueCat().catch(() => {});
     useUserStore.getState().hydrate();
+    useSubscriptionStore.getState().hydrate().then(() => {
+      // Verificar estado real con RevenueCat en background (no bloquea)
+      syncSubscriptionStatus().catch(() => {});
+    });
   }, []);
 
   useEffect(() => {

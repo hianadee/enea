@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENEA — Pantalla Hoy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Georgia&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    }
+
+    /* ── Device shell ─────────────────────────────────────────────────────── */
+    .device {
+      width: 393px;
+      min-height: 852px;
+      background: #0A0A0F;
+      border-radius: 52px;
+      border: 2px solid #2A2A35;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px #1A1A25;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Dynamic Island ───────────────────────────────────────────────────── */
+    .dynamic-island {
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 20px;
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+    }
+
+    /* ── Status bar ───────────────────────────────────────────────────────── */
+    .status-bar {
+      height: 54px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 28px 8px;
+      position: relative;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .status-time {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-icons svg { fill: #fff; }
+
+    /* ── Geometry background ──────────────────────────────────────────────── */
+    .geometry-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .geometry-bg svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* ── Scroll content ───────────────────────────────────────────────────── */
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 56px 28px 112px;
+      position: relative;
+      z-index: 1;
+    }
+    .scroll::-webkit-scrollbar { display: none; }
+
+    /* ── 1. Header ────────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 44px;
+    }
+    .date-text {
+      font-size: 11px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: #555570;
+    }
+    .planet-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(167,139,250,0.25);
+      border-radius: 100px;
+      padding: 6px 14px;
+    }
+    .planet-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #A78BFA;
+      flex-shrink: 0;
+    }
+    .planet-text {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: #A78BFA;
+    }
+
+    /* ── 2. Quote block ───────────────────────────────────────────────────── */
+    .quote-block {
+      margin-bottom: 48px;
+      display: flex;
+      flex-direction: row;
+      gap: 18px;
+    }
+    .quote-accent {
+      width: 2px;
+      border-radius: 1px;
+      background: #A78BFA;
+      margin-top: 4px;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .quote-text {
+      flex: 1;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 26px;
+      font-style: italic;
+      font-weight: 400;
+      line-height: 44px;
+      letter-spacing: -0.3px;
+      color: #FFFFFF;
+    }
+
+    /* ── 3. Illustration ──────────────────────────────────────────────────── */
+    .illustration-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 44px;
+      gap: 20px;
+    }
+    .illustration-rule {
+      width: 40%;
+      height: 1px;
+      background: rgba(167,139,250,0.12);
+    }
+    .illustration-placeholder {
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .illustration-placeholder svg {
+      opacity: 0.18;
+    }
+
+    /* ── 4. Context (Por qué esta frase hoy) ─────────────────────────────── */
+    .context-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .section-label {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 14px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0.1px;
+      color: rgba(167,139,250,0.8);
+    }
+    .context-text {
+      font-size: 16px;
+      line-height: 26px;
+      font-weight: 400;
+      letter-spacing: 0.1px;
+      color: #FFFFFF;
+    }
+
+    /* ── 5. Numerología ───────────────────────────────────────────────────── */
+    .numerology-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hairline {
+      height: 1px;
+      background: rgba(167,139,250,0.12);
+    }
+    .num-card {
+      border-radius: 16px;
+      border: 1px solid;
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .num-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+    .num-card-body {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+    }
+    .num-card-number {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 52px;
+      font-weight: 300;
+      line-height: 54px;
+      width: 44px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .num-card-vline {
+      width: 1px;
+      align-self: stretch;
+    }
+    .num-card-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .num-card-what {
+      font-size: 13px;
+      line-height: 19px;
+      font-style: italic;
+      letter-spacing: 0.1px;
+      color: #8B8A9E;
+    }
+    .num-card-phrase {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 22px;
+      letter-spacing: 0.1px;
+      color: #FFFFFF;
+    }
+    .num-card-keywords {
+      font-size: 13px;
+      line-height: 18px;
+      letter-spacing: 0.3px;
+      color: #8B8A9E;
+    }
+
+    /* ── Action bar ───────────────────────────────────────────────────────── */
+    .action-bar {
+      position: absolute;
+      bottom: 72px;
+      left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+      padding: 12px 32px 20px;
+      background: rgba(10,10,15,0.95);
+      border-top: 0.5px solid #1E1E2A;
+      backdrop-filter: blur(12px);
+      z-index: 5;
+    }
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-width: 88px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .action-btn:active { opacity: 0.7; }
+    .action-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .action-icon-saved { color: #A78BFA; }
+    .action-icon-unsaved { color: #8B8A9E; }
+    .action-label {
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    .action-label-saved { color: #A78BFA; }
+    .action-label-unsaved { color: #555570; }
+
+    /* ── Tab bar ──────────────────────────────────────────────────────────── */
+    .tab-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 72px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 10px;
+      background: rgba(10,10,15,0.97);
+      border-top: 0.5px solid #1E1E2A;
+      backdrop-filter: blur(20px);
+      z-index: 10;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 70px;
+    }
+    .tab-icon { font-size: 20px; line-height: 1; }
+    .tab-label { font-size: 10px; letter-spacing: 0.3px; }
+    .tab-active .tab-icon,
+    .tab-active .tab-label { color: #FC8181; }
+    .tab-inactive .tab-icon,
+    .tab-inactive .tab-label { color: #555570; }
+
+    /* ── Legend sidebar ───────────────────────────────────────────────────── */
+    .legend {
+      position: fixed;
+      right: calc(50% - 280px);
+      top: 40px;
+      width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .legend { display: none; } }
+    .legend-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #555570;
+    }
+    .legend-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .legend-key {
+      font-size: 10px;
+      color: #555570;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+    .legend-val {
+      font-size: 12px;
+      color: #8B8A9E;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Device ──────────────────────────────────────────────────────────────── -->
+<div class="device">
+
+  <!-- Dynamic Island -->
+  <div class="dynamic-island"></div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <!-- Signal -->
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="3" height="8" rx="0.5"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5"/><rect x="9" y="1" width="3" height="11" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.35"/></svg>
+      <!-- WiFi -->
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 9.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM8 6a5.5 5.5 0 014.2 1.9l-1.4 1.4A3.5 3.5 0 008 8a3.5 3.5 0 00-2.8 1.3L3.8 7.9A5.5 5.5 0 018 6zm0-4a9.5 9.5 0 017.1 3.2L13.7 6.5A7.5 7.5 0 008 4a7.5 7.5 0 00-5.7 2.5L.9 5.2A9.5 9.5 0 018 2z"/></svg>
+      <!-- Battery -->
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="0.5" width="22" height="11" rx="3.5" stroke="white" stroke-opacity="0.35" stroke-width="1" fill="none"/><rect x="1.5" y="2" width="17" height="8" rx="2" fill="white"/><path d="M23 4v4a2 2 0 000-4z" fill="white" opacity="0.4"/></svg>
+    </div>
+  </div>
+
+  <!-- Geometry background -->
+  <div class="geometry-bg">
+    <svg viewBox="0 0 393 852" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="glow" cx="60%" cy="20%" r="50%">
+          <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="393" height="852" fill="url(#glow)"/>
+      <!-- Geometric lines -->
+      <circle cx="290" cy="180" r="180" fill="none" stroke="#A78BFA" stroke-opacity="0.04" stroke-width="1"/>
+      <circle cx="290" cy="180" r="120" fill="none" stroke="#A78BFA" stroke-opacity="0.04" stroke-width="0.5"/>
+      <circle cx="290" cy="180" r="240" fill="none" stroke="#A78BFA" stroke-opacity="0.025" stroke-width="0.5"/>
+      <line x1="110" y1="0" x2="393" y2="360" stroke="#A78BFA" stroke-opacity="0.03" stroke-width="0.5"/>
+      <line x1="0" y1="120" x2="393" y2="480" stroke="#A78BFA" stroke-opacity="0.025" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <!-- Scroll content -->
+  <div class="scroll">
+
+    <!-- 1. Header -->
+    <div class="header">
+      <span class="date-text">sábado, 19 de abril</span>
+      <div class="planet-badge">
+        <div class="planet-dot"></div>
+        <span class="planet-text">Luna trígono Sol natal</span>
+      </div>
+    </div>
+
+    <!-- 2. Quote block -->
+    <div class="quote-block">
+      <div class="quote-accent"></div>
+      <p class="quote-text">
+        La disciplina no es el enemigo de la libertad — es el camino silencioso hacia ella.
+      </p>
+    </div>
+
+    <!-- 3. Illustration (zodiac — Géminis) -->
+    <div class="illustration-block">
+      <div class="illustration-rule"></div>
+      <div class="illustration-placeholder">
+        <!-- Gemini SVG placeholder -->
+        <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
+          <path d="M60 30 Q60 90 60 150 M120 30 Q120 90 120 150 M40 30 Q90 45 140 30 M40 150 Q90 135 140 150 M40 90 Q90 100 140 90" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+          <circle cx="60" cy="30" r="4" fill="#A78BFA" opacity="0.5"/>
+          <circle cx="120" cy="30" r="4" fill="#A78BFA" opacity="0.5"/>
+          <circle cx="60" cy="150" r="4" fill="#A78BFA" opacity="0.5"/>
+          <circle cx="120" cy="150" r="4" fill="#A78BFA" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="illustration-rule"></div>
+    </div>
+
+    <!-- 4. Por qué esta frase hoy -->
+    <div class="context-block">
+      <span class="section-label">Por qué esta frase hoy</span>
+      <p class="context-text">
+        Con Luna en tránsito armónico a tu Sol natal en Géminis, hoy tu energía pide estructura antes que movimiento. Tu tipo 4 tiende a buscar la libertad como escape — esta frase te recuerda que la disciplina no limita, ancla.
+      </p>
+    </div>
+
+    <!-- 5. Numerología de hoy -->
+    <div class="numerology-block">
+      <div class="hairline"></div>
+      <span class="section-label" style="color: rgba(167,139,250,0.8);">Numerología de hoy</span>
+
+      <!-- Día Universal -->
+      <div class="num-card" style="border-color: rgba(167,139,250,0.13); background: rgba(167,139,250,0.03);">
+        <span class="num-card-label" style="color: rgba(167,139,250,0.73);">Día Universal</span>
+        <div class="num-card-body">
+          <span class="num-card-number" style="color: #A78BFA;">5</span>
+          <div class="num-card-vline" style="background: rgba(167,139,250,0.19);"></div>
+          <div class="num-card-right">
+            <p class="num-card-what">La energía colectiva de hoy.<br>El mismo número para todo el mundo.</p>
+            <p class="num-card-phrase">Día de cambio. Deja que algo se mueva.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Año Personal -->
+      <div class="num-card" style="border-color: rgba(167,139,250,0.09); background: rgba(167,139,250,0.02);">
+        <span class="num-card-label" style="color: rgba(167,139,250,0.67);">Año Personal</span>
+        <div class="num-card-body">
+          <span class="num-card-number" style="color: rgba(167,139,250,0.73);">7</span>
+          <div class="num-card-vline" style="background: rgba(167,139,250,0.15);"></div>
+          <div class="num-card-right">
+            <p class="num-card-what">Tu ciclo numerológico personal.<br>Se renueva cada año en tu cumpleaños.</p>
+            <p class="num-card-phrase">El Buscador</p>
+            <p class="num-card-keywords">sabiduría · introspección · análisis</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /scroll -->
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="action-btn">
+      <span class="action-icon action-icon-unsaved">♡</span>
+      <span class="action-label action-label-unsaved">Guardar</span>
+    </button>
+    <button class="action-btn">
+      <span class="action-icon action-icon-unsaved">↑</span>
+      <span class="action-label action-label-unsaved">Compartir</span>
+    </button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <div class="tab-item tab-active">
+      <span class="tab-icon">◉</span>
+      <span class="tab-label">Hoy</span>
+    </div>
+    <div class="tab-item tab-inactive">
+      <span class="tab-icon">◇</span>
+      <span class="tab-label">Diario</span>
+    </div>
+    <div class="tab-item tab-inactive">
+      <span class="tab-icon">○</span>
+      <span class="tab-label">Tú</span>
+    </div>
+  </div>
+
+</div><!-- /device -->
+
+<!-- ── Legend ───────────────────────────────────────────────────────────────── -->
+<div class="legend">
+  <span class="legend-title">Tokens usados</span>
+  <div class="legend-item">
+    <span class="legend-key">Background</span>
+    <span class="legend-val"><span class="legend-swatch" style="background:#0A0A0F;border:1px solid #333"></span>#0A0A0F</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Accent (Moon)</span>
+    <span class="legend-val"><span class="legend-swatch" style="background:#A78BFA"></span>#A78BFA</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Text primary</span>
+    <span class="legend-val"><span class="legend-swatch" style="background:#FFFFFF;border:1px solid #333"></span>#FFFFFF</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Text secondary</span>
+    <span class="legend-val"><span class="legend-swatch" style="background:#8B8A9E"></span>#8B8A9E</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Text muted</span>
+    <span class="legend-val"><span class="legend-swatch" style="background:#555570"></span>#555570</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Quote font</span>
+    <span class="legend-val">Georgia 26px / italic / lh 44px</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Section label</span>
+    <span class="legend-val">Georgia 14px / italic</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Context text</span>
+    <span class="legend-val">SF 16px / lh 26px — AAA ✓</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Num phrase</span>
+    <span class="legend-val">SF 16px / 600 — AAA ✓</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Num what</span>
+    <span class="legend-val">SF 13px / italic — AA ✓</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-key">Num label</span>
+    <span class="legend-val">SF 10px / 700 / ls 1.8 — OK</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { colors } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePostHog } from 'posthog-react-native';
@@ -249,16 +250,17 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 32,
     color: colors.fg.primary,
     lineHeight: 42,
     marginBottom: 8,
   },
   helper: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#A8A8B8',
     fontWeight: '500',
+    lineHeight: 22,
   },
   pickerWrapper: {
     position: 'absolute',
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   dateText: {
-    fontFamily: 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 34,
     color: colors.fg.primary,
     textAlign: 'center',

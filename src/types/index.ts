@@ -101,6 +101,8 @@ export interface Quote {
   planetaryContext?: string;
   dominantPlanet?: DominantPlanet;
   enneagramType?: EnneagramType;
+  /** true = fallback local, no guardar en Supabase, reintentar en próxima carga */
+  isPlaceholder?: boolean;
 }
 
 export interface EnneagramQuestion {

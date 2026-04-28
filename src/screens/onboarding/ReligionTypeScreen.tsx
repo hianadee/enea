@@ -69,7 +69,7 @@ export const ReligionTypeScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.heading}>¿Cuál?</Text>
         <Text style={styles.subtitle}>
-          Enea la usará para encontrar las palabras justas.
+          Astro Enea la usará para encontrar las palabras justas.
         </Text>
 
         <View

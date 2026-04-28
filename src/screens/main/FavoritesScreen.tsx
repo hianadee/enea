@@ -83,7 +83,11 @@ const EmptyState: React.FC = () => {
 
   return (
     <View style={emptyStyles.container}>
-      <Animated.Text style={[emptyStyles.symbol, { opacity: pulseAnim }]}>
+      <Animated.Text
+        style={[emptyStyles.symbol, { opacity: pulseAnim }]}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
+      >
         ♡
       </Animated.Text>
       <Text style={[emptyStyles.title, { color: colors.textSecondary }]}>Nada guardado aún</Text>

@@ -5,12 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import { colors, typography, spacing } from '@/design-system/tokens';
-import { Button, Card, Input } from '@/design-system/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FONT_FAMILY, TYPOGRAPHY } from '@/constants/theme';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { ENNEAGRAM_QUESTIONS } from '@/constants/enneagram';
 import { EnneagramType } from '@/types';
@@ -27,22 +25,35 @@ const TOTAL = 10;
 export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
   const { setEnneagramType, setStep } = useOnboardingStore();
 
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [questionIndex, setQuestionIndex]     = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<Set<number>>(new Set());
   const [scores, setScores] = useState<Scores>({
     1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0,
   });
 
-  const question = ENNEAGRAM_QUESTIONS[questionIndex];
-  const isLast = questionIndex === ENNEAGRAM_QUESTIONS.length - 1;
-  const progress = (questionIndex + 1) / ENNEAGRAM_QUESTIONS.length;
+  const question  = ENNEAGRAM_QUESTIONS[questionIndex];
+  const isLast    = questionIndex === ENNEAGRAM_QUESTIONS.length - 1;
+  const progress  = (questionIndex + 1) / ENNEAGRAM_QUESTIONS.length;
+  const hasSelection = selectedOptions.size > 0;
+
+  const toggleOption = (i: number) => {
+    setSelectedOptions(prev => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  };
 
   const handleNext = () => {
-    if (selectedOption === null) return;
+    if (!hasSelection) return;
 
-    const option = question.options[selectedOption];
+    // Sumar puntos de todas las opciones seleccionadas
     const newScores = { ...scores };
-    option.types.forEach((t) => { newScores[t] = (newScores[t] || 0) + 1; });
+    selectedOptions.forEach(i => {
+      question.options[i].types.forEach(t => {
+        newScores[t] = (newScores[t] || 0) + 1;
+      });
+    });
     setScores(newScores);
 
     if (isLast) {
@@ -54,14 +65,14 @@ export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
       navigation.navigate('EnneagramResult');
     } else {
       setQuestionIndex(i => i + 1);
-      setSelectedOption(null);
+      setSelectedOptions(new Set());
     }
   };
 
   const handleBack = () => {
     if (questionIndex > 0) {
       setQuestionIndex(i => i - 1);
-      setSelectedOption(null);
+      setSelectedOptions(new Set());
     } else {
       navigation.goBack();
     }
@@ -74,7 +85,7 @@ export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           onPress={handleBack}
           style={styles.backBtn}
-          accessibilityLabel="Volver a la pantalla anterior"
+          accessibilityLabel="Volver"
           accessibilityRole="button"
         >
           <Text style={styles.backArrow}>←</Text>
@@ -96,45 +107,59 @@ export const EnneagramTestScreen: React.FC<Props> = ({ navigation }) => {
           <>
             <Text style={styles.heading}>Unas preguntas para{'\n'}conocerte mejor</Text>
             <Text style={styles.subtitle}>
-              El Eneagrama describe nueve formas de ver el mundo. Responde con lo primero que sientas, sin pensarlo mucho.
+              El Eneagrama revela tu estructura de carácter más profunda. Responde con lo primero que sientas, sin pensarlo mucho.
             </Text>
           </>
         )}
+
         <Text style={styles.questionCount}>
           {questionIndex + 1} / {ENNEAGRAM_QUESTIONS.length}
         </Text>
         <Text style={styles.questionText}>{question.text}</Text>
 
-        <View style={styles.options}>
-          {question.options.map((option, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.option, selectedOption === i && styles.optionSelected]}
-              onPress={() => setSelectedOption(i)}
-              activeOpacity={0.7}
-              accessibilityRole="radio"
-              accessibilityLabel={option.label}
-              accessibilityState={{ checked: selectedOption === i }}
-            >
-              <View style={[styles.dot, selectedOption === i && styles.dotSelected]} />
-              <Text style={[styles.optionText, selectedOption === i && styles.optionTextSelected]}>
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        {/* Hint multiselección */}
+        <Text style={styles.hint}>Puedes elegir más de una</Text>
+
+        <View
+          style={styles.options}
+          accessibilityRole="menu"
+          accessibilityLabel={question.text}
+        >
+          {question.options.map((option, i) => {
+            const isSelected = selectedOptions.has(i);
+            return (
+              <TouchableOpacity
+                key={i}
+                style={[styles.option, isSelected && styles.optionSelected]}
+                onPress={() => toggleOption(i)}
+                activeOpacity={0.7}
+                accessibilityRole="checkbox"
+                accessibilityLabel={option.label}
+                accessibilityState={{ checked: isSelected }}
+              >
+                {/* Checkbox */}
+                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.ctaBtn, selectedOption === null && styles.ctaBtnDisabled]}
+          style={[styles.ctaBtn, !hasSelection && styles.ctaBtnDisabled]}
           onPress={handleNext}
-          disabled={selectedOption === null}
+          disabled={!hasSelection}
           activeOpacity={0.85}
           accessibilityLabel={isLast ? 'Ver mi tipo de eneagrama' : 'Siguiente pregunta'}
           accessibilityRole="button"
-          accessibilityState={{ disabled: selectedOption === null }}
+          accessibilityState={{ disabled: !hasSelection }}
         >
           <Text style={styles.ctaBtnText}>
             {isLast ? 'Ver mi tipo' : 'Siguiente'}
@@ -150,22 +175,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
+
+  // ── Header ─────────────────────────────────────────────────────────────────
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backBtn: { width: 40, height: 44, justifyContent: 'center' },
-  backArrow: { color: colors.fg.primary, fontSize: 22 },
+  backBtn:      { width: 40, height: 44, justifyContent: 'center' },
+  backArrow:    { color: '#F0EEF6', fontSize: 22 },
   headerSpacer: { width: 40 },
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: colors.fg.secondary,
+    color: '#8B8A9E',
     fontSize: 14,
     letterSpacing: 0.3,
   },
+
+  // ── Progress ───────────────────────────────────────────────────────────────
   progressBar: {
     height: 1,
     backgroundColor: '#1A1A1A',
@@ -176,42 +205,51 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 1,
-    backgroundColor: colors.fg.primary,
+    backgroundColor: '#F0EEF6',
     borderRadius: 1,
   },
+
+  // ── Scroll ─────────────────────────────────────────────────────────────────
   scroll: {
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 16,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 28,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     lineHeight: 38,
     marginBottom: 10,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#A8A8B8',
-    lineHeight: 22,
+    ...TYPOGRAPHY.presets.bodyLg,
+    color: '#8B8A9E',
     marginBottom: 28,
   },
   questionCount: {
-    fontSize: 14,
-    color: '#A8A8B8',
+    ...TYPOGRAPHY.presets.bodySm,
+    color: '#8B8A9E',
     letterSpacing: 0.5,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   questionText: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 26,
-    color: colors.fg.primary,
+    color: '#F0EEF6',
     lineHeight: 36,
-    marginBottom: 32,
+    marginBottom: 10,
   },
+  hint: {
+    ...TYPOGRAPHY.presets.bodySm,
+    color: '#5A5A6E',
+    marginBottom: 24,
+    fontStyle: 'italic',
+  },
+
+  // ── Options ────────────────────────────────────────────────────────────────
   options: {
-    gap: 8,
+    gap: 10,
   },
   option: {
     flexDirection: 'row',
@@ -220,42 +258,56 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#1A1A1A',
-    backgroundColor: '#080808',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#2A2A3A',
+    backgroundColor: '#111118',
   },
   optionSelected: {
-    borderColor: '#3A3A3A',
-    backgroundColor: '#111111',
-  },
-  dot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#FC8181B3',
+    backgroundColor: '#1A1118',
+  },
+
+  // Checkbox — cuadrado redondeado (vs radio circular)
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#3A3A4A',
     marginTop: 2,
     flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dotSelected: {
-    borderColor: '#FC8181E6',
-    backgroundColor: '#FC8181E6',
+  checkboxSelected: {
+    borderColor: '#FC8181',
+    backgroundColor: '#FC818130',
   },
+  checkmark: {
+    color: '#FC8181',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
+  },
+
   optionText: {
     flex: 1,
-    fontSize: 15,
-    color: '#A8A8B8',
+    ...TYPOGRAPHY.presets.body,
+    color: '#8B8A9E',
     lineHeight: 22,
   },
   optionTextSelected: {
-    color: colors.fg.primary,
+    color: '#F0EEF6',
   },
+
+  // ── Footer ─────────────────────────────────────────────────────────────────
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
   ctaBtn: {
-    backgroundColor: colors.fg.primary,
+    backgroundColor: '#F0EEF6',
     borderRadius: 100,
     height: 56,
     alignItems: 'center',

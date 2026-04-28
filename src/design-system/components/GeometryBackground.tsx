@@ -7,7 +7,12 @@ interface Props {
 }
 
 export const GeometryBackground: React.FC<Props> = ({ color, opacity = 1 }) => (
-  <View style={styles.container} pointerEvents="none">
+  <View
+    style={styles.container}
+    pointerEvents="none"
+    accessibilityElementsHidden={true}
+    importantForAccessibility="no-hide-descendants"
+  >
     <View style={[styles.ring, styles.ring1, { borderColor: color, opacity: 0.04 * opacity }]} />
     <View style={[styles.ring, styles.ring2, { borderColor: color, opacity: 0.06 * opacity }]} />
     <View style={[styles.ring, styles.ring3, { borderColor: color, opacity: 0.09 * opacity }]} />

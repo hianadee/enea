@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NatalChartWheel } from '@/design-system/components/NatalChartWheel';
@@ -20,13 +21,13 @@ type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'NatalChartPreview'>;
 };
 
-const TOTAL  = 10;
-const ACCENT = '#FC8181';
+const TOTAL = 10;
 
 export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
   const { birthData, setNatalChart, setStep } = useOnboardingStore();
   const [chart, setChart] = useState<NatalChart | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   useEffect(() => {
     try {
@@ -85,10 +86,15 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
+      <View style={styles.scrollWrap}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -122,15 +128,15 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.birthSummary}>{birthSummary}</Text>
             ) : null}
 
-            {/* Texto introductorio — 32px de distancia */}
+            {/* Texto introductorio */}
             <View style={styles.introBlock}>
-              <Text style={styles.introParagraph}>
+              <Text style={styles.introParagraphPrimary}>
                 El cielo exacto del momento en que naciste.
               </Text>
-              <Text style={styles.introParagraph}>
+              <Text style={styles.introParagraphSecondary}>
                 Sol, Luna y Ascendente — los tres puntos que más te definen.
               </Text>
-              <Text style={styles.introParagraph}>
+              <Text style={styles.introParagraphSecondary}>
                 Sus movimientos actuales activan ese mapa: marcan tus momentos.
               </Text>
             </View>
@@ -205,6 +211,8 @@ export const NatalChartPreviewScreen: React.FC<Props> = ({ navigation }) => {
           </>
         )}
       </ScrollView>
+      <ScrollFadeHint visible={showFade} bgColor="#0A0A0F" />
+      </View>
 
       {/* Footer */}
       {!isLoading && (
@@ -336,6 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.3,
   },
+  scrollWrap: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 24,
@@ -384,25 +393,31 @@ const styles = StyleSheet.create({
     lineHeight: 42,
   },
 
-  // ── Fecha en coral, vinculada al título ───────────────────────────────────
+  // ── Fecha — muted, vinculada al título ───────────────────────────────────
   birthSummary: {
     fontSize: 14,
-    color: ACCENT,
+    color: '#7D7C8F',
     alignSelf: 'flex-start',
     lineHeight: 21,
     letterSpacing: 0.1,
   },
 
-  // ── Bloque de texto introductorio — 32px del birth summary ────────────────
+  // ── Bloque de texto introductorio ────────────────────────────────────────
   introBlock: {
     alignSelf: 'stretch',
     marginTop: 24,
     marginBottom: 28,
     gap: 12,
   },
-  introParagraph: {
+  // Primera frase — más visible, es la más importante
+  introParagraphPrimary: {
     ...TYPOGRAPHY.presets.bodyLg,
     color: '#8B8A9E',
+  },
+  // Segunda y tercera — más muted, contexto de apoyo
+  introParagraphSecondary: {
+    ...TYPOGRAPHY.presets.body,
+    color: '#7D7C8F',
   },
   wheelContainer: {
     width: 300,
@@ -452,7 +467,7 @@ const styles = StyleSheet.create({
   // Col 3 — grados (secundario → muted, monoespaciado visual)
   planetPos: { ...TYPOGRAPHY.presets.caption, color: '#7D7C8F', width: 52, textAlign: 'right', marginRight: 12 },
   // Col 4 — signo (accent del planeta)
-  planetSign: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '500', width: 68, textAlign: 'right' },
+  planetSign: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '500', width: 90, textAlign: 'right' },
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 16,

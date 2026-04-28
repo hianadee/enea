@@ -6,6 +6,10 @@ import { MainNavigator } from '@/navigation/MainNavigator';
 import { RootStackParamList } from '@/navigation/types';
 import { useAppReady } from '@/hooks/useAppReady';
 
+// Solo en desarrollo: pantallas sandbox
+import { DevPreviewScreen }        from '@/screens/dev/DevPreviewScreen';
+import { TypographyPreviewScreen } from '@/screens/dev/TypographyPreviewScreen';
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
@@ -20,12 +24,25 @@ export const RootNavigator: React.FC = () => {
     );
   }
 
+  // ── En __DEV__ arrancamos siempre en DevPreview ───────────────────────────
+  const initialRoute: keyof RootStackParamList = __DEV__
+    ? 'DevPreview'
+    : route === 'main'
+    ? 'Main'
+    : 'Onboarding';
+
   // ── Navegación según estado ───────────────────────────────────────────────
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false, animation: 'fade' }}
-      initialRouteName={route === 'main' ? 'Main' : 'Onboarding'}
+      initialRouteName={initialRoute}
     >
+      {__DEV__ && (
+        <Stack.Screen name="DevPreview"        component={DevPreviewScreen} />
+      )}
+      {__DEV__ && (
+        <Stack.Screen name="TypographyPreview" component={TypographyPreviewScreen} />
+      )}
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
       <Stack.Screen name="Main"       component={MainNavigator} />
     </Stack.Navigator>

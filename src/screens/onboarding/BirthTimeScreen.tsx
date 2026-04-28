@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { colors } from '@/design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePostHog } from 'posthog-react-native';
@@ -28,8 +29,6 @@ const TOTAL = 10;
 // iOS native spinner constants — 7 rows × 44pt = 308pt
 const IOS_PICKER_HEIGHT = 308;
 const IOS_ROW_HEIGHT    = 44;
-const IOS_LINE_TOP      = (IOS_PICKER_HEIGHT - IOS_ROW_HEIGHT) / 2;
-const IOS_LINE_BOTTOM   = IOS_LINE_TOP + IOS_ROW_HEIGHT;
 
 const DEFAULT_TIME = (() => {
   const d = new Date();
@@ -116,7 +115,8 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </View>
 
-        <View style={styles.pickerWrapper}>
+        {/* Picker — ocupa el espacio restante y centra el widget en X e Y */}
+        <View style={styles.pickerArea}>
 
           {Platform.OS === 'web' ? (
             /* ── Web: native HTML time input ── */
@@ -185,9 +185,9 @@ export const BirthTimeScreen: React.FC<Props> = ({ navigation }) => {
                 locale="es"
                 accessibilityLabel="Selector de hora de nacimiento"
               />
-              <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-                <View style={[styles.selectionLine, { top: IOS_LINE_TOP }]} />
-                <View style={[styles.selectionLine, { top: IOS_LINE_BOTTOM }]} />
+              {/* Líneas centradas igual que la selección nativa del picker */}
+              <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.linesOverlay]}>
+                <View style={styles.selectionBand} />
               </View>
             </View>
 
@@ -251,27 +251,23 @@ const styles = StyleSheet.create({
   headingGroup: {
     paddingTop: 32,
     paddingHorizontal: 28,
-    zIndex: 1,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 32,
     color: colors.fg.primary,
     lineHeight: 42,
     marginBottom: 8,
   },
   helper: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#A8A8B8',
     fontWeight: '500',
-    lineHeight: 21,
+    lineHeight: 22,
   },
-  pickerWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  // Ocupa el espacio restante bajo el heading y centra el picker en X e Y
+  pickerArea: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -283,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   timeText: {
-    fontFamily: 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 56,
     color: colors.fg.primary,
     letterSpacing: 4,
@@ -296,7 +292,6 @@ const styles = StyleSheet.create({
   },
   // ── iOS native spinner ──
   iosPicker: {
-    position: 'relative',
     width: '100%',
     height: IOS_PICKER_HEIGHT,
   },
@@ -305,12 +300,17 @@ const styles = StyleSheet.create({
     height: IOS_PICKER_HEIGHT,
     backgroundColor: 'transparent',
   },
-  selectionLine: {
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  // Overlay centrado: alinea las líneas con la fila seleccionada del picker nativo
+  linesOverlay: {
+    justifyContent: 'center',
+    alignItems: 'stretch',
+  },
+  selectionBand: {
+    height: IOS_ROW_HEIGHT,
+    marginHorizontal: 24,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   // ── Web ──
   webInputContainer: {

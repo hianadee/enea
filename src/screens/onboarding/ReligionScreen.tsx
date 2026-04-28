@@ -19,8 +19,8 @@ type ReligionResponse = 'si' | 'no' | 'espiritual';
 
 const OPTIONS: { value: ReligionResponse; label: string }[] = [
   { value: 'si',         label: 'Sí' },
+  { value: 'no',         label: 'No' },
   { value: 'espiritual', label: 'Interés espiritual, pero sin religión' },
-  { value: 'no',         label: 'Prefiero no responder' },
 ];
 
 const TOTAL = 10;

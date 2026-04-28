@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabNavigator } from '@/navigation/TabNavigator';
 import { QuoteDetailScreen } from '@/screens/main/QuoteDetailScreen';
+import { PaywallScreen } from '@/screens/main/PaywallScreen';
 import { MainStackParamList } from '@/navigation/types';
 import { useQuoteSync } from '@/hooks/useQuoteSync';
 import { useSettingsSync } from '@/hooks/useSettingsSync';
@@ -37,6 +38,11 @@ const MainContent: React.FC = () => {
           name="QuoteDetail"
           component={QuoteDetailScreen}
           options={{ animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="Paywall"
+          component={PaywallScreen}
+          options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
         />
       </Stack.Navigator>
 

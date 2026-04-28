@@ -22,17 +22,16 @@ import {
   Animated,
   FlatList,
   StyleSheet,
-  Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
   ListRenderItemInfo,
 } from 'react-native';
+import { FONT_FAMILY } from '@/constants/theme';
 
 export const ITEM_HEIGHT = 64;
 const VISIBLE = 5;
 export const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE;
 const REPEAT = 100; // repeat items this many times for "infinite" feel
-const SERIF = Platform.OS === 'ios' ? 'Georgia' : 'serif';
 
 type Row = { id: string; value: string; vi: number; spacer: boolean };
 
@@ -144,7 +143,7 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
     return (
       <View style={styles.itemView}>
         <Animated.Text
-          style={{ fontSize, opacity, color: '#FFFFFF', fontFamily: SERIF }}
+          style={{ fontSize, opacity, color: '#FFFFFF', fontFamily: FONT_FAMILY.serif }}
           numberOfLines={1}
         >
           {item.value}

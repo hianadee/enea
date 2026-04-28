@@ -77,8 +77,11 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={children}
+      accessibilityState={{ disabled }}
     >
-      <Text style={getTextStyle()}>{children}</Text>
+      <Text style={getTextStyle()} accessibilityElementsHidden={true}>{children}</Text>
     </TouchableOpacity>
   );
 };

@@ -9,8 +9,9 @@ import { logger } from '@/utils/logger';
 import { Quote, EnneagramType, GenderPreference, NatalChart, NumerologyProfile, TonePreferences } from '@/types';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { NUMEROLOGY_MEANINGS, calculateUniversalDay, calculatePersonalYear } from '@/utils/numerologyUtils';
-import { signNameEs } from '@/utils/astroUtils';
+import { signNameEs, getDailyTransits, formatTransitsForPrompt, getNatalTransitAspects, formatNatalTransitsForPrompt } from '@/utils/astroUtils';
 import { getPlaceholderQuote } from '@/constants/placeholderQuotes';
+import { useUserStore } from '@/store/userStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -101,6 +102,7 @@ async function callEdgeFunction(
   const lifePathInfo = NUMEROLOGY_MEANINGS[lifePathNum];
 
   const payload = {
+    clientId:            useUserStore.getState().clientId ?? '',
     firstName:           sanitizeFirstName(firstName),
     genderPreference:    genderPreference ?? 'neutro',
     enneatype:           enneagramType,
@@ -124,6 +126,10 @@ async function callEdgeFunction(
     spiritualTradition:  tonePreferences.spiritualTradition,
 
     todayDate:           today,
+    transits:            formatTransitsForPrompt(getDailyTransits()),
+    natalTransits:       natalChart?.planets
+      ? formatNatalTransitsForPrompt(getNatalTransitAspects(natalChart.planets))
+      : '',
   };
 
   // Sin sesión activa, el cliente Supabase envía el anon key (HS256) como Bearer.
@@ -189,5 +195,6 @@ function buildFallbackQuote(params: GenerateQuoteParams, today: string): Quote {
     planetaryContext: placeholder.planetaryContext,
     dominantPlanet:   params.natalChart?.dominantPlanet,
     enneagramType:    params.enneagramType ?? undefined,
+    isPlaceholder:    true, // ← nunca cachear, siempre reintentar
   };
 }

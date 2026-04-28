@@ -5,13 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { colors } from '../../design-system/tokens';
+import { FONT_FAMILY } from '@/constants/theme';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useOnboardingSave } from '../../hooks/useOnboardingSave';
 import { RootStackParamList } from '../../navigation/types';
@@ -51,8 +51,14 @@ export const WelcomeScreen: React.FC = () => {
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         nativeControls={false}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
       />
-      <View style={styles.overlay} />
+      <View
+        style={styles.overlay}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
+      />
 
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>
@@ -104,7 +110,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   heading: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: FONT_FAMILY.serif,
     fontSize: 40,
     color: colors.fg.primary,
     fontWeight: '300',

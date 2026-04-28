@@ -19,15 +19,18 @@ export type OnboardingStackParamList = {
 export type TabParamList = {
   Today: undefined;
   Journal: undefined;
-  Settings: undefined;
+  Settings: { scrollTo?: 'avisos' } | undefined;
 };
 
 export type MainStackParamList = {
-  Tabs: undefined;
+  Tabs:        undefined;
   QuoteDetail: { quoteId: string };
+  Paywall:     undefined;
 };
 
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
+  DevPreview: undefined;
+  TypographyPreview: undefined;
 };

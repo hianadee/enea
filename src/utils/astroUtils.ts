@@ -459,3 +459,301 @@ export function getSunSign(dateStr: string): { name: string; symbol: string } | 
 export function signNameEs(englishName: string): string {
   return ZODIAC_SIGNS.find(z => z.name === englishName)?.nameEs ?? englishName;
 }
+
+// ─── Daily Transits ───────────────────────────────────────────────────────────
+
+export interface DailyTransit {
+  planet:     string;   // nombre en español
+  sign:       string;   // signo en español
+  degrees:    number;   // grados dentro del signo (0-29)
+  retrograde: boolean;
+}
+
+export interface DailyTransits {
+  date:      string;
+  planets:   DailyTransit[];
+  moonPhase: string;   // descripción en español
+}
+
+/**
+ * Calcula las posiciones planetarias actuales (tránsitos del día).
+ * Usa astronomy-engine — misma librería que la carta natal.
+ * No requiere coordenadas del usuario (posiciones geocéntricas).
+ */
+export function getDailyTransits(date: Date = new Date()): DailyTransits {
+  const astroTime = Astronomy.MakeTime(date);
+
+  // Planetas a calcular (los más relevantes para interpretación astrológica)
+  const bodies: Array<{ body: Astronomy.Body; nameEs: string }> = [
+    { body: Astronomy.Body.Sun,     nameEs: 'Sol'      },
+    { body: Astronomy.Body.Moon,    nameEs: 'Luna'     },
+    { body: Astronomy.Body.Mercury, nameEs: 'Mercurio' },
+    { body: Astronomy.Body.Venus,   nameEs: 'Venus'    },
+    { body: Astronomy.Body.Mars,    nameEs: 'Marte'    },
+    { body: Astronomy.Body.Jupiter, nameEs: 'Júpiter'  },
+    { body: Astronomy.Body.Saturn,  nameEs: 'Saturno'  },
+  ];
+
+  const planets: DailyTransit[] = bodies.map(({ body, nameEs }) => {
+    const lon   = geocentricEclipticLon(body, astroTime);
+    const info  = signFromLon(lon);
+
+    // Detectar retrogradación: comparar posición de hoy con posición de mañana
+    // Si la longitud disminuye (ajustando el wrap de 360°), está retrógrado
+    let retrograde = false;
+    if (body !== Astronomy.Body.Sun && body !== Astronomy.Body.Moon) {
+      const tomorrow   = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+      const astroTom   = Astronomy.MakeTime(tomorrow);
+      const lonTomorrow = geocentricEclipticLon(body, astroTom);
+      // Diferencia corregida para el wrap 359°→0°
+      const diff = ((lonTomorrow - lon + 540) % 360) - 180;
+      retrograde = diff < 0;
+    }
+
+    return {
+      planet:     nameEs,
+      sign:       info.signEs,
+      degrees:    info.degrees,
+      retrograde,
+    };
+  });
+
+  // Fase lunar
+  const moonLon = geocentricEclipticLon(Astronomy.Body.Moon, astroTime);
+  const sunLon  = geocentricEclipticLon(Astronomy.Body.Sun,  astroTime);
+  const elongation = norm360(moonLon - sunLon);
+
+  let moonPhase: string;
+  if      (elongation < 45)  moonPhase = 'Luna nueva';
+  else if (elongation < 90)  moonPhase = 'Cuarto creciente';
+  else if (elongation < 135) moonPhase = 'Gibosa creciente';
+  else if (elongation < 180) moonPhase = 'Casi llena';
+  else if (elongation < 225) moonPhase = 'Luna llena';
+  else if (elongation < 270) moonPhase = 'Gibosa menguante';
+  else if (elongation < 315) moonPhase = 'Cuarto menguante';
+  else                        moonPhase = 'Luna balsámica';
+
+  const dateStr = date.toISOString().slice(0, 10);
+
+  return { date: dateStr, planets, moonPhase };
+}
+
+/**
+ * Serializa los tránsitos a texto legible para el prompt de Claude.
+ */
+export function formatTransitsForPrompt(transits: DailyTransits): string {
+  const lines = transits.planets.map(p => {
+    const retro = p.retrograde ? ' (retrógrado)' : '';
+    return `- ${p.planet}: ${p.sign} ${p.degrees}°${retro}`;
+  });
+  return `TRÁNSITOS DEL DÍA (${transits.date})\nFase lunar: ${transits.moonPhase}\n${lines.join('\n')}`;
+}
+
+// ─── Natal-Transit Aspects ─────────────────────────────────────────────────────
+
+export interface NatalTransitAspect {
+  transitPlanet:  string;  // nombre en español del planeta en tránsito
+  natalPlanet:    string;  // nombre en español del planeta natal
+  aspectType:     'conjunción' | 'oposición' | 'trígono' | 'cuadratura' | 'sextil';
+  orb:            number;  // grados de orbe (0-10)
+  applying:       boolean; // true = se está acercando (más potente)
+  intensity:      number;  // 0-100, basado en orbe y planetas involucrados
+}
+
+/** Orbes máximos por tipo de aspecto */
+const ASPECT_ORBS: Record<string, number> = {
+  'conjunción':  8,
+  'oposición':   8,
+  'trígono':     6,
+  'cuadratura':  6,
+  'sextil':      4,
+};
+
+/** Ángulos exactos por tipo de aspecto */
+const ASPECT_ANGLES: Array<{ type: string; angle: number }> = [
+  { type: 'conjunción',  angle: 0   },
+  { type: 'oposición',   angle: 180 },
+  { type: 'trígono',     angle: 120 },
+  { type: 'cuadratura',  angle: 90  },
+  { type: 'sextil',      angle: 60  },
+];
+
+/** Peso de cada planeta para ranking de importancia (personal > social > generacional) */
+const PLANET_WEIGHT: Record<string, number> = {
+  'Sol': 10, 'Luna': 10, 'Mercurio': 8, 'Venus': 8, 'Marte': 8,
+  'Júpiter': 6, 'Saturno': 6, 'Urano': 3, 'Neptuno': 3, 'Plutón': 3,
+};
+
+/** Peso por tipo de aspecto (mayor = más impactante) */
+const ASPECT_WEIGHT: Record<string, number> = {
+  'conjunción': 10, 'oposición': 9, 'cuadratura': 8, 'trígono': 7, 'sextil': 5,
+};
+
+/** Mapa de nombres inglés → español para planetas */
+const PLANET_ES: Record<string, string> = {
+  Sun: 'Sol', Moon: 'Luna', Mercury: 'Mercurio', Venus: 'Venus',
+  Mars: 'Marte', Jupiter: 'Júpiter', Saturn: 'Saturno',
+  Uranus: 'Urano', Neptune: 'Neptuno', Pluto: 'Plutón',
+};
+
+/**
+ * Calcula los aspectos entre los planetas en tránsito HOY y los planetas natales del usuario.
+ * Devuelve los más significativos ordenados por intensidad.
+ *
+ * @param natalPlanets — array de PlanetPosition de la carta natal del usuario
+ * @param maxAspects   — número máximo de aspectos a devolver (default 4)
+ */
+export function getNatalTransitAspects(
+  natalPlanets: Array<{ name: string; eclipticLon: number }>,
+  date: Date = new Date(),
+  maxAspects = 4,
+): NatalTransitAspect[] {
+  const astroTime = Astronomy.MakeTime(date);
+
+  // Planetas en tránsito a calcular
+  const transitBodies: Array<{ body: Astronomy.Body; nameEs: string }> = [
+    { body: Astronomy.Body.Sun,     nameEs: 'Sol'      },
+    { body: Astronomy.Body.Moon,    nameEs: 'Luna'     },
+    { body: Astronomy.Body.Mercury, nameEs: 'Mercurio' },
+    { body: Astronomy.Body.Venus,   nameEs: 'Venus'    },
+    { body: Astronomy.Body.Mars,    nameEs: 'Marte'    },
+    { body: Astronomy.Body.Jupiter, nameEs: 'Júpiter'  },
+    { body: Astronomy.Body.Saturn,  nameEs: 'Saturno'  },
+  ];
+
+  // Posiciones actuales de los planetas en tránsito
+  const transitPositions = transitBodies.map(({ body, nameEs }) => ({
+    nameEs,
+    lon: geocentricEclipticLon(body, astroTime),
+    lonTomorrow: body !== Astronomy.Body.Sun && body !== Astronomy.Body.Moon
+      ? geocentricEclipticLon(body, Astronomy.MakeTime(new Date(date.getTime() + 24 * 60 * 60 * 1000)))
+      : null,
+  }));
+
+  // Planetas natales relevantes (excluir NorthNode para aspectos)
+  const relevantNatal = natalPlanets.filter(p =>
+    ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'].includes(p.name)
+  );
+
+  const aspects: NatalTransitAspect[] = [];
+
+  for (const transit of transitPositions) {
+    for (const natal of relevantNatal) {
+      const natalNameEs = PLANET_ES[natal.name] ?? natal.name;
+
+      // No calcular aspecto de un planeta consigo mismo
+      if (transit.nameEs === natalNameEs) continue;
+
+      for (const { type, angle } of ASPECT_ANGLES) {
+        const maxOrb = ASPECT_ORBS[type];
+
+        // Diferencia angular mínima (0-180)
+        const diff = Math.abs(((transit.lon - natal.eclipticLon + 540) % 360) - 180);
+        const orb  = Math.abs(diff - angle);
+
+        if (orb <= maxOrb) {
+          // Determinar si está aplicando (orbe reduciéndose mañana)
+          let applying = false;
+          if (transit.lonTomorrow !== null) {
+            const diffTomorrow = Math.abs(((transit.lonTomorrow - natal.eclipticLon + 540) % 360) - 180);
+            const orbTomorrow  = Math.abs(diffTomorrow - angle);
+            applying = orbTomorrow < orb;
+          }
+
+          // Intensidad: combina orbe, peso de planetas y tipo de aspecto
+          const orbScore     = ((maxOrb - orb) / maxOrb) * 40;  // 0-40
+          const planetScore  = ((PLANET_WEIGHT[transit.nameEs] ?? 5) + (PLANET_WEIGHT[natalNameEs] ?? 5)) * 2; // 0-40
+          const aspectScore  = (ASPECT_WEIGHT[type] ?? 5) * 2;  // 0-20
+          const applyBonus   = applying ? 5 : 0;
+          const intensity    = Math.min(100, Math.round(orbScore + planetScore + aspectScore + applyBonus));
+
+          aspects.push({
+            transitPlanet: transit.nameEs,
+            natalPlanet:   natalNameEs,
+            aspectType:    type as NatalTransitAspect['aspectType'],
+            orb:           Math.round(orb * 10) / 10,
+            applying,
+            intensity,
+          });
+        }
+      }
+    }
+  }
+
+  // Ordenar por intensidad descendente, eliminar duplicados débiles
+  return aspects
+    .sort((a, b) => b.intensity - a.intensity)
+    .slice(0, maxAspects);
+}
+
+/**
+ * Palabras clave psicológicas para cada combinación tránsito-aspecto.
+ * Claude entiende astrología profundamente pero estas guías dan el tono correcto.
+ */
+const ASPECT_KEYWORDS: Record<string, Record<string, string>> = {
+  'Sol': {
+    'conjunción':  'identidad amplificada, brillo personal',
+    'oposición':   'tensión entre el yo y el otro, espejo externo',
+    'trígono':     'flujo de vitalidad, expresión natural',
+    'cuadratura':  'fricción que activa, ego bajo presión',
+    'sextil':      'oportunidad de brillo, puerta abierta',
+  },
+  'Luna': {
+    'conjunción':  'emociones en primer plano, intuición elevada',
+    'oposición':   'conflicto entre necesidad emocional y realidad',
+    'trígono':     'fluidez emocional, nutrición interior',
+    'cuadratura':  'tensión emocional, incomodidad que revela',
+    'sextil':      'sensibilidad fértil, conexión suave',
+  },
+  'Mercurio': {
+    'conjunción':  'mente activada, conversaciones importantes',
+    'oposición':   'puntos de vista en choque, escuchar es clave',
+    'trígono':     'claridad mental, comunicación fluida',
+    'cuadratura':  'mente acelerada, malentendidos posibles',
+    'sextil':      'ideas que llegan, conexiones intelectuales',
+  },
+  'Venus': {
+    'conjunción':  'belleza y placer amplificados, apertura al amor',
+    'oposición':   'relaciones en espejo, atracción-tensión',
+    'trígono':     'armonía en vínculos, gracia natural',
+    'cuadratura':  'deseos en conflicto, valores cuestionados',
+    'sextil':      'afecto disponible, creatividad suave',
+  },
+  'Marte': {
+    'conjunción':  'energía activada, impulso hacia la acción',
+    'oposición':   'conflicto externo, voluntad en choque',
+    'trígono':     'acción fluida, energía bien dirigida',
+    'cuadratura':  'frustración que empuja, fuerza bajo presión',
+    'sextil':      'iniciativa disponible, movimiento posible',
+  },
+  'Júpiter': {
+    'conjunción':  'expansión, abundancia, fe amplificada',
+    'oposición':   'exceso en espejo, crecimiento a través del otro',
+    'trígono':     'suerte y apertura, crecimiento natural',
+    'cuadratura':  'exceso o desperdicio, lección de límites',
+    'sextil':      'oportunidad de crecimiento, apertura suave',
+  },
+  'Saturno': {
+    'conjunción':  'prueba de madurez, responsabilidad llamando',
+    'oposición':   'límites desde fuera, confrontación con la realidad',
+    'trígono':     'estructura que sostiene, disciplina fértil',
+    'cuadratura':  'obstáculo que enseña, presión que forja',
+    'sextil':      'organización posible, estructura de apoyo',
+  },
+};
+
+/**
+ * Formatea los aspectos tránsito-natal para el prompt de Claude.
+ */
+export function formatNatalTransitsForPrompt(aspects: NatalTransitAspect[]): string {
+  if (aspects.length === 0) return '';
+
+  const lines = aspects.map(a => {
+    const applying  = a.applying ? ' (aplicando)' : '';
+    const keywords  = ASPECT_KEYWORDS[a.transitPlanet]?.[a.aspectType] ?? '';
+    const keyStr    = keywords ? ` → ${keywords}` : '';
+    return `• ${a.transitPlanet} en tránsito ${a.aspectType} tu ${a.natalPlanet} natal [orbe ${a.orb}°${applying}]${keyStr}`;
+  });
+
+  return `ASPECTOS TRÁNSITO-NATAL HOY (lo que el cielo hace a TU carta)\n${lines.join('\n')}`;
+}

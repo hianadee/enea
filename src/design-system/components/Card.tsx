@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { colors } from '@/design-system/tokens/colors';
 import { spacing, borderRadius, shadow } from '@/design-system/tokens/spacing';
 
@@ -45,8 +45,21 @@ export const Card: React.FC<CardProps> = ({
     };
   };
 
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        style={[getCardStyle(), style]}
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+      >
+        {children}
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <View style={[getCardStyle(), style]} onTouchEnd={onPress}>
+    <View style={[getCardStyle(), style]}>
       {children}
     </View>
   );

@@ -219,9 +219,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 16,
     color: COLORS.dark.textSecondary,
-    lineHeight: 24,
+    lineHeight: 22,
     marginBottom: SPACING['2xl'],
   },
   form: {

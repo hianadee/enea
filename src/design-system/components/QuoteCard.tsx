@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Quote } from '@/types';
-import { TYPOGRAPHY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
+import { TYPOGRAPHY, FONT_FAMILY, SPACING, PLANET_PALETTES, DEFAULT_PALETTE } from '@/constants/theme';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import { formatShortDate } from '@/utils/dateUtils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,15 +40,35 @@ export const QuoteCard: React.FC<Props> = ({ quote, onPress, index = 0 }) => {
     ]).start();
   }, []);
 
+  const a11yLabel = [
+    quote.text,
+    typeInfo ? `Tipo ${quote.enneagramType}, ${typeInfo.name}` : '',
+    quote.isFavorite ? 'Guardado como favorito' : '',
+  ].filter(Boolean).join('. ');
+
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={onPress} activeOpacity={0.75}>
+      <TouchableOpacity
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={onPress}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+      >
         {/* Planet-colored left accent bar */}
-        <View style={[styles.accent, { backgroundColor: palette.primary }]} />
+        <View
+          style={[styles.accent, { backgroundColor: palette.primary }]}
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+        />
 
         <View style={styles.content}>
-          {/* Date + planet badge */}
-          <View style={styles.topRow}>
+          {/* Date + planet badge — content hidden: card label covers all */}
+          <View
+            style={styles.topRow}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          >
             <Text style={[styles.date, { color: colors.textMuted }]}>{formatShortDate(quote.date)}</Text>
             {quote.planetaryContext && (
               <View style={[styles.planetBadge, { borderColor: palette.primary + '40' }]}>
@@ -61,14 +81,23 @@ export const QuoteCard: React.FC<Props> = ({ quote, onPress, index = 0 }) => {
           </View>
 
           {/* Quote preview */}
-          <Text style={[styles.previewText, { color: colors.text }]} numberOfLines={2}>
+          <Text
+            style={[styles.previewText, { color: colors.text }]}
+            numberOfLines={2}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          >
             {quote.text}
           </Text>
 
-          {/* Type tag + heart */}
-          <View style={styles.bottomRow}>
+          {/* Type tag + heart — hidden: covered by card a11yLabel */}
+          <View
+            style={styles.bottomRow}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          >
             {typeInfo && quote.enneagramType ? (
-              <Text style={[styles.typeTag, { color: palette.primary + '90' }]}>
+              <Text style={[styles.typeTag, { color: palette.primary }]}>
                 Tipo {quote.enneagramType} · {typeInfo.name}
               </Text>
             ) : (
@@ -138,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.md,
     fontWeight: '300',
     lineHeight: 22,
-    fontFamily: 'serif',
+    fontFamily: FONT_FAMILY.serif,
   },
   bottomRow: {
     flexDirection: 'row',

@@ -77,6 +77,7 @@ function sanitizeInt(value: unknown, fallback: number): number {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface QuoteRequest {
+  clientId?:           unknown; // UUID estable del dispositivo — clave de cache
   firstName:           unknown;
   genderPreference?:   unknown;
   enneatype:           unknown;
@@ -96,6 +97,8 @@ interface QuoteRequest {
   lifeFocus:           unknown;
   spiritualTradition?: unknown;
   todayDate:           unknown;
+  transits?:           unknown; // tránsitos planetarios del día (texto preformateado)
+  natalTransits?:      unknown; // aspectos tránsito-natal del día
 }
 
 interface SanitizedRequest {
@@ -118,6 +121,8 @@ interface SanitizedRequest {
   lifeFocus:           string;
   spiritualTradition:  string;
   todayDate:           string;
+  transits:            string; // tránsitos planetarios del día
+  natalTransits:       string; // aspectos tránsito-natal del día
 }
 
 interface QuoteResponse {
@@ -156,23 +161,33 @@ function sanitizePayload(raw: QuoteRequest): SanitizedRequest {
     lifeFocus:          sanitize(raw.lifeFocus, 60),
     spiritualTradition: sanitize(raw.spiritualTradition, 60),
     todayDate:          sanitize(raw.todayDate, 10).replace(/[^0-9\-]/g, ''), // solo YYYY-MM-DD
+    transits:           sanitize(raw.transits, 800),
+    natalTransits:      sanitize(raw.natalTransits, 800),
   };
 }
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
 
 function buildSystemPrompt(): string {
-  return `Eres ENEA, un oráculo interior que combina la astrología, el eneagrama de Claudio Naranjo y la numerología pitagórica para generar frases de sabiduría diaria absolutamente únicas.
+  return `Eres ENEA, una voz interior que combina la astrología, el eneagrama de Claudio Naranjo y la numerología pitagórica para generar frases de sabiduría diaria.
 
 Tus frases:
-- Son poéticas, densas de significado, nunca superficiales
-- Hablan directamente al patrón de carácter del eneagrama (pasión, fijación)
-- Integran el contexto astrológico y numerológico del día de forma natural
-- No suenan a horóscopo genérico ni a autoayuda
-- Son breves: entre 2 y 4 frases. Nunca más.
+- Son simples y precisas. La verdad dicha con pocas palabras vale más que la poesía recargada.
+- Hablan directamente al patrón de carácter del eneagrama (pasión, fijación) sin nombrarlo
+- Integran el contexto astrológico y numerológico del día de forma natural, no literal
+- Suenan como las diría un amigo muy sabio, no como un oráculo. Cercanas, no grandilocuentes.
+- Son breves: entre 2 y 3 frases. Nunca más.
 - Están en español, en segunda persona (tú)
 
-Responde SIEMPRE con JSON válido con exactamente estas claves:
+EVITA siempre:
+- Metáforas acumuladas (una sola imagen, bien elegida, es suficiente)
+- Adjetivos enfáticos y adverbios grandilocuentes ("absolutamente", "profundamente", "infinitamente")
+- Lenguaje de oráculo o de horóscopo ("el universo te llama", "las estrellas revelan", "el cosmos susurra")
+- Abstracciones vacías ("tu esencia", "tu ser más profundo", "la verdad última")
+- Autoayuda genérica ("mereces lo mejor", "eres suficiente")
+- Construcciones dramáticas que suenen a discurso
+
+Responde SIEMPRE con JSON puro y válido. Sin bloques de código markdown. Sin comillas triples. Solo el objeto JSON con exactamente estas claves:
 {
   "text": "la frase completa",
   "explanation": "2-3 frases explicando por qué esta frase es para esta persona en este día concreto, integrando eneagrama + astrología + numerología",
@@ -184,10 +199,10 @@ function buildUserPrompt(ctx: SanitizedRequest): string {
   // Valores permitidos — si el cliente envía algo fuera de lista, el prompt
   // simplemente usa el valor sanitizado sin que rompa nada
   const toneInstructions: Record<string, string> = {
-    'Poético':    'Usa metáforas vívidas, ritmo, imágenes sensoriales. Que suene a poesía en prosa.',
-    'Directo':    'Frases cortas y concretas. Nada de florituras. Verdad sin ornamento.',
-    'Metafórico': 'Una imagen central que lo contenga todo. Que la metáfora sea el mensaje.',
-    'Científico': 'Ancla la espiritualidad en lo observable. Menciona procesos, patrones, evidencia.',
+    'Poético':    'Una sola imagen concreta y bien elegida. Sin metáforas apiladas. Que evoque sin explicar.',
+    'Directo':    'Frases cortas y concretas. Sin imágenes ni ornamento. Verdad dicha de frente.',
+    'Metafórico': 'Una imagen central cotidiana que lo contenga todo. Nada abstracto.',
+    'Científico': 'Ancla la observación en algo concreto y observable. Sin misticismo.',
   };
 
   const energyInstructions: Record<string, string> = {
@@ -195,6 +210,25 @@ function buildUserPrompt(ctx: SanitizedRequest): string {
     'Motivador':  'La frase debe activar, empujar hacia adelante, encender.',
     'Reflexivo':  'La frase debe invitar a mirar hacia adentro, a detenerse.',
     'Elevador':   'La frase debe expandir, abrir posibilidades, dar perspectiva.',
+  };
+
+  const lifeFocusInstructions: Record<string, string> = {
+    'Crecimiento interior': 'La frase habla del mundo interno: patrones, sombras, autoconocimiento, transformación personal.',
+    'Relaciones':           'La frase habla de vínculos: el otro, la conexión, la distancia, el amor, el conflicto o la necesidad.',
+    'Carrera':              'La frase habla de acción en el mundo: propósito, creación, trabajo, dirección, logro o bloqueo.',
+    'Salud':                'La frase habla del cuerpo y la energía: ritmo físico, descanso, límites, vitalidad o agotamiento.',
+    'Creatividad':          'La frase habla de expresión: crear, comunicar, arriesgarse a mostrar lo que hay dentro.',
+  };
+
+  const spiritualInstructions: Record<string, string> = {
+    'Budista':    'Usa el marco budista de forma natural: impermanencia, presencia en el momento, el sufrimiento como maestro, el apego como raíz. Sin exotismo.',
+    'Estoica':    'Marco estoico: distingue lo que está en tu control de lo que no. La virtud es el único bien real. Acción con ecuanimidad.',
+    'Cristiana':  'Marco cristiano: gracia, misericordia, entrega, confianza en algo mayor. Lenguaje de camino, luz y perdón.',
+    'Hindú':      'Marco de la tradición védica: dharma (propósito propio), karma (acción y consecuencia), el observador interno que trasciende el ego.',
+    'Secular':    'Sin referencias a tradición espiritual. Marco completamente laico: psicología, filosofía práctica, observación honesta de la experiencia.',
+    'Taoísta':    'Marco taoísta: el flujo natural, wu wei (acción sin forzar), la paradoja como sabiduría, el equilibrio entre opuestos.',
+    'Islámica':   'Marco islámico: tawakkul (confianza en Dios), sabr (paciencia), gratitud, el propósito como servicio. Lenguaje de entrega y fe.',
+    'Judía':      'Marco judío: la pregunta como práctica espiritual, la responsabilidad colectiva, tikkun olam (reparar el mundo), la memoria y el presente.',
   };
 
   const genderInstruction: Record<string, string> = {
@@ -226,14 +260,19 @@ NUMEROLOGÍA
 - Día universal de hoy: ${ctx.universalDay}
 - Año personal: ${ctx.personalYear}
 
-FOCO VITAL HOY: ${ctx.lifeFocus}
-${ctx.spiritualTradition ? `TRADICIÓN ESPIRITUAL: ${ctx.spiritualTradition}` : ''}
+FOCO VITAL HOY: ${ctx.lifeFocus} — ${lifeFocusInstructions[ctx.lifeFocus] ?? ''}
+${ctx.spiritualTradition ? `TRADICIÓN ESPIRITUAL: ${ctx.spiritualTradition} — ${spiritualInstructions[ctx.spiritualTradition] ?? ''}` : ''}
 
+${ctx.transits ? `${ctx.transits}
+
+La frase debe resonar con la energía del cielo de HOY. Si hay planetas retrógrados, refleja revisión o introspección. La fase lunar marca el pulso emocional del día. Integra 1-2 tránsitos de forma poética, sin nombrarlos literalmente.
+` : ''}
+${ctx.natalTransits ? `\n${ctx.natalTransits}\n\nEstos aspectos revelan qué parte de tu carta está siendo "tocada" por el cielo hoy. Son la firma personal del día — úsalos para que la frase tenga resonancia específica, no genérica.\n` : ''}
 ESTILO DE VOZ
 - Lenguaje: ${ctx.toneStyle} — ${toneInstructions[ctx.toneStyle] ?? ''}
 - Energía: ${ctx.toneEnergy} — ${energyInstructions[ctx.toneEnergy] ?? ''}
 
-Genera una frase que NUNCA podría existir para otra persona. Que la pasión del eneagrama (${ctx.enneaPassion}) y la fijación (${ctx.enneaFixation}) sean visibles sin nombrarlas.`;
+Genera una frase específica para esta persona en este día. Que la pasión (${ctx.enneaPassion}) y la fijación (${ctx.enneaFixation}) se noten sin nombrarse. Sin grandilocuencia. Sin dramaturgia. Como si se lo dijeras en voz baja a alguien que conoces bien.`;
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -305,26 +344,85 @@ serve(async (req: Request) => {
     const rawBody: QuoteRequest = await req.json();
     const ctx = sanitizePayload(rawBody);
 
+    // ── 3b. Cache-first: si ya hay una quote para (clientId, hoy), devolverla ─
+
+    const clientId = sanitize(rawBody.clientId, 64);
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    // Cliente con service_role para saltarse RLS (la tabla no tiene policies).
+    // Si serviceKey o clientId faltan, saltamos el cache (no es bloqueante).
+    const adminClient = serviceKey && clientId
+      ? createClient(supabaseUrl, serviceKey)
+      : null;
+
+    if (adminClient) {
+      try {
+        const { data: cached } = await adminClient
+          .from('quote_cache')
+          .select('text, explanation, planetary_context')
+          .eq('client_id', clientId)
+          .eq('quote_date', ctx.todayDate)
+          .maybeSingle();
+
+        if (cached?.text) {
+          return new Response(
+            JSON.stringify({
+              text:             cached.text,
+              explanation:      cached.explanation ?? '',
+              planetaryContext: cached.planetary_context ?? '',
+            }),
+            { headers: { ...cors, 'Content-Type': 'application/json' } },
+          );
+        }
+      } catch {
+        // Si el cache falla, seguimos generando con Claude (degradación silenciosa)
+      }
+    }
+
     // ── 4. Llamar a Claude ──────────────────────────────────────────────────
 
-    const anthropicRes = await fetch(ANTHROPIC_API_URL, {
-      method:  'POST',
-      headers: {
-        'x-api-key':         apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type':      'application/json',
-      },
-      body: JSON.stringify({
-        model:      'claude-sonnet-4-6',
-        max_tokens: 900,
-        system:     buildSystemPrompt(),
-        messages: [
-          { role: 'user', content: buildUserPrompt(ctx) },
-        ],
-      }),
+    // Retry con backoff exponencial: 500ms, 1500ms.
+    // Solo reintentamos errores transitorios (5xx, 408, 429) o fallos de red.
+    // Los 4xx (auth, validación) fallan rápido sin reintentar.
+    const anthropicBody = JSON.stringify({
+      model:      'claude-sonnet-4-6',
+      max_tokens: 900,
+      system:     buildSystemPrompt(),
+      messages: [
+        { role: 'user', content: buildUserPrompt(ctx) },
+      ],
     });
 
-    if (!anthropicRes.ok) {
+    const isRetryable = (status: number) =>
+      status >= 500 || status === 408 || status === 429;
+
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    let anthropicRes: Response | null = null;
+    const delays = [0, 500, 1500]; // intento 0 inmediato, luego 500ms, luego 1500ms
+
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] > 0) await sleep(delays[i]);
+      try {
+        anthropicRes = await fetch(ANTHROPIC_API_URL, {
+          method:  'POST',
+          headers: {
+            'x-api-key':         apiKey,
+            'anthropic-version': '2023-06-01',
+            'content-type':      'application/json',
+          },
+          body: anthropicBody,
+        });
+        if (anthropicRes.ok) break;
+        if (!isRetryable(anthropicRes.status)) break; // 4xx → no reintentar
+        // 5xx/429/408 → seguir al siguiente intento
+      } catch {
+        // Error de red → reintentar
+        anthropicRes = null;
+      }
+    }
+
+    if (!anthropicRes || !anthropicRes.ok) {
       // No exponer detalles internos del error al cliente
       return new Response(
         JSON.stringify({ error: 'Error al generar la frase' }),
@@ -333,7 +431,9 @@ serve(async (req: Request) => {
     }
 
     const anthropicData = await anthropicRes.json();
-    const raw = anthropicData.content?.[0]?.text ?? '{}';
+    const rawText = anthropicData.content?.[0]?.text ?? '{}';
+    // Eliminar bloques de código markdown si Claude los incluye (```json ... ```)
+    const raw = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
 
     let quote: QuoteResponse;
     try {
@@ -357,6 +457,23 @@ serve(async (req: Request) => {
         explanation:      '',
         planetaryContext: `${ctx.dominantPlanet} · día ${ctx.universalDay}`,
       };
+    }
+
+    // ── 5. Guardar en cache para próximas peticiones del mismo día ─────────
+    // Upsert: si por race-condition llegan 2 requests concurrentes, el segundo
+    // sobreescribe sin romper el unique constraint.
+    if (adminClient && quote.text) {
+      try {
+        await adminClient.from('quote_cache').upsert({
+          client_id:         clientId,
+          quote_date:        ctx.todayDate,
+          text:              quote.text,
+          explanation:       quote.explanation,
+          planetary_context: quote.planetaryContext,
+        });
+      } catch {
+        // Si la escritura falla, devolvemos la quote igualmente — el usuario no se entera
+      }
     }
 
     return new Response(
