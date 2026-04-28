@@ -291,25 +291,30 @@ serve(async (req: Request) => {
     return new Response('ok', { headers: cors });
   }
 
-  // ── 1. Verificar autorización ─────────────────────────────────────────────
-  // Aceptamos 3 formatos de auth:
-  //  a) apikey header con la publishable key (caso del cliente Supabase JS
-  //     con publishable key — el SDK NO la pone como Authorization Bearer
-  //     porque no es un JWT, solo como apikey)
-  //  b) Authorization: Bearer <anon_key | publishable_key> (curl directo,
-  //     server-to-server)
-  //  c) Authorization: Bearer <user JWT> (sesión activa de usuario)
+  // ── 1. Autorización ultra-permisiva ──────────────────────────────────────
   //
-  // PUBLISHABLE_KEY: hardcoded a propósito. Supabase auto-gestiona la env var
-  // SUPABASE_ANON_KEY y puede rotarla en redeploys. Las publishable keys
-  // están diseñadas para ser públicas — hardcodear es seguro y desacopla la
-  // función del env var opaco que Supabase mueve sin avisar.
-  const PUBLISHABLE_KEY = 'sb_publishable_nVx5AR6aFjFZmIGCT6igJA_M9zFfs6J';
+  // Aceptamos cualquier request con header apikey O Authorization (Bearer).
+  // NO validamos el VALOR del token. Razones:
+  //
+  //  1. Supabase rota SUPABASE_ANON_KEY env var sin avisar (lo hizo el 28-04-2026
+  //     a las 13:00 y rompió todas las requests durante 2 horas)
+  //  2. El SDK supabase-js convierte internamente la publishable key a JWT
+  //     legacy y NO podemos predecir el formato exacto que enviará en el futuro
+  //  3. La publishable key ya es PÚBLICA — está en el bundle de la app iOS
+  //     y cualquiera puede extraerla con un decompilador. La validación
+  //     estricta solo añade fragilidad sin sumar seguridad real.
+  //
+  // La protección real de esta función NO es la auth, son:
+  //  - Cache por (clientId, día): máximo 1 llamada a Claude por usuario por día
+  //  - sanitizePayload(): limita longitudes y elimina chars de control
+  //  - verify_jwt = false en config.toml + --no-verify-jwt en deploy
+  //  - Rate limiting (futuro, si hay abuso real)
+  //
+  // El único caso en que devolvemos 401 es si NO hay ningún header de auth —
+  // requests completamente anónimas (Safari directo, scrapers básicos).
 
-  const supabaseUrl     = Deno.env.get('SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-
-  if (!supabaseUrl || !supabaseAnonKey) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (!supabaseUrl) {
     return new Response(
       JSON.stringify({ error: 'Configuración del servidor incompleta' }),
       { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } },
@@ -318,56 +323,12 @@ serve(async (req: Request) => {
 
   const apiKeyHeader = req.headers.get('apikey');
   const authHeader   = req.headers.get('Authorization');
-  const bearer       = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-  // Decodifica un JWT y comprueba si es un anon-key legítimo del proyecto
-  // Supabase. NO verifica firma — la publishable key del proyecto ya es
-  // pública por diseño, así que la seguridad de esta función no descansa
-  // en la validación criptográfica del bearer sino en:
-  //   - rate limiting (futuro)
-  //   - sanitización de payload (sanitizePayload abajo)
-  //   - --no-verify-jwt en deploy
-  function looksLikeSupabaseAnonJWT(token: string): boolean {
-    if (!token || !token.includes('.')) return false;
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    try {
-      const payloadJson = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
-      const payload = JSON.parse(payloadJson);
-      return payload.iss === 'supabase' && payload.role === 'anon';
-    } catch {
-      return false;
-    }
-  }
-
-  const isValidApiKey =
-    apiKeyHeader === supabaseAnonKey ||
-    apiKeyHeader === PUBLISHABLE_KEY ||
-    bearer       === supabaseAnonKey ||
-    bearer       === PUBLISHABLE_KEY ||
-    (apiKeyHeader ? looksLikeSupabaseAnonJWT(apiKeyHeader) : false) ||
-    (bearer       ? looksLikeSupabaseAnonJWT(bearer)       : false);
-
-  if (!isValidApiKey) {
-    // Si llega un bearer que no es api key ni JWT anon válido, probar como
-    // JWT de usuario (sesión activa). Si tampoco lo es → 401.
-    if (bearer) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: `Bearer ${bearer}` } },
-      });
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        return new Response(
-          JSON.stringify({ code: 401, message: 'No autorizado' }),
-          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
-        );
-      }
-    } else {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado' }),
-        { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
-      );
-    }
+  if (!apiKeyHeader && !authHeader?.startsWith('Bearer ')) {
+    return new Response(
+      JSON.stringify({ error: 'No autorizado' }),
+      { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
+    );
   }
 
   // ── 2. Verificar API key de Anthropic ─────────────────────────────────────

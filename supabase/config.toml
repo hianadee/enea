@@ -1,0 +1,18 @@
+# Supabase project configuration
+#
+# Este archivo persiste settings críticos para que sobrevivan a redeploys
+# y a cambios automáticos de la plataforma de Supabase. Sin este archivo,
+# Supabase puede cambiar defaults silenciosamente (lo hizo el 28-04-2026:
+# auto-redespliegue reactivó verify_jwt=true y rompió todas las requests
+# hasta que diagnosticamos y desplegamos con --no-verify-jwt).
+
+project_id = "myghlqincyftpuntehkp"
+
+# ─── Edge Functions ──────────────────────────────────────────────────────
+# verify_jwt = false: el gateway de Supabase no rechaza requests por
+# formato de JWT. La función hace su propia auth (mínima, ver index.ts).
+# Necesario porque el SDK supabase-js envía formatos que no son JWTs
+# válidos y los rechaza el gateway por defecto.
+
+[functions.generate-quote]
+verify_jwt = false
