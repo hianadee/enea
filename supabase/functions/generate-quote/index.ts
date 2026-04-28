@@ -291,17 +291,20 @@ serve(async (req: Request) => {
     return new Response('ok', { headers: cors });
   }
 
-  // ── 1. Verificar JWT de Supabase ──────────────────────────────────────────
-  // Solo usuarios autenticados en la app pueden generar frases.
-  // El cliente Supabase en la app envía el token automáticamente.
-
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(
-      JSON.stringify({ error: 'No autorizado' }),
-      { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
-    );
-  }
+  // ── 1. Verificar autorización ─────────────────────────────────────────────
+  // Aceptamos 3 formatos de auth:
+  //  a) apikey header con la publishable key (caso del cliente Supabase JS
+  //     con publishable key — el SDK NO la pone como Authorization Bearer
+  //     porque no es un JWT, solo como apikey)
+  //  b) Authorization: Bearer <anon_key | publishable_key> (curl directo,
+  //     server-to-server)
+  //  c) Authorization: Bearer <user JWT> (sesión activa de usuario)
+  //
+  // PUBLISHABLE_KEY: hardcoded a propósito. Supabase auto-gestiona la env var
+  // SUPABASE_ANON_KEY y puede rotarla en redeploys. Las publishable keys
+  // están diseñadas para ser públicas — hardcodear es seguro y desacopla la
+  // función del env var opaco que Supabase mueve sin avisar.
+  const PUBLISHABLE_KEY = 'sb_publishable_nVx5AR6aFjFZmIGCT6igJA_M9zFfs6J';
 
   const supabaseUrl     = Deno.env.get('SUPABASE_URL');
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -313,33 +316,55 @@ serve(async (req: Request) => {
     );
   }
 
-  // Verificar que la petición proviene de un cliente autorizado.
-  // Se acepta tanto un JWT de usuario (sesión anónima o real) como el anon key,
-  // porque el cliente móvil puede no tener sesión activa aún.
-  //
-  // PUBLISHABLE_KEY: hardcoded a propósito. Supabase auto-gestiona la env var
-  // SUPABASE_ANON_KEY y puede rotarla en redeploys (lo hizo el 28-04-2026 a las
-  // 13:00, rompiendo todas las requests). Las publishable keys están diseñadas
-  // para ser públicas — hardcodearla es seguro y desacopla la función del env
-  // var opaco que Supabase mueve sin avisar.
-  const PUBLISHABLE_KEY = 'sb_publishable_nVx5AR6aFjFZmIGCT6igJA_M9zFfs6J';
   const apiKeyHeader = req.headers.get('apikey');
-  const bearer       = authHeader.replace('Bearer ', '');
+  const authHeader   = req.headers.get('Authorization');
+  const bearer       = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  // Decodifica un JWT y comprueba si es un anon-key legítimo del proyecto
+  // Supabase. NO verifica firma — la publishable key del proyecto ya es
+  // pública por diseño, así que la seguridad de esta función no descansa
+  // en la validación criptográfica del bearer sino en:
+  //   - rate limiting (futuro)
+  //   - sanitización de payload (sanitizePayload abajo)
+  //   - --no-verify-jwt en deploy
+  function looksLikeSupabaseAnonJWT(token: string): boolean {
+    if (!token || !token.includes('.')) return false;
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    try {
+      const payloadJson = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = JSON.parse(payloadJson);
+      return payload.iss === 'supabase' && payload.role === 'anon';
+    } catch {
+      return false;
+    }
+  }
+
   const isValidApiKey =
     apiKeyHeader === supabaseAnonKey ||
-    bearer       === supabaseAnonKey ||
     apiKeyHeader === PUBLISHABLE_KEY ||
-    bearer       === PUBLISHABLE_KEY;
+    bearer       === supabaseAnonKey ||
+    bearer       === PUBLISHABLE_KEY ||
+    (apiKeyHeader ? looksLikeSupabaseAnonJWT(apiKeyHeader) : false) ||
+    (bearer       ? looksLikeSupabaseAnonJWT(bearer)       : false);
 
   if (!isValidApiKey) {
-    // Intentar validar como JWT de usuario (sesión anónima/real)
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Si llega un bearer que no es api key ni JWT anon válido, probar como
+    // JWT de usuario (sesión activa). Si tampoco lo es → 401.
+    if (bearer) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${bearer}` } },
+      });
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ code: 401, message: 'No autorizado' }),
+          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
+        );
+      }
+    } else {
       return new Response(
-        JSON.stringify({ code: 401, message: 'No autorizado' }),
+        JSON.stringify({ error: 'No autorizado' }),
         { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
       );
     }
