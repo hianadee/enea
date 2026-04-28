@@ -273,8 +273,14 @@ export const DailyQuoteScreen: React.FC = () => {
     })
       .then((quote) => {
         setTodayQuote(quote);
-        if (!quote.isPlaceholder) {
-          // Frase real obtenida: reanimar para revelar el contenido actualizado
+        if (!isReady.current) {
+          // Primera vez que llega contenido (real o placeholder) → revelar.
+          // Antes solo se animaba si !isPlaceholder, lo que dejaba la pantalla
+          // en opacity 0 cuando la Edge Function fallaba en TestFlight y se
+          // caía al fallback de placeholder.
+          animateIn();
+        } else if (!quote.isPlaceholder) {
+          // Ya había placeholder visible y ahora llega la frase real → reanimar
           animHeader.setValue(0);
           animQuote.setValue(0);
           animateIn();
