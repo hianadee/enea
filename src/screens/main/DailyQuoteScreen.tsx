@@ -87,19 +87,22 @@ function formatDate(date: Date): string {
   });
 }
 
-// ─── Logo ENEA (SVG inline) ───────────────────────────────────────────────────
-const EneaLogo: React.FC<{ width: number; opacity?: number }> = ({ width, opacity = 0.55 }) => {
-  const height = Math.round(width * (26 / 102));
-  const fill   = `rgba(255,255,255,${opacity})`;
-  return (
-    <Svg width={width} height={height} viewBox="0 0 102 26" fill="none">
-      <Path d="M81.1104 25.0939L91.3908 0H91.4448L101.725 25.0939H98.4603L95.6001 17.8895H87.1005L84.2134 25.0939H81.1104ZM88.1259 15.3261H94.5748L92.659 10.5232C92.4251 9.91163 92.2003 9.30901 91.9844 8.7154C91.7686 8.12178 91.5527 7.41123 91.3368 6.58377C91.121 7.41123 90.9141 8.12178 90.7162 8.7154C90.5184 9.29103 90.2935 9.89364 90.0417 10.5232L88.1259 15.3261Z" fill={fill} />
-      <Path d="M59.2544 25.0991V0.814697H71.2348V3.56693H62.3304V8.74759H69.346V11.4998H62.3304V22.3468H71.2348V25.0991H59.2544Z" fill={fill} />
-      <Path d="M44.6836 25.9033L27.6844 7.69005V25.0939H24.7703V0L41.7694 18.2133V0.809481H44.6836V25.9033Z" fill={fill} />
-      <Path d="M0 25.0991V0.814697H11.9804V3.56693H3.07604V8.74759H10.0916V11.4998H3.07604V22.3468H11.9804V25.0991H0Z" fill={fill} />
-    </Svg>
-  );
-};
+// ─── Wordmark Astro Enea ──────────────────────────────────────────────────────
+// Mismo estilo que el footer de la pantalla "Tú" (SettingsScreen): mayúsculas,
+// letter-spacing amplio, peso 600. El share card no es accent-coloured como
+// la pantalla, así que va en blanco semi-transparente.
+const AstroEneaWordmark: React.FC<{ size: number; opacity?: number }> = ({ size, opacity = 0.55 }) => (
+  <Text
+    style={{
+      fontSize: size,
+      letterSpacing: 2,
+      fontWeight: '600',
+      color: `rgba(255,255,255,${opacity})`,
+    }}
+  >
+    ASTRO ENEA
+  </Text>
+);
 
 // ─── ShareCard: tarjeta 4:5 para Instagram ───────────────────────────────────
 interface ShareCardProps {
@@ -139,9 +142,9 @@ const ShareCard = React.forwardRef<ViewShot, ShareCardProps>(
           />
         )}
 
-        {/* Logo Astro Enea */}
+        {/* Wordmark Astro Enea */}
         <View style={card.brandWrap}>
-          <EneaLogo width={CARD_W * 0.22} />
+          <AstroEneaWordmark size={CARD_W * 0.035} />
         </View>
       </ViewShot>
     );
