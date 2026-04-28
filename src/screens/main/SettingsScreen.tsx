@@ -6,20 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
-  Modal,
-  Platform,
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { TabParamList } from '@/navigation/types';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNotifications } from '@/notifications/useNotifications';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useOnboardingSave } from '@/hooks/useOnboardingSave';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/contexts/ThemeContext';
-import { TYPOGRAPHY, FONT_FAMILY, SPACING, DEFAULT_PALETTE, PLANET_PALETTES } from '@/constants/theme';
+import { TYPOGRAPHY, FONT_FAMILY, DEFAULT_PALETTE, PLANET_PALETTES } from '@/constants/theme';
 import { ENNEAGRAM_TYPES } from '@/constants/enneagram';
 import {
   SpiritualTradition, LanguageStyle, EnergyType, LifeFocus,
@@ -31,6 +28,15 @@ import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
 
 // ─── Constante de acento ─────────────────────────────────────────────────────
 const ACCENT = '#FC8181';
+
+// ─── Presets de hora para la cita diaria ─────────────────────────────────────
+const TIME_PRESETS: { h: number; m: number; label: string }[] = [
+  { h: 7,  m: 0, label: '07:00' },
+  { h: 9,  m: 0, label: '09:00' },
+  { h: 14, m: 0, label: '14:00' },
+  { h: 18, m: 0, label: '18:00' },
+  { h: 21, m: 0, label: '21:00' },
+];
 
 // ─── Datos de tono ────────────────────────────────────────────────────────────
 const SPIRITUAL_TRADITIONS: SpiritualTradition[] = [
@@ -195,18 +201,6 @@ export const SettingsScreen: React.FC = () => {
   const { dailyQuote, permissionGranted, toggle: toggleNotification, updateTime } = useNotifications();
   const { saveAnonymous } = useOnboardingSave();
 
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  // pickerDate solo se actualiza al ABRIR el modal (initial value del spinner).
-  // Mientras el usuario desliza, la posición se rastrea en pickerDateRef para
-  // evitar que un setState mid-scroll cancele la inercia de UIDatePicker en iOS.
-  const [pickerDate, setPickerDate] = useState<Date>(() => {
-    const d = new Date(); d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0); return d;
-  });
-  const pickerDateRef = useRef<Date>(pickerDate);
-  // Key que se incrementa en cada apertura del modal — fuerza un mount fresco
-  // del DateTimePicker en iOS Release, donde aparentemente Hermes/RN producen
-  // re-renders que el picker interpreta como setDate y cancelan la inercia.
-  const [pickerSessionKey, setPickerSessionKey] = useState(0);
   const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   // ── Dirty state — solo true si el usuario cambia algo en esta sesión ─────
@@ -441,35 +435,53 @@ export const SettingsScreen: React.FC = () => {
           sublabel={dailyQuote.enabled ? `${formattedTime} · Cada día` : 'Pausada'}
           last
           right={
-            <View style={s.notifRight}>
-              <TouchableOpacity
-                style={[s.timeBtn, { borderColor: dailyQuote.enabled ? ACCENT + '55' : colors.border }]}
-                onPress={() => {
-                  const d = new Date();
-                  d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0);
-                  setPickerDate(d);
-                  pickerDateRef.current = d;
-                  setPickerSessionKey(k => k + 1);
-                  setShowTimePicker(true);
-                }}
-                disabled={!dailyQuote.enabled}
-                activeOpacity={0.7}
-                accessibilityLabel={`Hora de notificación: ${formattedTime}`}
-                accessibilityRole="button"
-              >
-                <Text style={[s.timeBtnText, { color: dailyQuote.enabled ? ACCENT : colors.textMuted }]}>
-                  {formattedTime}
-                </Text>
-              </TouchableOpacity>
-              <ENEAToggle
-                value={dailyQuote.enabled}
-                onToggle={() => { toggleNotification(!dailyQuote.enabled); markDirty(); }}
-                accentColor={ACCENT}
-                accessibilityLabel="Activar cita diaria"
-              />
-            </View>
+            <ENEAToggle
+              value={dailyQuote.enabled}
+              onToggle={() => { toggleNotification(!dailyQuote.enabled); markDirty(); }}
+              accentColor={ACCENT}
+              accessibilityLabel="Activar cita diaria"
+            />
           }
         />
+
+        {dailyQuote.enabled && (
+          <View
+            style={s.timeChipsRow}
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Hora del aviso diario"
+          >
+            {TIME_PRESETS.map((p) => {
+              const active = dailyQuote.hour === p.h && dailyQuote.minute === p.m;
+              return (
+                <TouchableOpacity
+                  key={p.label}
+                  style={[
+                    s.timeChip,
+                    {
+                      borderColor: active ? ACCENT : colors.border,
+                      backgroundColor: active ? ACCENT + '14' : 'transparent',
+                    },
+                  ]}
+                  onPress={() => { updateTime(p.h, p.m); markDirty(); }}
+                  activeOpacity={0.7}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Hora ${p.label}`}
+                  accessibilityState={{ selected: active }}
+                >
+                  <Text
+                    style={[
+                      s.timeChipText,
+                      { color: active ? ACCENT : colors.textSecondary },
+                    ]}
+                    accessibilityElementsHidden
+                  >
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         </View>{/* /avisos */}
 
@@ -540,61 +552,6 @@ export const SettingsScreen: React.FC = () => {
       </ScrollView>
       <ScrollFadeHint visible={showFade} bgColor={colors.background} />
       </View>
-
-      {/* ── Time picker modal ──────────────────────────────────────────────── */}
-      <Modal visible={showTimePicker} transparent animationType="fade" onRequestClose={() => setShowTimePicker(false)}>
-        <TouchableOpacity style={s.modalOverlay} onPress={() => setShowTimePicker(false)} activeOpacity={1}>
-          <View style={[s.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]} onStartShouldSetResponder={() => true}>
-            <View style={s.modalHeader}>
-              <TouchableOpacity onPress={() => setShowTimePicker(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel="Cancelar">
-                <Text style={[s.modalAction, { color: colors.textMuted }]} accessibilityElementsHidden={true}>Cancelar</Text>
-              </TouchableOpacity>
-              <Text style={[s.modalTitle, { color: colors.text }]}>Hora del aviso</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  const d = pickerDateRef.current;
-                  updateTime(d.getHours(), d.getMinutes());
-                  setShowTimePicker(false);
-                  markDirty();
-                }}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                accessibilityRole="button"
-                accessibilityLabel="Listo"
-              >
-                <Text style={[s.modalAction, { color: ACCENT, fontWeight: '600' }]} accessibilityElementsHidden={true}>Listo</Text>
-              </TouchableOpacity>
-            </View>
-            {showTimePicker && (
-              <DateTimePicker
-                key={pickerSessionKey}
-                value={pickerDate}
-                mode="time"
-                is24Hour
-                display="spinner"
-                onChange={(event, selectedDate) => {
-                  // Android: el picker se cierra solo; aquí confirmamos o cancelamos
-                  if (Platform.OS === 'android') {
-                    setShowTimePicker(false);
-                    if (event.type === 'set' && selectedDate) {
-                      pickerDateRef.current = selectedDate;
-                      setPickerDate(selectedDate);
-                      updateTime(selectedDate.getHours(), selectedDate.getMinutes());
-                      markDirty();
-                    }
-                    return;
-                  }
-                  // iOS: spinner emite onChange continuamente durante el scroll.
-                  // Solo guardamos la posición en una ref — NO setState — para no
-                  // cancelar la inercia del UIDatePicker. Se lee al pulsar "Listo".
-                  if (selectedDate) pickerDateRef.current = selectedDate;
-                }}
-                style={{ width: '100%' }}
-                {...(Platform.OS === 'ios' && { textColor: colors.text })}
-              />
-            )}
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       {/* ── Tira "Hecho" flotante ─────────────────────────────────────────── */}
       {isDirty && (
@@ -753,16 +710,26 @@ const s = StyleSheet.create({
   },
   permBannerBtnText: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '600' },
 
-  notifRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  timeBtn: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    minWidth: 52,
-    alignItems: 'center',
+  timeChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
-  timeBtnText: { ...TYPOGRAPHY.presets.bodySmMedium, letterSpacing: 0.5 },
+  timeChip: {
+    flex: 1,
+    height: 38,
+    borderRadius: 100,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+  },
 
   // ── Genéricos ────────────────────────────────────────────────────────────────
   metaText: { ...TYPOGRAPHY.presets.bodySm },
@@ -782,27 +749,6 @@ const s = StyleSheet.create({
   },
   doneLabel:   { fontSize: 15, fontWeight: '500', letterSpacing: 0.1 },
   doneBtnText: { fontSize: 17, fontWeight: '700', letterSpacing: 0.2 },
-
-  // ── Modal ─────────────────────────────────────────────────────────────────────
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalCard: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    paddingBottom: SPACING['2xl'],
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  modalTitle:  { ...TYPOGRAPHY.presets.body, fontWeight: '500' },
-  modalAction: { ...TYPOGRAPHY.presets.body },
 
   // ── Footer ────────────────────────────────────────────────────────────────────
   footer: {
