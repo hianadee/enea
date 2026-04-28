@@ -316,9 +316,20 @@ serve(async (req: Request) => {
   // Verificar que la petición proviene de un cliente autorizado.
   // Se acepta tanto un JWT de usuario (sesión anónima o real) como el anon key,
   // porque el cliente móvil puede no tener sesión activa aún.
+  //
+  // PUBLISHABLE_KEY: hardcoded a propósito. Supabase auto-gestiona la env var
+  // SUPABASE_ANON_KEY y puede rotarla en redeploys (lo hizo el 28-04-2026 a las
+  // 13:00, rompiendo todas las requests). Las publishable keys están diseñadas
+  // para ser públicas — hardcodearla es seguro y desacopla la función del env
+  // var opaco que Supabase mueve sin avisar.
+  const PUBLISHABLE_KEY = 'sb_publishable_nVx5AR6aFjFZmIGCT6igJA_M9zFfs6J';
   const apiKeyHeader = req.headers.get('apikey');
   const bearer       = authHeader.replace('Bearer ', '');
-  const isValidApiKey = apiKeyHeader === supabaseAnonKey || bearer === supabaseAnonKey;
+  const isValidApiKey =
+    apiKeyHeader === supabaseAnonKey ||
+    bearer       === supabaseAnonKey ||
+    apiKeyHeader === PUBLISHABLE_KEY ||
+    bearer       === PUBLISHABLE_KEY;
 
   if (!isValidApiKey) {
     // Intentar validar como JWT de usuario (sesión anónima/real)
