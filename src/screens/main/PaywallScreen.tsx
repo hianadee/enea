@@ -63,6 +63,22 @@ export const PaywallScreen: React.FC<Props> = ({ navigation }) => {
     loadOfferings();
   }, []);
 
+  // Auto-restore de seguridad: si el usuario llega aquí pero ya tiene una
+  // suscripción activa en App Store que el cache local no reflejaba (típico
+  // tras reinstalar TestFlight), restorePurchases lo detectará y nos saca
+  // automáticamente. Sin requerir tap en "Restaurar compras".
+  useEffect(() => {
+    let cancelled = false;
+    restorePurchases()
+      .then((isActive) => {
+        if (!cancelled && isActive) {
+          navigation.replace('Tabs');
+        }
+      })
+      .catch(() => {/* silencioso — el botón manual sigue disponible */});
+    return () => { cancelled = true; };
+  }, []);
+
   const monthlyPkg = packages.find(p =>
     p.identifier === '$rc_monthly' || p.product.identifier.includes('monthly'),
   );

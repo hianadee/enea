@@ -148,7 +148,13 @@ export async function restorePurchases(): Promise<boolean> {
 
 /** Verifica el estado actual de la suscripción con RevenueCat. */
 export async function syncSubscriptionStatus(): Promise<void> {
-  if (__DEV__) return;
+  if (__DEV__) {
+    // En dev, marcar verificado igualmente para que useSubscription no
+    // se quede en estado "no verificado" indefinidamente (irrelevante
+    // porque BYPASS_PAYWALL ya cortocircuita la lógica, pero defensivo).
+    useSubscriptionStore.getState().setSubscriptionVerified(true);
+    return;
+  }
 
   try {
     const Purchases = require('react-native-purchases').default;
@@ -161,5 +167,9 @@ export async function syncSubscriptionStatus(): Promise<void> {
     }
   } catch {
     // No hacer nada — el estado local es la fuente de verdad offline
+  } finally {
+    // Marca SIEMPRE como verificado tras consultar a RC (éxito o error).
+    // A partir de aquí, useSubscription puede aplicar la lógica real de bloqueo.
+    useSubscriptionStore.getState().setSubscriptionVerified(true);
   }
 }

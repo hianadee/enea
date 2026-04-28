@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.astroenea.app",
-      "buildNumber": "8",
+      "buildNumber": "10",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"

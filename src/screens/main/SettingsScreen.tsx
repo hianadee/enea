@@ -203,6 +203,10 @@ export const SettingsScreen: React.FC = () => {
     const d = new Date(); d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0); return d;
   });
   const pickerDateRef = useRef<Date>(pickerDate);
+  // Key que se incrementa en cada apertura del modal — fuerza un mount fresco
+  // del DateTimePicker en iOS Release, donde aparentemente Hermes/RN producen
+  // re-renders que el picker interpreta como setDate y cancelan la inercia.
+  const [pickerSessionKey, setPickerSessionKey] = useState(0);
   const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   // ── Dirty state — solo true si el usuario cambia algo en esta sesión ─────
@@ -445,6 +449,7 @@ export const SettingsScreen: React.FC = () => {
                   d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0);
                   setPickerDate(d);
                   pickerDateRef.current = d;
+                  setPickerSessionKey(k => k + 1);
                   setShowTimePicker(true);
                 }}
                 disabled={!dailyQuote.enabled}
@@ -559,31 +564,34 @@ export const SettingsScreen: React.FC = () => {
                 <Text style={[s.modalAction, { color: ACCENT, fontWeight: '600' }]} accessibilityElementsHidden={true}>Listo</Text>
               </TouchableOpacity>
             </View>
-            <DateTimePicker
-              value={pickerDate}
-              mode="time"
-              is24Hour
-              display="spinner"
-              onChange={(event, selectedDate) => {
-                // Android: el picker se cierra solo; aquí confirmamos o cancelamos
-                if (Platform.OS === 'android') {
-                  setShowTimePicker(false);
-                  if (event.type === 'set' && selectedDate) {
-                    pickerDateRef.current = selectedDate;
-                    setPickerDate(selectedDate);
-                    updateTime(selectedDate.getHours(), selectedDate.getMinutes());
-                    markDirty();
+            {showTimePicker && (
+              <DateTimePicker
+                key={pickerSessionKey}
+                value={pickerDate}
+                mode="time"
+                is24Hour
+                display="spinner"
+                onChange={(event, selectedDate) => {
+                  // Android: el picker se cierra solo; aquí confirmamos o cancelamos
+                  if (Platform.OS === 'android') {
+                    setShowTimePicker(false);
+                    if (event.type === 'set' && selectedDate) {
+                      pickerDateRef.current = selectedDate;
+                      setPickerDate(selectedDate);
+                      updateTime(selectedDate.getHours(), selectedDate.getMinutes());
+                      markDirty();
+                    }
+                    return;
                   }
-                  return;
-                }
-                // iOS: spinner emite onChange continuamente durante el scroll.
-                // Solo guardamos la posición en una ref — NO setState — para no
-                // cancelar la inercia del UIDatePicker. Se lee al pulsar "Listo".
-                if (selectedDate) pickerDateRef.current = selectedDate;
-              }}
-              style={{ width: '100%' }}
-              {...(Platform.OS === 'ios' && { textColor: colors.text })}
-            />
+                  // iOS: spinner emite onChange continuamente durante el scroll.
+                  // Solo guardamos la posición en una ref — NO setState — para no
+                  // cancelar la inercia del UIDatePicker. Se lee al pulsar "Listo".
+                  if (selectedDate) pickerDateRef.current = selectedDate;
+                }}
+                style={{ width: '100%' }}
+                {...(Platform.OS === 'ios' && { textColor: colors.text })}
+              />
+            )}
           </View>
         </TouchableOpacity>
       </Modal>

@@ -21,7 +21,7 @@ export interface SubscriptionStatus {
 }
 
 export function useSubscription(): SubscriptionStatus {
-  const { trialStartDate, isSubscribed, hydrated } = useSubscriptionStore();
+  const { trialStartDate, isSubscribed, hydrated, subscriptionVerified } = useSubscriptionStore();
 
   if (BYPASS_PAYWALL) {
     return {
@@ -34,7 +34,12 @@ export function useSubscription(): SubscriptionStatus {
   }
 
   const { isTrialActive, daysLeft } = getTrialStatus(trialStartDate);
-  const isBlocked = !isTrialActive && !isSubscribed;
+
+  // Hasta que RevenueCat haya respondido, NO bloqueamos. El cache local puede
+  // decir "no suscrito" cuando el usuario sí lo está (típico tras reinstalar
+  // desde TestFlight o tras compra reciente). Bloquear antes de la verificación
+  // mete a usuarios suscritos en el paywall.
+  const isBlocked = subscriptionVerified && !isTrialActive && !isSubscribed;
 
   return { isBlocked, isTrialActive, daysLeft, isSubscribed, hydrated };
 }

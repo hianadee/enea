@@ -30,11 +30,16 @@ interface SubscriptionState {
   productId:      ProductId | null;
   /** true una vez que AsyncStorage ha sido leído */
   hydrated:       boolean;
+  /** true cuando RevenueCat ha respondido (con éxito o error). Hasta que esto
+   *  sea true no debemos bloquear al usuario, porque el cache local puede no
+   *  reflejar una suscripción reciente que sí existe en App Store. */
+  subscriptionVerified: boolean;
 
   startTrial:    () => void;
   setSubscribed: (productId: ProductId) => void;
   setUnsubscribed: () => void;
   hydrate:       () => Promise<void>;
+  setSubscriptionVerified: (value: boolean) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,6 +59,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   isSubscribed:   false,
   productId:      null,
   hydrated:       false,
+  subscriptionVerified: false,
+
+  setSubscriptionVerified: (value) => set({ subscriptionVerified: value }),
 
   startTrial: () => {
     if (get().trialStartDate) return; // ya iniciado — no reiniciar
