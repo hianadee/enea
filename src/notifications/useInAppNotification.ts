@@ -5,6 +5,7 @@
  * El banner se muestra cuando:
  *   1. La app vuelve a primer plano desde background/inactivo (AppState)
  *   2. El usuario toca la notificación push diaria (addNotificationResponseReceivedListener)
+ *   3. La app está en primer plano y se cumple la hora configurada (timer local, una vez/día)
  *
  * Reglas:
  *   - Solo se muestra UNA VEZ por sesión de app (flag de módulo → se resetea al matar la app)
@@ -71,6 +72,36 @@ export function useInAppNotification() {
     });
 
     return () => sub.remove();
+  }, []);
+
+  // ─── Timer local: dispara el banner si la app está en foreground a la hora ─
+  // Cubre el caso "el usuario está usando la app cuando llega la hora configurada"
+  // — la push del sistema no se muestra con la app activa, así que sin este timer
+  // el banner no aparecería hasta el siguiente foreground.
+
+  useEffect(() => {
+    let lastFiredDay: string | null = null; // clave por día para no repetir
+
+    const check = () => {
+      const { dailyQuote } = useNotificationStore.getState();
+      if (!dailyQuote.enabled) return;
+
+      const now = new Date();
+      const today = now.toDateString();
+      if (lastFiredDay === today) return;
+
+      if (now.getHours() === dailyQuote.hour && now.getMinutes() === dailyQuote.minute) {
+        lastFiredDay = today;
+        // Llegó la hora estando el usuario delante: forzar el banner aunque ya
+        // se hubiese mostrado en el foreground inicial de la sesión.
+        _shownThisSession = false;
+        show();
+      }
+    };
+
+    check(); // primer chequeo inmediato (cubre el caso de abrir app justo en la hora)
+    const id = setInterval(check, 30_000); // cada 30s — barato y suficiente
+    return () => clearInterval(id);
   }, []);
 
   return { visible, dismiss };

@@ -179,6 +179,11 @@ Tus frases:
 - Son breves: entre 2 y 3 frases. Nunca más.
 - Están en español, en segunda persona (tú)
 
+CUANDO HAY MARCO ESPIRITUAL CONFIGURADO:
+- Es estructural, no decorativo: una palabra o imagen característica del léxico que se te da DEBE aparecer en la frase o en la explicación.
+- No nombres la tradición literalmente ("como dice el cristianismo", "el budismo enseña" → NO). El marco se reconoce por su léxico, no por su etiqueta.
+- Esto refuerza la regla de concreción: una imagen budista de impermanencia o una imagen cristiana de perdón es lo OPUESTO al oráculo vago.
+
 EVITA siempre:
 - Metáforas acumuladas (una sola imagen, bien elegida, es suficiente)
 - Adjetivos enfáticos y adverbios grandilocuentes ("absolutamente", "profundamente", "infinitamente")
@@ -221,14 +226,14 @@ function buildUserPrompt(ctx: SanitizedRequest): string {
   };
 
   const spiritualInstructions: Record<string, string> = {
-    'Budista':    'Usa el marco budista de forma natural: impermanencia, presencia en el momento, el sufrimiento como maestro, el apego como raíz. Sin exotismo.',
-    'Estoica':    'Marco estoico: distingue lo que está en tu control de lo que no. La virtud es el único bien real. Acción con ecuanimidad.',
-    'Cristiana':  'Marco cristiano: gracia, misericordia, entrega, confianza en algo mayor. Lenguaje de camino, luz y perdón.',
-    'Hindú':      'Marco de la tradición védica: dharma (propósito propio), karma (acción y consecuencia), el observador interno que trasciende el ego.',
-    'Secular':    'Sin referencias a tradición espiritual. Marco completamente laico: psicología, filosofía práctica, observación honesta de la experiencia.',
-    'Taoísta':    'Marco taoísta: el flujo natural, wu wei (acción sin forzar), la paradoja como sabiduría, el equilibrio entre opuestos.',
-    'Islámica':   'Marco islámico: tawakkul (confianza en Dios), sabr (paciencia), gratitud, el propósito como servicio. Lenguaje de entrega y fe.',
-    'Judía':      'Marco judío: la pregunta como práctica espiritual, la responsabilidad colectiva, tikkun olam (reparar el mundo), la memoria y el presente.',
+    'Budista':    'Marco budista. Pivotes: impermanencia, presencia, sufrimiento como maestro, apego como raíz. Incluye al menos una palabra del léxico: impermanencia, presencia, soltar, apego, vacío, raíz, instante.',
+    'Estoica':    'Marco estoico. Pivotes: distinguir lo que está en tu control de lo que no, virtud como único bien, ecuanimidad. Incluye al menos una palabra del léxico: control, virtud, juicio, asentir, indiferente, ecuanimidad, dominio.',
+    'Cristiana':  'Marco cristiano. Pivotes: gracia, misericordia, entrega, confianza en algo mayor. Incluye al menos una palabra del léxico: gracia, perdón, luz, camino, entrega, misericordia, confianza, prójimo.',
+    'Hindú':      'Marco védico. Pivotes: dharma (propósito propio), karma (acción y consecuencia), el observador que trasciende el ego. Incluye al menos una palabra del léxico: dharma, karma, observador, ego, propósito, acción, testigo.',
+    'Secular':    'Sin referencias a tradición espiritual. Marco laico: psicología, filosofía práctica, observación honesta. EVITA léxico místico o religioso (gracia, dharma, alma, espíritu, sagrado). Habla de hechos, hábitos, mente.',
+    'Taoísta':    'Marco taoísta. Pivotes: flujo natural, wu wei (no forzar), paradoja, equilibrio de opuestos. Incluye al menos una palabra del léxico: flujo, ceder, agua, vacío, equilibrio, opuesto, no forzar, suave.',
+    'Islámica':   'Marco islámico. Pivotes: tawakkul (confianza), sabr (paciencia), gratitud, propósito como servicio. Incluye al menos una palabra del léxico: confianza, paciencia, gratitud, entrega, servicio, fe, prueba.',
+    'Judía':      'Marco judío. Pivotes: la pregunta como práctica, responsabilidad colectiva, tikkun olam (reparar el mundo), memoria viva. Incluye al menos una palabra del léxico: pregunta, reparar, memoria, responsabilidad, prójimo, palabra, herencia.',
   };
 
   const genderInstruction: Record<string, string> = {
@@ -261,7 +266,8 @@ NUMEROLOGÍA
 - Año personal: ${ctx.personalYear}
 
 FOCO VITAL HOY: ${ctx.lifeFocus} — ${lifeFocusInstructions[ctx.lifeFocus] ?? ''}
-${ctx.spiritualTradition ? `TRADICIÓN ESPIRITUAL: ${ctx.spiritualTradition} — ${spiritualInstructions[ctx.spiritualTradition] ?? ''}` : ''}
+${ctx.spiritualTradition ? `MARCO ESPIRITUAL (estructural — debe verse en la frase): ${ctx.spiritualTradition}
+${spiritualInstructions[ctx.spiritualTradition] ?? ''}` : ''}
 
 ${ctx.transits ? `${ctx.transits}
 

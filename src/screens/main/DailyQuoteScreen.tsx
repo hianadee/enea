@@ -352,7 +352,7 @@ export const DailyQuoteScreen: React.FC = () => {
           Tu frase está{'\n'}preparándose.
         </Text>
         <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
-          Estamos leyendo el cielo de hoy.{'\n'}Vuelve en un momento.
+          Estamos leyendo el cielo de hoy.
         </Text>
       </View>
     );

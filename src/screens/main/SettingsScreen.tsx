@@ -16,6 +16,7 @@ import { TabParamList } from '@/navigation/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNotifications } from '@/notifications/useNotifications';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useOnboardingSave } from '@/hooks/useOnboardingSave';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { TYPOGRAPHY, FONT_FAMILY, SPACING, DEFAULT_PALETTE, PLANET_PALETTES } from '@/constants/theme';
@@ -192,13 +193,16 @@ export const SettingsScreen: React.FC = () => {
   const accentColor = palette.primary;
 
   const { dailyQuote, permissionGranted, toggle: toggleNotification, updateTime } = useNotifications();
+  const { saveAnonymous } = useOnboardingSave();
 
   const [showTimePicker, setShowTimePicker] = useState(false);
-  // Una sola fuente de verdad: la fecha del picker.
-  // Se sincroniza con dailyQuote al abrir el modal.
+  // pickerDate solo se actualiza al ABRIR el modal (initial value del spinner).
+  // Mientras el usuario desliza, la posición se rastrea en pickerDateRef para
+  // evitar que un setState mid-scroll cancele la inercia de UIDatePicker en iOS.
   const [pickerDate, setPickerDate] = useState<Date>(() => {
     const d = new Date(); d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0); return d;
   });
+  const pickerDateRef = useRef<Date>(pickerDate);
   const { showFade, onScroll, onContentSizeChange, onLayout } = useScrollFade();
 
   // ── Dirty state — solo true si el usuario cambia algo en esta sesión ─────
@@ -207,6 +211,11 @@ export const SettingsScreen: React.FC = () => {
   const markDirty = () => setIsDirty(true);
 
   const handleDone = () => {
+    if (isDirty) {
+      // Fire-and-forget: backup local + upsert a Supabase. Si falla (offline),
+      // useAppReady reintentará desde el backup en el próximo arranque.
+      saveAnonymous().catch(() => {});
+    }
     setIsDirty(false);
     navigation.navigate('Today');
   };
@@ -364,7 +373,7 @@ export const SettingsScreen: React.FC = () => {
         {/* ══ SECCIÓN: VOZ DE ENEA ════════════════════════════════════════ */}
         <SectionHeader label="Voz de Enea" />
         <Text style={[s.sectionIntro, { color: colors.text }]}>
-          Así habla Enea contigo. Cámbialo cuando quieras.
+          Así habla Enea contigo. Tus cambios afectarán a tu próxima frase diaria.
         </Text>
 
         <View style={s.toneBlock}>
@@ -435,6 +444,7 @@ export const SettingsScreen: React.FC = () => {
                   const d = new Date();
                   d.setHours(dailyQuote.hour, dailyQuote.minute, 0, 0);
                   setPickerDate(d);
+                  pickerDateRef.current = d;
                   setShowTimePicker(true);
                 }}
                 disabled={!dailyQuote.enabled}
@@ -537,7 +547,8 @@ export const SettingsScreen: React.FC = () => {
               <Text style={[s.modalTitle, { color: colors.text }]}>Hora del aviso</Text>
               <TouchableOpacity
                 onPress={() => {
-                  updateTime(pickerDate.getHours(), pickerDate.getMinutes());
+                  const d = pickerDateRef.current;
+                  updateTime(d.getHours(), d.getMinutes());
                   setShowTimePicker(false);
                   markDirty();
                 }}
@@ -558,16 +569,17 @@ export const SettingsScreen: React.FC = () => {
                 if (Platform.OS === 'android') {
                   setShowTimePicker(false);
                   if (event.type === 'set' && selectedDate) {
+                    pickerDateRef.current = selectedDate;
                     setPickerDate(selectedDate);
                     updateTime(selectedDate.getHours(), selectedDate.getMinutes());
                     markDirty();
                   }
                   return;
                 }
-                // iOS: spinner emite onChange continuamente — actualizamos state.
-                // No causa snap-back porque pasamos al picker el mismo valor que
-                // acaba de emitir; la posición visual no cambia.
-                if (selectedDate) setPickerDate(selectedDate);
+                // iOS: spinner emite onChange continuamente durante el scroll.
+                // Solo guardamos la posición en una ref — NO setState — para no
+                // cancelar la inercia del UIDatePicker. Se lee al pulsar "Listo".
+                if (selectedDate) pickerDateRef.current = selectedDate;
               }}
               style={{ width: '100%' }}
               {...(Platform.OS === 'ios' && { textColor: colors.text })}

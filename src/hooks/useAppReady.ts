@@ -21,7 +21,19 @@ import { useOnboardingStore } from '../store/onboardingStore';
 import { useUserStore } from '../store/userStore';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { initRevenueCat, syncSubscriptionStatus } from '../services/revenueCatService';
-import { EnneagramType, NatalChart } from '../types';
+import { EnneagramType, NatalChart, SpiritualTradition } from '../types';
+
+// Migración del campo legacy `religion` (build ≤8) al nuevo `spiritualTradition`
+// del payload del Edge Function. El campo legacy guardaba sustantivos
+// ("Cristianismo"); el Edge sólo entiende adjetivos ("Cristiana").
+const RELIGION_LEGACY_MAP: Record<string, SpiritualTradition> = {
+  Cristianismo: 'Cristiana',
+  Budismo:      'Budista',
+  Judaísmo:     'Judía',
+  Islam:        'Islámica',
+  Hinduismo:    'Hindú',
+  // 'Otra' no tiene equivalente en el Edge → queda sin tradición (frase neutral)
+};
 
 /** Carga el perfil de Supabase en el onboardingStore para que
  *  generateDailyQuote tenga todos los datos necesarios al arrancar. */
@@ -58,6 +70,15 @@ function hydrateOnboardingStore(profile: ProfilePayload): void {
 
   if (profile.religion_response) store.setReligionResponse(profile.religion_response as any);
   if (profile.religion)          store.setReligion(profile.religion);
+
+  // Migración: usuarios de build ≤8 tienen `religion` guardado con sustantivos
+  // ("Cristianismo") pero `tone_tradition` vacío. Si no se migra, el Edge nunca
+  // les inyecta marco espiritual y la frase queda neutral pese a haber declarado
+  // una religión en onboarding.
+  if (profile.religion && !profile.tone_tradition) {
+    const migrated = RELIGION_LEGACY_MAP[profile.religion];
+    if (migrated) store.setTonePreference('spiritualTradition', migrated);
+  }
 
   store.setStep('complete');
 }

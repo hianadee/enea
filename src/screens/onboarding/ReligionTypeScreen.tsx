@@ -11,6 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FONT_FAMILY, TYPOGRAPHY } from '@/constants/theme';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { OnboardingStackParamList } from '@/navigation/types';
+import { SpiritualTradition } from '@/types';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'ReligionType'>;
@@ -18,22 +19,25 @@ type Props = {
 
 const TOTAL = 10;
 
-const RELIGIONS = [
-  'Cristianismo',
-  'Budismo',
-  'Judaísmo',
-  'Islam',
-  'Hinduismo',
-  'Otra',
+// Solo tradiciones religiosas/contemplativas que el Edge Function `generate-quote`
+// reconoce con instrucciones de prompt específicas (mapping en líneas 223-232).
+// "Estoica" y "Secular" no aparecen aquí porque la pantalla pregunta por religión.
+const RELIGIONS: SpiritualTradition[] = [
+  'Cristiana',
+  'Budista',
+  'Judía',
+  'Islámica',
+  'Hindú',
+  'Taoísta',
 ];
 
 export const ReligionTypeScreen: React.FC<Props> = ({ navigation }) => {
-  const { setReligion, setStep } = useOnboardingStore();
-  const [selected, setSelected] = useState<string | null>(null);
+  const { setTonePreference, setStep } = useOnboardingStore();
+  const [selected, setSelected] = useState<SpiritualTradition | null>(null);
 
-  const handleSelect = (value: string) => {
+  const handleSelect = (value: SpiritualTradition) => {
     setSelected(value);
-    setReligion(value);
+    setTonePreference('spiritualTradition', value);
     setStep('tone');
     navigation.navigate('TonePreferences');
   };
