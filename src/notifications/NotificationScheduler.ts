@@ -39,8 +39,12 @@ export async function scheduleDailyQuote(hour: number, minute: number): Promise<
   const id = await Notifications.scheduleNotificationAsync({
     identifier: `${ENEA_ID_PREFIX}${Date.now()}`,
     content: {
-      title: 'Tu mensaje de hoy ✦',
-      body:  'Tu frase diaria ya está lista.',
+      title: 'Astro Enea',
+      body:  '¿Estás preparado/a para saber tu frase de hoy?',
+      // Sonido a true: el SO solo lo usa cuando el usuario ve la push
+      // (lockscreen / background). En foreground el handler en
+      // NotificationService.ts pone shouldPlaySound: false para no romper
+      // la atmósfera mientras se usa la app.
       sound: true,
       data:  { type: 'daily-quote' },
       ...(Platform.OS === 'android' && { channelId: CHANNEL_ID }),

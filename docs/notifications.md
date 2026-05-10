@@ -72,7 +72,7 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 
 **Channels:**
 - Cada notificación pertenece a un canal con prioridad/sonido/vibración propios
-- ENEA define el canal `daily-quote` en `NotificationService.ts`
+- ENEA define el canal `astro-enea-daily-quote` en `NotificationScheduler.ts` con `importance: DEFAULT`, vibración suave y luz `#FC8181` (acento de marca)
 - El usuario puede ajustar cada canal individualmente desde Ajustes de Android
 
 **Battery optimization:**

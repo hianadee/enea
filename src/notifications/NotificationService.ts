@@ -24,16 +24,28 @@ import {
 import { useNotificationStore } from '@/store/notificationStore';
 
 // ─── Foreground handler ───────────────────────────────────────────────────────
-// Configura cómo se muestran las notificaciones cuando la app está en primer plano.
+// Configura cómo se muestran las notificaciones cuando la app está EN FOREGROUND.
 // Se ejecuta al importar el módulo — antes de que monte cualquier componente.
+//
+// Política ENEA en foreground:
+//  - NO mostrar banner del sistema sobre la app (lo cubre el banner in-app
+//    de DailyQuoteBanner, disparado por useInAppNotification con su timer
+//    de 30s + listener de AppState)
+//  - NO sonar (tono reflexivo, no intrusivo)
+//  - NO badges en el icono (rompe la atmósfera íntima)
+//  - SÍ añadir a Notification Center / pull-down (por si el usuario quiere
+//    revisar luego que la frase llegó a su hora)
+//
+// En BACKGROUND/lockscreen iOS y Android se aplica el comportamiento default
+// del SO: banner, sonido, etc. — esto solo afecta foreground.
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert:  true,   // legacy iOS
-    shouldShowBanner: true,   // iOS 14+
-    shouldShowList:   true,   // iOS 14+ Notification Center
-    shouldPlaySound:  true,
-    shouldSetBadge:   false,
+    shouldShowAlert:  false,  // legacy iOS
+    shouldShowBanner: false,  // iOS 14+ — el banner in-app lo cubre
+    shouldShowList:   true,   // iOS 14+ Notification Center — sí queremos historial
+    shouldPlaySound:  false,  // tono reflexivo
+    shouldSetBadge:   false,  // sin números rojos
   }),
 });
 
