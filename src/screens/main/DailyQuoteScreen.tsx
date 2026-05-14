@@ -26,6 +26,7 @@ import { calculateUniversalDay, getDailyNumerologyPhrase, NUMEROLOGY_MEANINGS } 
 import { getSunSign, ZODIAC_SIGNS } from '@/utils/astroUtils';
 import { generateDailyQuote } from '@/services/quoteGeneratorService';
 import { ScrollFadeHint, useScrollFade } from '@/components/ScrollFadeHint';
+import { logger } from '@/utils/logger';
 
 
 // ─── Dimensiones de la tarjeta de compartir (ratio 4:5) ──────────────────────
@@ -336,7 +337,10 @@ export const DailyQuoteScreen: React.FC = () => {
           UTI: 'public.jpeg',
         });
       }
-    } catch (_) {
+    } catch (err) {
+      // Loguear el error para que aparezca en Sentry — antes se tragaba
+      // silenciosamente y el usuario veía el spinner desaparecer sin saber por qué
+      logger.warn('[Share] Falló capture o shareAsync:', err);
     } finally {
       setIsSharing(false);
     }

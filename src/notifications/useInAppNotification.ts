@@ -22,9 +22,13 @@ import { AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useNotificationStore } from '@/store/notificationStore';
 
-// ─── Singleton de sesión ──────────────────────────────────────────────────────
+// ─── Guard por día (módulo singleton) ─────────────────────────────────────────
+// Una sola fecha — si el banner ya se mostró HOY, no se vuelve a mostrar
+// independientemente del trigger (AppState, push recibida, push tapped, timer).
+// El único caso que bypasa el daily limit: usuario tocó la push explícitamente
+// desde lockscreen/bandeja — la intención del usuario es ver el banner.
 // Se resetea cuando la app se mata y se reabre (proceso nuevo).
-let _shownThisSession = false;
+let _lastShownDay: string | null = null;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -34,13 +38,15 @@ export function useInAppNotification() {
 
   // ─── Show / dismiss ────────────────────────────────────────────────────────
 
-  const show = () => {
+  const show = (bypassDailyLimit = false) => {
     // Comprobar estado actual del store en el momento del evento (evita closures stale)
     const { dailyQuote } = useNotificationStore.getState();
     if (!dailyQuote.enabled) return;
-    if (_shownThisSession)   return;
 
-    _shownThisSession = true;
+    const today = new Date().toDateString();
+    if (!bypassDailyLimit && _lastShownDay === today) return;
+
+    _lastShownDay = today;
     setVisible(true);
   };
 
@@ -63,19 +69,15 @@ export function useInAppNotification() {
   }, []);
 
   // ─── Listener: push llega con app en foreground ────────────────────────────
-  // CRÍTICO: con shouldShowBanner=false en NotificationService.ts, el sistema
-  // no muestra ningún banner cuando llega la push en foreground. Sin este
-  // listener, el usuario no se enteraría hasta que el timer de 30s coincida
-  // (y solo si la hora es exacta). Este listener cubre el caso al instante.
+  // Con shouldShowBanner=false en NotificationService.ts, el sistema no muestra
+  // banner cuando llega la push en foreground. Este listener cubre ese caso.
+  // El daily limit aplica — si el banner ya se mostró hoy, no se vuelve a
+  // disparar (evita race con el timer de 30s en la misma minute window).
 
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((notification) => {
       const type = notification.request.content.data?.type;
       if (type !== 'daily-quote') return;
-
-      // Reset de la flag para permitir mostrar aunque ya se hubiese visto
-      // antes en esta sesión — la push diaria es el evento explícito del día
-      _shownThisSession = false;
       show();
     });
 
@@ -83,42 +85,31 @@ export function useInAppNotification() {
   }, []);
 
   // ─── Listener: usuario toca la notificación push desde bandeja/lockscreen ──
+  // BYPASS del daily limit: el usuario tocó explícitamente la push desde fuera
+  // de la app — su intención es ver el banner, incluso si ya lo había visto hoy.
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const type = response.notification.request.content.data?.type;
       if (type !== 'daily-quote') return;
-
-      // Al venir de una notificación, permitir mostrar aunque ya se hubiese visto
-      // (el usuario explícitamente tocó el aviso, merece la bienvenida)
-      _shownThisSession = false;
-      show();
+      show(true); // bypass daily limit
     });
 
     return () => sub.remove();
   }, []);
 
   // ─── Timer local: dispara el banner si la app está en foreground a la hora ─
-  // Cubre el caso "el usuario está usando la app cuando llega la hora configurada"
-  // — la push del sistema no se muestra con la app activa, así que sin este timer
-  // el banner no aparecería hasta el siguiente foreground.
+  // Backup del listener `received` — cubre casos donde la push del SO no se
+  // entregó (permisos revocados, OS supression, etc.). El daily limit lo
+  // protege de duplicar el banner con el listener received.
 
   useEffect(() => {
-    let lastFiredDay: string | null = null; // clave por día para no repetir
-
     const check = () => {
       const { dailyQuote } = useNotificationStore.getState();
       if (!dailyQuote.enabled) return;
 
       const now = new Date();
-      const today = now.toDateString();
-      if (lastFiredDay === today) return;
-
       if (now.getHours() === dailyQuote.hour && now.getMinutes() === dailyQuote.minute) {
-        lastFiredDay = today;
-        // Llegó la hora estando el usuario delante: forzar el banner aunque ya
-        // se hubiese mostrado en el foreground inicial de la sesión.
-        _shownThisSession = false;
         show();
       }
     };
