@@ -7,10 +7,10 @@ Documento técnico del comportamiento de notificaciones (push del sistema + bann
 ### Push notification (notificación del sistema)
 Notificación gestionada por el SO (iOS o Android). Aparece en bandeja del dispositivo. Llega aunque la app esté cerrada o el iPhone bloqueado.
 
-En ENEA: programada localmente vía `expo-notifications`, una al día a la hora elegida por el usuario (chips: 07:00 / 09:00 / 14:00 / 18:00 / 21:00).
+En Astro Enea: programada localmente vía `expo-notifications`, una al día a la hora elegida por el usuario (chips: 07:00 / 09:00 / 14:00 / 18:00 / 21:00).
 
 ### In-app notification (banner dentro de la app)
-La pinta la propia app, no el sistema. Solo se ve si el usuario tiene la app abierta. En ENEA es un banner suave: *"¿Estás preparado/a para saber tu frase de hoy?"*
+La pinta la propia app, no el sistema. Solo se ve si el usuario tiene la app abierta. En Astro Enea es un banner suave: *"¿Estás preparado/a para saber tu frase de hoy?"*
 
 Las dos coexisten porque cubren escenarios complementarios.
 
@@ -19,7 +19,7 @@ Las dos coexisten porque cubren escenarios complementarios.
 Tres eventos disparan `show()` en `useInAppNotification.ts`:
 
 ### 1. App vuelve a foreground desde background
-`AppState.addEventListener('change', ...)` detecta la transición `inactive/background → active`. El usuario estaba en otra app y regresa a ENEA.
+`AppState.addEventListener('change', ...)` detecta la transición `inactive/background → active`. El usuario estaba en otra app y regresa a Astro Enea.
 
 ### 2. Usuario pulsa la notificación push del sistema
 `Notifications.addNotificationResponseReceivedListener` se dispara cuando `data.type === 'daily-quote'`. Override de `_shownThisSession` para forzar el banner aunque ya se hubiera mostrado.
@@ -56,7 +56,7 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 - Si el usuario lo desactiva, las locales no llegan — fuera de control de la app
 
 **Sonido / vibración:**
-- Configurable; ENEA usa por defecto sin sonido custom (respeta tono reflexivo)
+- Configurable; Astro Enea usa por defecto sin sonido custom (respeta tono reflexivo)
 
 ### Android
 
@@ -68,16 +68,16 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 **Permisos:**
 - Android 13+ requiere `POST_NOTIFICATIONS` permission explícita
 - Versiones anteriores eran automáticas
-- ENEA solicita el permiso vía `requestPermissions()` en el momento adecuado
+- Astro Enea solicita el permiso vía `requestPermissions()` en el momento adecuado
 
 **Channels:**
 - Cada notificación pertenece a un canal con prioridad/sonido/vibración propios
-- ENEA define el canal `astro-enea-daily-quote` en `NotificationScheduler.ts` con `importance: DEFAULT`, vibración suave y luz `#FC8181` (acento de marca)
+- Astro Enea define el canal `astro-enea-daily-quote` en `NotificationScheduler.ts` con `importance: DEFAULT`, vibración suave y luz `#FC8181` (acento de marca)
 - El usuario puede ajustar cada canal individualmente desde Ajustes de Android
 
 **Battery optimization:**
 - Si el usuario tiene optimización agresiva, las locales pueden retrasarse o no llegar
-- Fuera del control de la app — solo se puede sugerir al usuario que añada ENEA a excepciones
+- Fuera del control de la app — solo se puede sugerir al usuario que añada Astro Enea a excepciones
 
 ## Diseño visual del banner in-app
 
@@ -90,20 +90,20 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 ## Flujos de usuario completos
 
 ### Escenario A: ritual matutino con push
-1. **8:55** — usuario despierta, ve push de ENEA programada para 9:00 en lockscreen
+1. **8:55** — usuario despierta, ve push de Astro Enea programada para 9:00 en lockscreen
 2. **9:00** — push aparece (silenciosa o con sonido según preferencia)
 3. Usuario lee, toca → app abre
 4. Banner in-app NO se muestra (la navegación directa desde push ya cubre)
 5. Usuario aterriza en pantalla Hoy con la frase del día
 
 ### Escenario B: comprobador casual
-1. **11:00** — usuario abre ENEA por primera vez en el día (push programada era 9:00)
+1. **11:00** — usuario abre Astro Enea por primera vez en el día (push programada era 9:00)
 2. App detecta foreground transition desde "no había estado abierta hoy"
 3. Banner in-app aparece con mensaje suave
 4. Tap → navega a Hoy con la frase
 
 ### Escenario C: ya estaba en la app
-1. **8:55** — usuario está en ENEA Diario escribiendo entradas
+1. **8:55** — usuario está en Astro Enea Diario escribiendo entradas
 2. **9:00:00–9:00:30** — timer dispara `show()` porque hora coincide
 3. Banner in-app baja desde arriba sin interrumpir lo que escriba
 4. Usuario decide: lee la frase ahora o cierra el banner y sigue
@@ -119,7 +119,7 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 
 - **Polling cada 30s vs cada 1s:** con 30s el banner puede aparecer hasta 30 segundos tarde respecto a la hora exacta. 30x menos coste de batería. Aceptable porque la frase del día no requiere precisión de reloj.
 
-- **Una vez por sesión:** evita molestar. Coste: si el usuario abre y cierra ENEA 5 veces en una hora ANTES de su hora programada, no ve el banner hasta el primer foreground DESPUÉS de la hora.
+- **Una vez por sesión:** evita molestar. Coste: si el usuario abre y cierra Astro Enea 5 veces en una hora ANTES de su hora programada, no ve el banner hasta el primer foreground DESPUÉS de la hora.
 
 - **Banner vs modal:** banner permite seguir con lo que el usuario estaba haciendo. Un modal sería más intrusivo, menos respetuoso del tono *"frase reflexiva"*.
 
@@ -127,7 +127,7 @@ Cubre el caso "el usuario está usando la app cuando llega su hora" — la push 
 
 ## Lo que NO hace (intencionalmente)
 
-- **Re-engagement push** ("te echamos de menos") — filosofía ENEA: respetuoso, no intrusivo
+- **Re-engagement push** ("te echamos de menos") — filosofía Astro Enea: respetuoso, no intrusivo
 - **Badges en el icono de app** — los números rojos generan ansiedad, rompen el tono íntimo
 - **Notificaciones por contenido** (frase favorita guardada, etc.) — una sola push diaria, máximo
 - **Sonido custom invasivo** — si el usuario quiere sonido, usa el default del sistema

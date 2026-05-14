@@ -167,7 +167,7 @@ export const PaywallScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* ── Encabezado ──────────────────────────────────────────────── */}
         <View style={styles.header}>
-          <Text style={styles.badge}>ASTRO ENEA</Text>
+          <Text style={styles.badge}>Astro Enea</Text>
           <Text style={styles.heading}>Tu prueba ha terminado</Text>
           <Text style={styles.subheading}>
             Continúa recibiendo tu frase diaria,{'\n'}hecha solo para ti.
@@ -363,9 +363,9 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   badge: {
-    fontSize: 11,
+    fontSize: 12,
     color: ACCENT,
-    letterSpacing: 2.5,
+    letterSpacing: 0.5,
     fontWeight: '600',
     marginBottom: 16,
   },

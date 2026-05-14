@@ -1,9 +1,9 @@
 Create a CLAUDE.md file in the root of the project with this exact content:
 
-# ENEA — Project Brief for Claude Code
+# Astro Enea — Project Brief for Claude Code
 
-## What is ENEA
-ENEA is a personalized inspirational quotes app for iOS and Android.
+## What is Astro Enea
+Astro Enea is a personalized inspirational quotes app for iOS and Android.
 Every quote is uniquely generated for each user based on:
 - Their natal chart (calculated with Swiss Ephemeris / swisseph)
 - Their Enneagram type (based on Claudio Naranjo's characterology)
@@ -61,7 +61,7 @@ Brand voice: intimate, poetic, never generic. Spoken by Enea — the guide.
 8. Tradición espiritual — only if "Sí" in step 7
 9. Eneagrama — Naranjo's 9 types, short test or direct selection
 10. Tono — language style + energy + life focus
-11. Perfil completo — "Tu ENEA está lista."
+11. Perfil completo — "Tu Astro Enea está lista."
 
 ---
 

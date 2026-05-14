@@ -1,7 +1,7 @@
-# ENEA
+# Astro Enea
 
 App móvil premium de autoconocimiento que combina astrología natal,
-tipología Enneagram (modelo Claudio Naranjo) y contenido inspiracional personalizado.
+tipología Eneagrama (modelo Claudio Naranjo) y contenido inspiracional personalizado.
 
 Disponible para iOS y Android.
 

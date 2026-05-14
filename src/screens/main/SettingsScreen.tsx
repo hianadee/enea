@@ -544,7 +544,7 @@ export const SettingsScreen: React.FC = () => {
         <View style={s.footer}>
           <View style={[s.footerDot, { backgroundColor: ACCENT + '40' }]} />
           <View style={[s.footerLine, { backgroundColor: ACCENT + '18' }]} />
-          <Text style={[s.footerEnea, { color: ACCENT }]}>ASTRO ENEA</Text>
+          <Text style={[s.footerEnea, { color: ACCENT }]}>Astro Enea</Text>
           <View style={[s.footerLine, { backgroundColor: ACCENT + '18' }]} />
           <View style={[s.footerDot, { backgroundColor: ACCENT + '40' }]} />
         </View>
@@ -760,5 +760,5 @@ const s = StyleSheet.create({
   },
   footerDot:  { width: 3, height: 3, borderRadius: 2 },
   footerLine: { width: 28, height: 1 },
-  footerEnea: { fontSize: 10, fontWeight: '600', letterSpacing: 2 },
+  footerEnea: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
 });

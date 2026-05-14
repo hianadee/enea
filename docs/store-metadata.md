@@ -1,4 +1,4 @@
-# ENEA — Store Metadata
+# Astro Enea — Store Metadata
 
 Toda la copy necesaria para App Store (iOS) y Google Play (Android).
 
@@ -8,7 +8,7 @@ Toda la copy necesaria para App Store (iOS) y Google Play (Android).
 
 ### Name (30 chars max)
 ```
-ENEA
+Astro Enea
 ```
 
 ### Subtitle (30 chars max)
@@ -18,18 +18,18 @@ Tu frase del día, solo tuya
 
 ### Promotional Text (170 chars max — cambiable sin nueva versión)
 ```
-Cada mañana, una frase generada únicamente para ti. Combina tu carta natal, tu Enneagram y el momento exacto de hoy.
+Cada mañana, una frase generada únicamente para ti. Combina tu carta natal, tu Eneagrama y el momento exacto de hoy.
 ```
 
 ### Description (4000 chars max)
 
 ```
-ENEA no adivina. Calcula.
+Astro Enea no adivina. Calcula.
 
-Cada día, a la hora que elijas, ENEA genera una frase que solo puede existir para ti — porque combina tres sistemas de autoconocimiento con la fecha de hoy:
+Cada día, a la hora que elijas, Astro Enea genera una frase que solo puede existir para ti — porque combina tres sistemas de autoconocimiento con la fecha de hoy:
 
 · Tu carta natal (Sol, Luna, Ascendente, planeta dominante)
-· Tu tipo Enneagram según el modelo de Claudio Naranjo
+· Tu tipo de Eneagrama según el modelo de Claudio Naranjo
 · La numerología del día: ciclo universal y año personal
 
 El resultado no es un horóscopo genérico. Es una frase poética, densa de significado, que habla directamente a tu patrón de carácter — sin nombrarlo.
@@ -39,13 +39,13 @@ El resultado no es un horóscopo genérico. Es una frase poética, densa de sign
 CÓMO FUNCIONA
 
 1. Introduce tu fecha, lugar y hora de nacimiento
-ENEA calcula tu carta natal con precisión astronómica usando Swiss Ephemeris, el mismo sistema que usan los astrólogos profesionales.
+Astro Enea calcula tu carta natal con precisión astronómica usando Swiss Ephemeris, el mismo sistema que usan los astrólogos profesionales.
 
-2. Descubre tu tipo Enneagram
+2. Descubre tu tipo de Eneagrama
 Basado en la caracterología de Claudio Naranjo — no en el RHETI estándar. Nueve tipos con sus pasiones y fijaciones reales.
 
 3. Elige tu voz
-Poética, directa, metafórica o científica. Centrada, motivadora, reflexiva o elevadora. ENEA habla como tú necesitas escuchar.
+Poética, directa, metafórica o científica. Centrada, motivadora, reflexiva o elevadora. Enea habla como tú necesitas escuchar.
 
 4. Recibe tu frase cada día
 A la hora que elijas. Solo tuya. Nunca repetida.
@@ -66,7 +66,7 @@ QUÉ INCLUYE
 
 DISEÑADA PARA DURAR
 
-ENEA no es una app de motivación. No hay frases de calendario ni clichés de autoayuda. Es una herramienta de autoconocimiento que mejora cuanto más se usa — porque recuerda quién eres.
+Astro Enea no es una app de motivación. No hay frases de calendario ni clichés de autoayuda. Es una herramienta de autoconocimiento que mejora cuanto más se usa — porque recuerda quién eres.
 
 Para los que toman en serio su vida interior.
 ```
@@ -98,7 +98,7 @@ https://hianadee.github.io/enea/privacy-policy.html
 
 ### Copyright
 ```
-© 2026 ENEA
+© 2026 Astro Enea
 ```
 
 ### Age Rating
@@ -112,22 +112,22 @@ https://hianadee.github.io/enea/privacy-policy.html
 
 ### Title (50 chars max)
 ```
-ENEA — Tu frase diaria personalizada
+Astro Enea — Tu frase diaria personalizada
 ```
 
 ### Short Description (80 chars max)
 ```
-Carta natal + Enneagram + IA. Una frase única para ti cada día.
+Carta natal + Eneagrama + IA. Una frase única para ti cada día.
 ```
 
 ### Full Description (4000 chars max)
 ```
-ENEA no adivina. Calcula.
+Astro Enea no adivina. Calcula.
 
-Cada día, a la hora que elijas, ENEA genera una frase que solo puede existir para ti — porque combina tres sistemas de autoconocimiento con la fecha de hoy:
+Cada día, a la hora que elijas, Astro Enea genera una frase que solo puede existir para ti — porque combina tres sistemas de autoconocimiento con la fecha de hoy:
 
 · Tu carta natal (Sol, Luna, Ascendente, planeta dominante)
-· Tu tipo Enneagram según el modelo de Claudio Naranjo
+· Tu tipo de Eneagrama según el modelo de Claudio Naranjo
 · La numerología del día: ciclo universal y año personal
 
 El resultado no es un horóscopo genérico. Es una frase poética, densa de significado, que habla directamente a tu patrón de carácter.
@@ -135,13 +135,13 @@ El resultado no es un horóscopo genérico. Es una frase poética, densa de sign
 CÓMO FUNCIONA
 
 1. Introduce tu fecha, lugar y hora de nacimiento
-ENEA calcula tu carta natal con precisión astronómica usando Swiss Ephemeris.
+Astro Enea calcula tu carta natal con precisión astronómica usando Swiss Ephemeris.
 
-2. Descubre tu tipo Enneagram
+2. Descubre tu tipo de Eneagrama
 Basado en la caracterología de Claudio Naranjo. Nueve tipos con sus pasiones y fijaciones reales.
 
 3. Elige tu voz
-Poética, directa, metafórica o científica. ENEA habla como tú necesitas escuchar.
+Poética, directa, metafórica o científica. Enea habla como tú necesitas escuchar.
 
 4. Recibe tu frase cada día
 A la hora que elijas. Solo tuya. Nunca repetida.
@@ -181,10 +181,20 @@ https://hianadee.github.io/enea/privacy-policy.html
 
 ---
 
+## NOTAS SOBRE EL NOMBRE
+
+- **Producto** = "Astro Enea" (capitalización tipo título — A mayúscula, E mayúscula)
+- **Voz / personaje** = "Enea" (capitalizada como nombre propio — es la voz que habla en la app)
+- **Wordmark visual** = "Astro Enea" en serif/camel case (en share card, footer de Tú, badge del paywall — siempre camel case, NUNCA todo mayúsculas)
+
+En descripción y marketing, el producto se llama **Astro Enea**. Dentro de la app, cuando algo lo dice la voz, se firma como **Enea**.
+
+---
+
 ## NOTAS PARA EL SUBMIT
 
-- El email de soporte que aparece en los formularios: **hola@enea.app**
-- Si no tienes dominio enea.app, usa tu email personal para el submit inicial
-- App Store requiere que la Privacy Policy esté activa ANTES de enviar la app a revisión
+- Email de soporte: **hi@astroenea.com** (el que aparece en pantalla Tú · Info)
+- App Store requiere que la Privacy Policy esté activa ANTES de enviar la app a revisión → la URL `hianadee.github.io/enea/privacy-policy.html` ya está live
 - Google Play requiere declarar si la app usa IA generativa → SÍ, marcar la opción correspondiente
-- Google Play requiere el Data Safety form → datos recogidos: nombre, fecha nacimiento, ubicación, email (opcional)
+- Google Play requiere el Data Safety form → datos recogidos: nombre, fecha de nacimiento, ubicación, email (opcional)
+- Apple requiere completar el App Privacy questionnaire → mismos datos

@@ -88,19 +88,20 @@ function formatDate(date: Date): string {
 }
 
 // ─── Wordmark Astro Enea ──────────────────────────────────────────────────────
-// Mismo estilo que el footer de la pantalla "Tú" (SettingsScreen): mayúsculas,
-// letter-spacing amplio, peso 600. El share card no es accent-coloured como
-// la pantalla, así que va en blanco semi-transparente.
+// Brand mark camel case "Astro Enea" en serif. El share card no es
+// accent-coloured como la pantalla Tú, así que va en blanco semi-transparente
+// para que se lea bien sobre el fondo oscuro del card.
 const AstroEneaWordmark: React.FC<{ size: number; opacity?: number }> = ({ size, opacity = 0.55 }) => (
   <Text
     style={{
+      fontFamily: FONT_FAMILY.serif,
       fontSize: size,
-      letterSpacing: 2,
-      fontWeight: '600',
+      letterSpacing: 0.3,
+      fontWeight: '500',
       color: `rgba(255,255,255,${opacity})`,
     }}
   >
-    ASTRO ENEA
+    Astro Enea
   </Text>
 );
 

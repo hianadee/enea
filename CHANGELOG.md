@@ -1,6 +1,6 @@
 # Changelog
 
-Todos los cambios notables de ENEA se documentan en este archivo.
+Todos los cambios notables de Astro Enea se documentan en este archivo.
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 Versionado siguiendo [Semantic Versioning](https://semver.org/lang/es/).
@@ -10,7 +10,7 @@ Versionado siguiendo [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.1.0] - 2026-04-08
 
 ### Added
-- Splash screen con identidad visual ENEA
+- Splash screen con identidad visual Astro Enea
 - Onboarding completo de 10 pasos:
   - Paso 1: Pantalla de bienvenida
   - Paso 2: Nombre del usuario
