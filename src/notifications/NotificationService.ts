@@ -115,11 +115,14 @@ export async function setDailyQuoteEnabled(
 
   try {
     if (!enabled) {
-      // Cancelar y limpiar
+      // Cancelar y limpiar — TODAS las llamadas con catch para que el toggle
+      // se complete aunque alguna cancelación falle (sin esto, el store
+      // quedaría enabled=false pero la notificación seguiría programada
+      // en el SO, llegando al usuario al día siguiente)
       if (store.dailyQuote.scheduledId) {
         await cancelNotification(store.dailyQuote.scheduledId).catch(() => {});
       }
-      await cancelAllDailyQuoteNotifications();
+      await cancelAllDailyQuoteNotifications().catch(() => {});
       store.toggleDailyQuote(false);
       store.setScheduledId(null);
       return;

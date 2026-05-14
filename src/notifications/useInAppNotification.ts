@@ -4,8 +4,12 @@
  *
  * El banner se muestra cuando:
  *   1. La app vuelve a primer plano desde background/inactivo (AppState)
- *   2. El usuario toca la notificación push diaria (addNotificationResponseReceivedListener)
- *   3. La app está en primer plano y se cumple la hora configurada (timer local, una vez/día)
+ *   2. La notificación push diaria LLEGA con la app en foreground
+ *      (addNotificationReceivedListener — antes faltaba este caso)
+ *   3. El usuario toca la notificación push diaria desde bandeja/lockscreen
+ *      (addNotificationResponseReceivedListener)
+ *   4. La app está en primer plano y se cumple la hora configurada
+ *      (timer local cada 30s — backup para los casos en que (2) no dispare)
  *
  * Reglas:
  *   - Solo se muestra UNA VEZ por sesión de app (flag de módulo → se resetea al matar la app)
@@ -58,7 +62,27 @@ export function useInAppNotification() {
     return () => sub.remove();
   }, []);
 
-  // ─── Listener: usuario toca la notificación push ───────────────────────────
+  // ─── Listener: push llega con app en foreground ────────────────────────────
+  // CRÍTICO: con shouldShowBanner=false en NotificationService.ts, el sistema
+  // no muestra ningún banner cuando llega la push en foreground. Sin este
+  // listener, el usuario no se enteraría hasta que el timer de 30s coincida
+  // (y solo si la hora es exacta). Este listener cubre el caso al instante.
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener((notification) => {
+      const type = notification.request.content.data?.type;
+      if (type !== 'daily-quote') return;
+
+      // Reset de la flag para permitir mostrar aunque ya se hubiese visto
+      // antes en esta sesión — la push diaria es el evento explícito del día
+      _shownThisSession = false;
+      show();
+    });
+
+    return () => sub.remove();
+  }, []);
+
+  // ─── Listener: usuario toca la notificación push desde bandeja/lockscreen ──
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
