@@ -382,6 +382,44 @@ serve(async (req: Request) => {
       }
     }
 
+    // ── 3c. Rate limit diario — contingencia anti-abuso ─────────────────────
+    //
+    // Cuenta cuántas frases reales se han generado hoy (cada fila en
+    // quote_cache para today = una llamada a Claude). Si pasa el umbral,
+    // devuelve 429 → cliente cae al placeholder local.
+    //
+    // Por qué este cap a nivel de día:
+    //  - Anthropic console tiene cap mensual ($50) — backstop final
+    //  - Este cap diario falla rápido en caso de abuso (UUIDs aleatorios),
+    //    evitando que un atacante coma el budget mensual en pocas horas
+    //  - 100 calls/día × ~$0.02/call = $2/día max → si los 30 días son
+    //    máximos = $60/mes, pero Anthropic corta a $50 → safe net doble
+    //  - 100 calls/día = ~100 usuarios DAU sin tocar el cap (cache 1/usuario/día)
+    //
+    // Si el conteo falla (caída de Supabase, RLS, etc.), permitimos seguir —
+    // el Anthropic cap mensual es el backstop final.
+    const DAILY_CLAUDE_LIMIT = 100;
+    if (adminClient) {
+      try {
+        const { count } = await adminClient
+          .from('quote_cache')
+          .select('*', { count: 'exact', head: true })
+          .eq('quote_date', ctx.todayDate);
+
+        if ((count ?? 0) >= DAILY_CLAUDE_LIMIT) {
+          return new Response(
+            JSON.stringify({
+              error: 'Servicio temporalmente saturado',
+              code: 'DAILY_LIMIT_REACHED',
+            }),
+            { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } },
+          );
+        }
+      } catch {
+        // Conteo falló — permitir seguir; Anthropic cap protege el budget
+      }
+    }
+
     // ── 4. Llamar a Claude ──────────────────────────────────────────────────
 
     // Retry con backoff exponencial: 500ms, 1500ms.
