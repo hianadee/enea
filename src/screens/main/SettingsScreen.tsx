@@ -134,8 +134,8 @@ function ChipRow<T extends string>({
 
 const chip = StyleSheet.create({
   row:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pill: { height: 32, paddingHorizontal: 14, borderRadius: 100, borderWidth: 1, justifyContent: 'center' },
-  text: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  pill: { height: 44, paddingHorizontal: 20, borderRadius: 100, borderWidth: 1, justifyContent: 'center' },
+  text: { fontSize: 15, fontWeight: '500', lineHeight: 20 },
 });
 
 // ─── Section overline ─────────────────────────────────────────────────────────
@@ -762,14 +762,14 @@ const s = StyleSheet.create({
   },
   timeChip: {
     flex: 1,
-    height: 38,
+    height: 44,
     borderRadius: 100,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeChipText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.3,

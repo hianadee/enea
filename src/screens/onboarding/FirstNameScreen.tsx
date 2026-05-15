@@ -185,9 +185,11 @@ const styles = StyleSheet.create({
     marginTop: 36,
   },
   genderLabel: {
-    ...TYPOGRAPHY.presets.label,
-    color: '#A8A8B8',
-    marginBottom: 12,
+    fontFamily: FONT_FAMILY.serif,
+    fontSize: 20,
+    color: '#F0EEF6',
+    lineHeight: 26,
+    marginBottom: 14,
   },
   genderChips: {
     flexDirection: 'row',
@@ -195,16 +197,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    height: 32,
-    paddingHorizontal: 14,
+    height: 44,
+    paddingHorizontal: 20,
     borderRadius: 100,
     borderWidth: 1,
     justifyContent: 'center',
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 20,
   },
 
   // ── Footer ────────────────────────────────────────────────────────────────────
