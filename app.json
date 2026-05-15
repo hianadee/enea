@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.astroenea.app",
-      "buildNumber": "12",
+      "buildNumber": "14",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -37,7 +37,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.astroenea.app",
-      "versionCode": 21,
+      "versionCode": 22,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "SCHEDULE_EXACT_ALARM"

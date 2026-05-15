@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Vibration,
+  AppState,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
@@ -294,6 +295,49 @@ export const DailyQuoteScreen: React.FC = () => {
       .finally(() => setIsGenerating(false));
   }, []);
 
+  // ── Auto-retry silencioso al volver a foreground si hay placeholder ──────
+  // Si la app abre con red mala → placeholder → red vuelve → sin esta lógica
+  // el usuario se queda con placeholder hasta matar y reabrir la app. Esto
+  // recupera silenciosamente la frase real cuando la app vuelve al frente.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return;
+
+      // Leer estado fresco — no usar el todayQuote del closure (puede estar stale)
+      const currentQuote = useQuoteStore.getState().todayQuote;
+      if (!currentQuote || !currentQuote.isPlaceholder) return;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const store = useOnboardingStore.getState();
+
+      generateDailyQuote({
+        firstName:        store.firstName || 'amigo',
+        genderPreference: store.genderPreference ?? 'neutro',
+        enneagramType:    store.enneagramType,
+        natalChart:       store.natalChart,
+        numerologyProfile: store.numerologyProfile,
+        tonePreferences:  store.tonePreferences,
+        birthDate:        store.birthData?.date,
+      })
+        .then((quote) => {
+          // Solo actualizamos si llegó frase REAL — si vuelve placeholder, no
+          // tiene sentido reemplazar el placeholder visible por otro placeholder
+          if (!quote.isPlaceholder && quote.date === today) {
+            setTodayQuote(quote);
+            // Reanimar suavemente para revelar el contenido actualizado
+            animHeader.setValue(0);
+            animQuote.setValue(0);
+            animateIn();
+          }
+        })
+        .catch(() => {
+          // Silencioso — sigue habiendo placeholder visible, nada se rompe
+        });
+    });
+
+    return () => sub.remove();
+  }, []);
+
   // Estilo reutilizable: fade + subida 18px
   const revealStyle = (anim: Animated.Value) => ({
     opacity: anim,
@@ -392,10 +436,44 @@ export const DailyQuoteScreen: React.FC = () => {
             {formatDate(new Date())}
           </Text>
           {todayQuote?.planetaryContext && (
-            <View style={[styles.planetBadge, { borderColor: palette.primary + '40' }]}>
-              <View style={[styles.planetDot, { backgroundColor: palette.primary }]} />
-              <Text style={[styles.planetText, { color: palette.primary }]}>
-                {todayQuote.planetaryContext}
+            // Cuando la frase es placeholder (Edge Function falló), mostramos
+            // el badge en gris muted para ser honestos sin alarmar. El auto-retry
+            // en background puede actualizar a real → el badge se reanima
+            // automáticamente al color del planeta dominante. Discreto, no
+            // rompe la calma del ritual.
+            <View
+              style={[
+                styles.planetBadge,
+                {
+                  borderColor: todayQuote.isPlaceholder
+                    ? colors.border
+                    : palette.primary + '40',
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.planetDot,
+                  {
+                    backgroundColor: todayQuote.isPlaceholder
+                      ? colors.textMuted
+                      : palette.primary,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.planetText,
+                  {
+                    color: todayQuote.isPlaceholder
+                      ? colors.textMuted
+                      : palette.primary,
+                  },
+                ]}
+              >
+                {todayQuote.isPlaceholder
+                  ? 'Frase de respaldo · sin conexión'
+                  : todayQuote.planetaryContext}
               </Text>
             </View>
           )}
