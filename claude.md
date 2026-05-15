@@ -10,7 +10,7 @@ Every quote is uniquely generated for each user based on:
 - Their spiritual belief and tone preferences
 
 Tagline: "Tu energía, tu verdad, hoy."
-Brand voice: intimate, poetic, never generic. Spoken by Enea — the guide.
+Brand voice: intimate, poetic, never generic. Spoken by Astro Enea — the guide.
 
 ---
 
@@ -52,7 +52,7 @@ Brand voice: intimate, poetic, never generic. Spoken by Enea — the guide.
 
 ## Onboarding Flow (10 steps)
 1. Intro/Splash — logo + "Nada de lo que sientes es accidental."
-2. Nombre — "Hola, soy Enea. ¿Cómo te llamas?"
+2. Nombre — "Hola, soy Astro Enea. ¿Cómo te llamas?"
 3. Fecha de nacimiento — native DateTimePicker iOS / custom scroll Android
 4. Lugar de nacimiento — autocomplete with lat/lng
 5. Hora de nacimiento — native TimePicker (optional)

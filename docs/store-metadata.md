@@ -184,10 +184,10 @@ https://hianadee.github.io/enea/privacy-policy.html
 ## NOTAS SOBRE EL NOMBRE
 
 - **Producto** = "Astro Enea" (capitalización tipo título — A mayúscula, E mayúscula)
-- **Voz / personaje** = "Enea" (capitalizada como nombre propio — es la voz que habla en la app)
+- **Voz / personaje** = "Astro Enea" (igual — la voz que habla en la app también es Astro Enea, no se acorta)
 - **Wordmark visual** = "Astro Enea" en serif/camel case (en share card, footer de Tú, badge del paywall — siempre camel case, NUNCA todo mayúsculas)
 
-En descripción y marketing, el producto se llama **Astro Enea**. Dentro de la app, cuando algo lo dice la voz, se firma como **Enea**.
+Una sola convención: **siempre "Astro Enea"**, sea como producto, voz, wordmark o referencia.
 
 ---
 

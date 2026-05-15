@@ -399,8 +399,8 @@ export const SettingsScreen: React.FC = () => {
 
         <Divider />
 
-        {/* ══ SECCIÓN: VOZ DE ENEA ════════════════════════════════════════ */}
-        <SectionHeader label="Voz de Enea" />
+        {/* ══ SECCIÓN: VOZ DE ASTRO ENEA ═══════════════════════════════════ */}
+        <SectionHeader label="Voz de Astro Enea" />
         <Text style={[s.sectionIntro, { color: colors.text }]}>
           Así habla Enea contigo. Tus cambios afectarán a tu próxima frase diaria.
         </Text>
@@ -730,7 +730,7 @@ const s = StyleSheet.create({
   dataTitle: { ...TYPOGRAPHY.presets.bodyLg },
   dataDesc:  { ...TYPOGRAPHY.presets.bodySm, lineHeight: 20 },
 
-  // ── Voz de Enea ─────────────────────────────────────────────────────────────
+  // ── Voz de Astro Enea ─────────────────────────────────────────────────────────────
   sectionIntro: {
     ...TYPOGRAPHY.presets.bodyLg,
     marginBottom: 16,

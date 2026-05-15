@@ -34,7 +34,7 @@ const PRESETS: PresetEntry[] = [
   { key: 'display',       label: 'display',       tag: '96 · serif · 200',     sample: '4' },
   { key: 'heading1',      label: 'heading1',       tag: '40 · serif · 300',     sample: 'Tu carta natal' },
   { key: 'heading2',      label: 'heading2',       tag: '30 · serif · 300',     sample: 'Tu camino tiene\nsu propio idioma.' },
-  { key: 'heading3',      label: 'heading3',       tag: '24 · serif · 300',     sample: 'Voz de Enea' },
+  { key: 'heading3',      label: 'heading3',       tag: '24 · serif · 300',     sample: 'Voz de Astro Enea' },
   { key: 'quote',         label: 'quote',          tag: '26 · serif · italic',  sample: '"Lo que resistes, persiste."' },
   { key: 'sectionTitle',  label: 'sectionTitle',   tag: '14 · serif · italic',  sample: 'Por qué esta frase hoy' },
   { key: 'title',         label: 'title',          tag: '20 · sans · 300',      sample: 'El Iniciador' },
