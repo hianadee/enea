@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   Animated,
   Linking,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { TabParamList } from '@/navigation/types';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
+import { TabParamList, RootStackParamList } from '@/navigation/types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNotifications } from '@/notifications/useNotifications';
+import { deleteAccount } from '@/services/accountService';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useOnboardingSave } from '@/hooks/useOnboardingSave';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -187,6 +190,7 @@ const div = StyleSheet.create({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<TabParamList, 'Settings'>>();
   const insets = useSafeAreaInsets();
   const scrollRef   = useRef<ScrollView>(null);
@@ -216,6 +220,33 @@ export const SettingsScreen: React.FC = () => {
     }
     setIsDirty(false);
     navigation.navigate('Today');
+  };
+
+  // ── Eliminar cuenta ────────────────────────────────────────────────────────
+  // Cumple Apple App Store Guideline 5.1.1(v) y Google Play data deletion:
+  // los usuarios deben poder borrar su cuenta y datos desde la app.
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '¿Eliminar tu cuenta?',
+      'Esto borrará tu carta natal, eneatipo, frases guardadas, ajustes y suscripción. La acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteAccount();
+            // Navegar al root del stack de Onboarding — el usuario empieza de cero
+            rootNav.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Onboarding' }],
+              }),
+            );
+          },
+        },
+      ],
+    );
   };
 
   const formattedTime = `${String(dailyQuote.hour).padStart(2, '0')}:${String(dailyQuote.minute).padStart(2, '0')}`;
@@ -527,7 +558,6 @@ export const SettingsScreen: React.FC = () => {
         />
         <Row
           label="Soporte"
-          last
           right={
             <TouchableOpacity
               onPress={() => Linking.openURL('mailto:hi@astroenea.com')}
@@ -536,6 +566,22 @@ export const SettingsScreen: React.FC = () => {
               accessibilityRole="link"
             >
               <Text style={[s.linkText, { color: ACCENT }]}>hi@astroenea.com →</Text>
+            </TouchableOpacity>
+          }
+        />
+
+        {/* Eliminar cuenta — requerido por Apple Guideline 5.1.1(v) y Google Play */}
+        <Row
+          label="Eliminar mi cuenta"
+          last
+          right={
+            <TouchableOpacity
+              onPress={handleDeleteAccount}
+              activeOpacity={0.7}
+              accessibilityLabel="Eliminar mi cuenta y todos mis datos"
+              accessibilityRole="button"
+            >
+              <Text style={[s.linkText, { color: '#E55454' }]}>Borrar →</Text>
             </TouchableOpacity>
           }
         />
