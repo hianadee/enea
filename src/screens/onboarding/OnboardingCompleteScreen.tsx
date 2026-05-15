@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     borderColor: '#2A2A3A',
     backgroundColor: '#13131A',
     paddingHorizontal: 16,
-    fontSize: 15,
+    fontSize: 18,
     color: colors.fg.primary,
   },
   sendBtn: {

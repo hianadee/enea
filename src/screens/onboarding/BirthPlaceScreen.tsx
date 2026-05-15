@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 18,
     color: colors.fg.primary,
     paddingVertical: 12,
   },

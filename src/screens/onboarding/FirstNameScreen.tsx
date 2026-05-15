@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 44,
   },
   input: {
-    fontSize: 28,
+    fontSize: 18,
     color: '#F0EEF6',
     borderBottomWidth: 1,
     borderBottomColor: '#2A2A3A',

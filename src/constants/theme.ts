@@ -44,10 +44,25 @@ export const COLORS = {
 };
 
 // ─── Font families ────────────────────────────────────────────────────────────
+//
+// Política tipográfica de Astro Enea:
+//   - serif (Georgia/serif) → titulares, hero, voz poética
+//   - sans (sistema)        → body, labels, inputs, UI funcional
+//
+// `sans = undefined` es intencional. React Native con undefined fontFamily
+// usa la fuente sans del sistema: SF en iOS (Apple HIG recomendada) y Roboto
+// en Android. Decisión tomada el 15-05-2026 en lugar de cargar Inter:
+//   - Cero peso extra en bundle
+//   - Mejor integración con Dynamic Type (accesibilidad)
+//   - SF / Roboto son indistinguibles de Inter para el usuario casual
+//
+// Cuando se asigna explícitamente `fontFamily: FONT_FAMILY.sans` en un style
+// el resultado es el mismo que omitirlo — el `undefined` documenta intención.
+
 export const FONT_FAMILY = {
-  /** Georgia (iOS) / serif genérico (Android) — editorial, poético */
+  /** Georgia (iOS) / serif genérico (Android) — titulares, hero, voz */
   serif: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-  /** Sistema — sans-serif por defecto (undefined = hereda el sistema) */
+  /** Sistema — SF (iOS) o Roboto (Android), via React Native default */
   sans:  undefined as string | undefined,
 };
 
