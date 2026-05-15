@@ -316,8 +316,7 @@ export const SettingsScreen: React.FC = () => {
 
         <Divider />
 
-        {/* ══ SECCIÓN: TU MAPA ════════════════════════════════════════════ */}
-        <SectionHeader label="Tu mapa" />
+        {/* ══ SECCIÓN: TU MAPA (sin label, la rueda + Big Three hablan por sí) ═══ */}
 
         {/* Rueda natal centrada */}
         {birthData?.date && (
@@ -679,7 +678,6 @@ const s = StyleSheet.create({
     fontSize: 48,
     fontWeight: '300',
     letterSpacing: -0.5,
-    fontStyle: 'italic',
     lineHeight: 52,
   },
   heroBirth: {
