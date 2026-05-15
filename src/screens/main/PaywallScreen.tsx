@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   subheading: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   planName: {
     ...TYPOGRAPHY.presets.bodySm,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontWeight: '500',
   },
   planNameSelected: {
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   planPrice: {
     fontFamily: FONT_FAMILY.serif,
     fontSize: 22,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontWeight: '300',
   },
   planPriceSelected: {
@@ -492,11 +492,11 @@ const styles = StyleSheet.create({
   planPeriod: {
     fontFamily: FONT_FAMILY.sans ?? undefined,
     fontSize: 14,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
   },
   planSaving: {
     fontSize: 13,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontWeight: '600',
   },
   planSavingSelected: {
@@ -529,13 +529,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   restoreText: {
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
   legal: {
     ...TYPOGRAPHY.presets.caption,
-    color: '#5A5A6E',
+    color: '#A8A8B8',
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 8,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   },
   errorBody: {
     ...TYPOGRAPHY.presets.body,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -577,11 +577,11 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     ...TYPOGRAPHY.presets.caption,
-    color: '#7A7A8E',
+    color: '#A8A8B8',
     textDecorationLine: 'underline',
   },
   legalSep: {
     ...TYPOGRAPHY.presets.caption,
-    color: '#5A5A6E',
+    color: '#A8A8B8',
   },
 });

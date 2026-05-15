@@ -104,7 +104,7 @@ export const FirstNameScreen: React.FC<Props> = ({ navigation }) => {
                       accessibilityLabel={opt.label}
                       accessibilityState={{ checked: active }}
                     >
-                      <Text style={[styles.chipText, { color: active ? ACCENT : '#8B8A9E' }]}>
+                      <Text style={[styles.chipText, { color: active ? ACCENT : '#A8A8B8' }]}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   subheading: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 44,
   },
   input: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   genderLabel: {
     ...TYPOGRAPHY.presets.label,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 12,
   },
   genderChips: {

@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   preTitle: {
     fontSize: 11,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   chevron: {
-    color: '#7A7A8A',
+    color: '#A8A8B8',
     fontSize: 20,
   },
 });

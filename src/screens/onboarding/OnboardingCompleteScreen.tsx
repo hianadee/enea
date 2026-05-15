@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   symbolFallback: { marginBottom: 28 },
-  symbol: { fontSize: 48, color: '#7A7A8A' },
+  symbol: { fontSize: 48, color: '#A8A8B8' },
   card: {
     width: '100%',
     backgroundColor: '#080808',

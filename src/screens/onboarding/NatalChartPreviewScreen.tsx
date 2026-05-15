@@ -275,7 +275,7 @@ const bigThreeStyles = StyleSheet.create({
   // Nivel 2 — categoría (SOL / LUNA / ASCENDENTE)
   label: {
     ...TYPOGRAPHY.presets.label,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     textAlign: 'center',
     marginBottom: 6,
   },
@@ -283,7 +283,7 @@ const bigThreeStyles = StyleSheet.create({
   // Nivel 3 — contexto breve (muted, caption)
   description: {
     ...TYPOGRAPHY.presets.caption,
-    color: '#7D7C8F',
+    color: '#A8A8B8',
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 12,
@@ -291,7 +291,7 @@ const bigThreeStyles = StyleSheet.create({
 
   // Nivel 4 — EL DATO: nombre del signo (hero de cada columna)
   signRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
-  signSymbol: { fontSize: 13, color: '#8B8A9E' },
+  signSymbol: { fontSize: 13, color: '#A8A8B8' },
   sign: {
     fontFamily: FONT_FAMILY.serif,
     fontSize: 17,
@@ -300,7 +300,7 @@ const bigThreeStyles = StyleSheet.create({
   },
 
   // Nivel 5 — grados (técnico, secundario)
-  deg: { fontSize: 12, color: '#7D7C8F', letterSpacing: 0.3 },
+  deg: { fontSize: 12, color: '#A8A8B8', letterSpacing: 0.3 },
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -368,14 +368,14 @@ const styles = StyleSheet.create({
   },
   loadingSubtext: {
     fontSize: 14,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     textAlign: 'center',
   },
-  errorText: { color: '#666666', fontSize: 14, textAlign: 'center' },
+  errorText: { color: '#A8A8B8', fontSize: 14, textAlign: 'center' },
   // ── Encabezado de sección ─────────────────────────────────────────────────
   preTitle: {
     fontSize: 11,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     letterSpacing: 2,
     textTransform: 'uppercase',
     alignSelf: 'flex-start',
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   // ── Fecha — muted, vinculada al título ───────────────────────────────────
   birthSummary: {
     fontSize: 14,
-    color: '#7D7C8F',
+    color: '#A8A8B8',
     alignSelf: 'flex-start',
     lineHeight: 21,
     letterSpacing: 0.1,
@@ -412,12 +412,12 @@ const styles = StyleSheet.create({
   // Primera frase — más visible, es la más importante
   introParagraphPrimary: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
   },
   // Segunda y tercera — más muted, contexto de apoyo
   introParagraphSecondary: {
     ...TYPOGRAPHY.presets.body,
-    color: '#7D7C8F',
+    color: '#A8A8B8',
   },
   wheelContainer: {
     width: 300,
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   },
   planetListTitle: {
     ...TYPOGRAPHY.presets.label,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 14,
   },
   planetRow: {
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   // Col 2 — nombre (dato principal → color text)
   planetName: { flex: 1, ...TYPOGRAPHY.presets.body, color: '#F0EEF6' },
   // Col 3 — grados (secundario → muted, monoespaciado visual)
-  planetPos: { ...TYPOGRAPHY.presets.caption, color: '#7D7C8F', width: 52, textAlign: 'right', marginRight: 12 },
+  planetPos: { ...TYPOGRAPHY.presets.caption, color: '#A8A8B8', width: 52, textAlign: 'right', marginRight: 12 },
   // Col 4 — signo (accent del planeta)
   planetSign: { ...TYPOGRAPHY.presets.bodySm, fontWeight: '500', width: 90, textAlign: 'right' },
   footer: {

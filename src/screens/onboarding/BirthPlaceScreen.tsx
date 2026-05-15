@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   errorText: {
-    color: '#8A8A9A',
+    color: '#A8A8B8',
     fontSize: 14,
     marginTop: 8,
   },

@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -224,12 +224,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 28,
   },
   questionCount: {
     ...TYPOGRAPHY.presets.bodySm,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     letterSpacing: 0.5,
     marginBottom: 12,
   },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...TYPOGRAPHY.presets.bodySm,
-    color: '#5A5A6E',
+    color: '#A8A8B8',
     marginBottom: 24,
     fontStyle: 'italic',
   },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     ...TYPOGRAPHY.presets.body,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     lineHeight: 22,
   },
   optionTextSelected: {

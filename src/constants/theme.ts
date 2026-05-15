@@ -23,17 +23,23 @@ export const COLORS = {
     surfaceElevated: '#1C1C26',
     border: '#2A2A3A',
     text: '#F0EEF6',
-    textSecondary: '#8B8A9E',
-    textMuted: '#7D7C8F',   // ramp: textSecondary #8B8A9E → textMuted #7D7C8F → border #2A2A3A · 4.85:1 WCAG AA
+    // Decisión 15-05-2026: un solo gris para todo el texto secundario/muted.
+    // #A8A8B8 = el más brillante de los grises que había en la app, contraste
+    // ~8:1 sobre fondo #0A0A0F (WCAG AAA). Unificado para evitar deriva
+    // entre pantallas (antes había 11 grises distintos dispersos).
+    textSecondary: '#A8A8B8',
+    textMuted: '#A8A8B8',
   },
   light: {
-    background:      '#EDEAF6',   // base: gris-lavanda suave — claramente no blanco
-    surface:         '#F5F3FD',   // tarjetas: ligeramente más claro que el fondo
-    surfaceElevated: '#FFFFFF',   // modales y pickers: blanco puro — visiblemente elevado
-    border:          '#C8C5DC',   // bordes y separadores visibles
-    text:            '#16162A',   // texto principal: casi negro con tinte morado
-    textSecondary:   '#48465E',   // secundario: gris-morado oscuro — buena legibilidad
-    textMuted:       '#6E6C82',   // auxiliar: visible sobre todos los fondos (~4.5:1)
+    background:      '#EDEAF6',
+    surface:         '#F5F3FD',
+    surfaceElevated: '#FFFFFF',
+    border:          '#C8C5DC',
+    text:            '#16162A',
+    // Mismo principio en light mode: un solo gris para texto secundario.
+    // #48465E = contraste ~7:1 sobre #EDEAF6 (WCAG AAA).
+    textSecondary:   '#48465E',
+    textMuted:       '#48465E',
   },
 };
 

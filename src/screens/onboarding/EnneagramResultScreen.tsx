@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   // ── Hero ──────────────────────────────────────────────────────────────────────
   typeLabel: {
     ...TYPOGRAPHY.presets.label,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 4,
   },
   typeNumber: {
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   // ── Descripción ───────────────────────────────────────────────────────────────
   typeDescription: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   // ── Selector de tipo ──────────────────────────────────────────────────────────
   resonateLabel: {
     ...TYPOGRAPHY.presets.bodySm,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   retakeBtnText: {
     ...TYPOGRAPHY.presets.bodySm,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     letterSpacing: 0.2,
   },
 });

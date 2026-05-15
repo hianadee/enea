@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   dateTapHint: {
     fontSize: 13,
-    color: '#555565',
+    color: '#A8A8B8',
     letterSpacing: 0.5,
   },
   // ── iOS native spinner ──

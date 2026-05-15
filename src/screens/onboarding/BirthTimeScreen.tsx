@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   timeTapHint: {
     fontSize: 13,
-    color: '#555565',
+    color: '#A8A8B8',
     letterSpacing: 0.5,
   },
   // ── iOS native spinner ──
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   skipBtnNote: {
-    color: '#8A8A9A',
+    color: '#A8A8B8',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 21,

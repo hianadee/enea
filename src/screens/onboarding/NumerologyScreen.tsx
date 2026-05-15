@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   errorText: {
-    color: '#8A8A9A',
+    color: '#A8A8B8',
     fontSize: 14,
     textAlign: 'center',
   },

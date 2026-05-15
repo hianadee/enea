@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   stepCounter: {
     flex: 1,
     textAlign: 'center',
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...TYPOGRAPHY.presets.bodyLg,
-    color: '#8B8A9E',
+    color: '#A8A8B8',
     marginBottom: 36,
   },
 
